@@ -132,6 +132,15 @@ Use the wizard to create:
 
 ## Verification
 
+Install Playwright's Chromium build once:
+
+```bash
+npx playwright install chromium
+```
+
+To use an existing Chrome installation instead, set `PLAYWRIGHT_CHROME_PATH`
+to its executable path.
+
 ```bash
 npm run lint
 npm run typecheck

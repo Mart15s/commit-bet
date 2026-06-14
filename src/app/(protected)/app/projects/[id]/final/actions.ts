@@ -19,7 +19,11 @@ export async function generateFinal(formData: FormData) {
   ]);
   const contributions = [];
   for (const member of members ?? []) {
-    const { data: assigned } = await supabase.from("task_assignments").select("task_id, tasks(status)").eq("user_id", member.user_id);
+    const { data: assigned } = await supabase
+      .from("task_assignments")
+      .select("task_id, tasks!inner(status, project_id)")
+      .eq("user_id", member.user_id)
+      .eq("tasks.project_id", projectId);
     const taskIds = (assigned ?? []).map((row) => row.task_id);
     const { count: evidenceCount } = taskIds.length
       ? await supabase.from("evidence").select("*", { count: "exact", head: true }).eq("user_id", member.user_id).in("task_id", taskIds)
