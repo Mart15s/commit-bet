@@ -1,15 +1,24 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f6f7f2;
-  --foreground: #172019;
-  --card: #ffffff;
-  --muted: #657068;
-  --line: #dfe4dd;
-  --brand: #245b45;
-  --brand-strong: #173e2f;
-  --accent: #e9f45b;
-  --danger: #a33232;
+  --background: #050812;
+  --background-elevated: #080d19;
+  --surface: #0b1020;
+  --card: #101729;
+  --card-strong: #141d33;
+  --foreground: #f8fafc;
+  --muted: #aab4c5;
+  --muted-strong: #cbd5e1;
+  --muted-dim: #6b7280;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.14);
+  --brand: #2f7bff;
+  --brand-strong: #1f5ed0;
+  --cyan: #22d3ee;
+  --green: #34d399;
+  --purple: #8b5cf6;
+  --amber: #f59e0b;
+  --danger: #fb7185;
 }
 
 * {
@@ -18,16 +27,19 @@
 
 html {
   background: var(--background);
+  color-scheme: dark;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(circle at 8% -10%, rgba(233, 244, 91, 0.28), transparent 24rem),
-    var(--background);
+    radial-gradient(circle at 12% -8%, rgba(47, 123, 255, 0.14), transparent 30rem),
+    radial-gradient(circle at 92% 12%, rgba(34, 211, 238, 0.08), transparent 26rem),
+    linear-gradient(180deg, #050812 0%, #070b15 48%, #050812 100%);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Inter", "Segoe UI", Arial, Helvetica, sans-serif;
+  text-rendering: optimizeLegibility;
 }
 
 button,
@@ -42,30 +54,54 @@ a {
   -webkit-tap-highlight-color: transparent;
 }
 
+a,
+button,
+input,
+select,
+textarea {
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
 input,
 select,
 textarea {
   width: 100%;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: 0.9rem;
-  background: white;
-  padding: 0.85rem 1rem;
+  background: rgba(7, 12, 24, 0.82);
+  padding: 0.88rem 1rem;
   color: var(--foreground);
   outline: none;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #64748b;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(36, 91, 69, 0.12);
+  border-color: rgba(47, 123, 255, 0.85);
+  box-shadow: 0 0 0 3px rgba(47, 123, 255, 0.16);
+}
+
+input:disabled {
+  color: var(--muted-dim);
+  opacity: 0.75;
 }
 
 label {
   display: grid;
-  gap: 0.45rem;
-  color: #354138;
-  font-size: 0.9rem;
+  gap: 0.5rem;
+  color: var(--muted-strong);
+  font-size: 0.875rem;
   font-weight: 700;
 }
 
@@ -75,6 +111,32 @@ textarea {
 }
 
 ::selection {
-  background: var(--accent);
-  color: var(--brand-strong);
+  background: rgba(47, 123, 255, 0.45);
+  color: white;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.premium-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: linear-gradient(to bottom, black, transparent 90%);
+}
+
+.subtle-scrollbar {
+  scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+  scrollbar-width: thin;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

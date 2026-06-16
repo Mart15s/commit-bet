@@ -3,10 +3,10 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 const variants = {
-  primary: "bg-[var(--brand)] text-white hover:bg-[var(--brand-strong)]",
-  secondary: "border border-[var(--line)] bg-white text-[var(--foreground)] hover:bg-[#f0f2ed]",
-  ghost: "text-[var(--brand)] hover:bg-white/70",
-  danger: "bg-[var(--danger)] text-white hover:bg-[#812525]",
+  primary: "border-blue-400/40 bg-gradient-to-r from-[var(--brand)] to-[#239DE8] text-white shadow-[0_12px_34px_rgba(47,123,255,.24)] hover:brightness-110",
+  secondary: "border border-[var(--line-strong)] bg-white/[0.06] text-[var(--foreground)] hover:border-white/20 hover:bg-white/[0.1]",
+  ghost: "text-blue-300 hover:bg-white/[0.06] hover:text-white",
+  danger: "border border-rose-400/30 bg-rose-500/15 text-rose-100 hover:bg-rose-500/24",
 };
 
 const sizes = {
@@ -27,7 +27,7 @@ export function Button({
   return (
     <button
       className={cn(
-        "inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl font-extrabold transition disabled:cursor-not-allowed disabled:opacity-50",
+        "inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border font-extrabold outline-none transition active:scale-[.985] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-blue-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050812]",
         variants[variant],
         sizes[size],
         className,
@@ -54,7 +54,7 @@ export function ButtonLink({
     <Link
       href={href}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-xl font-extrabold transition",
+        "inline-flex items-center justify-center gap-2 rounded-xl border font-extrabold outline-none transition active:scale-[.985] focus-visible:ring-2 focus-visible:ring-blue-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050812]",
         variants[variant],
         sizes[size],
         className,
@@ -66,7 +66,11 @@ export function ButtonLink({
 }
 
 export function Card({ children, className }: { children: ReactNode; className?: string }) {
-  return <section className={cn("rounded-2xl border border-[var(--line)] bg-white p-5", className)}>{children}</section>;
+  return (
+    <section className={cn("rounded-2xl border border-[var(--line)] bg-[var(--card)]/88 p-5 shadow-[0_16px_60px_rgba(0,0,0,.16)]", className)}>
+      {children}
+    </section>
+  );
 }
 
 export function PageHeader({
@@ -83,8 +87,8 @@ export function PageHeader({
   return (
     <header className="mb-6 flex items-start justify-between gap-4">
       <div>
-        {eyebrow && <p className="mb-1 text-xs font-black uppercase tracking-[.16em] text-[var(--brand)]">{eyebrow}</p>}
-        <h1 className="text-3xl font-black tracking-[-.035em]">{title}</h1>
+        {eyebrow && <p className="mb-1 text-xs font-black uppercase tracking-[.16em] text-blue-300">{eyebrow}</p>}
+        <h1 className="text-3xl font-black tracking-[-.045em] text-white">{title}</h1>
         {description && <p className="mt-2 max-w-2xl leading-6 text-[var(--muted)]">{description}</p>}
       </div>
       {action}
@@ -95,13 +99,13 @@ export function PageHeader({
 export function StatusBadge({ status }: { status: string }) {
   const tone =
     status === "approved" || status === "active" || status === "completed"
-      ? "bg-[#e4f4e7] text-[#28603a]"
+      ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
       : status === "rejected" || status === "critical"
-        ? "bg-[#fae7e7] text-[#922f2f]"
+        ? "border-rose-400/20 bg-rose-400/10 text-rose-300"
         : status === "submitted" || status === "disputed"
-          ? "bg-[#fff2c9] text-[#735813]"
-          : "bg-[#edf0eb] text-[#566057]";
-  return <span className={cn("inline-flex rounded-full px-2.5 py-1 text-xs font-black capitalize", tone)}>{status.replaceAll("_", " ")}</span>;
+          ? "border-amber-400/20 bg-amber-400/10 text-amber-300"
+          : "border-slate-400/15 bg-slate-400/10 text-slate-300";
+  return <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-black capitalize", tone)}>{status.replaceAll("_", " ")}</span>;
 }
 
 export function EmptyState({ title, copy, action }: { title: string; copy: string; action?: ReactNode }) {
@@ -116,6 +120,5 @@ export function EmptyState({ title, copy, action }: { title: string; copy: strin
 
 export function ErrorMessage({ message }: { message?: string }) {
   if (!message) return null;
-  return <div className="rounded-xl bg-[#fae7e7] p-3 text-sm font-bold text-[#922f2f]">{message}</div>;
+  return <div className="rounded-xl border border-rose-400/20 bg-rose-500/10 p-3 text-sm font-bold text-rose-200">{message}</div>;
 }
-

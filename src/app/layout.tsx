@@ -3,8 +3,8 @@ import { Toaster } from "sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CommitBet - Finish what your team starts",
-  description: "Evidence-based accountability sprints with AI recommendations and human decisions.",
+  title: "CommitBet - Evidence-based commitments",
+  description: "Turn vague project promises into evidence-based commitments with AI guidance and human confirmation.",
 };
 
 export default function RootLayout({
@@ -13,8 +13,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" data-scroll-behavior="smooth">
+      <body className="antialiased">
         {children}
         <Toaster richColors position="top-center" />
       </body>
