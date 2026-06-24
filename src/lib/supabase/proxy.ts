@@ -1,12 +1,30 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  getSupabaseConfig,
+  getSupabaseConfigErrorMessage,
+} from "@/lib/auth-config";
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
+  const configError = getSupabaseConfigErrorMessage();
+
+  if (configError) {
+    if (request.nextUrl.pathname.startsWith("/app")) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("error", configError);
+      return NextResponse.redirect(url);
+    }
+
+    return response;
+  }
+
+  const { url, key } = getSupabaseConfig();
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    url!,
+    key!,
     {
       cookies: {
         getAll: () => request.cookies.getAll(),
@@ -34,4 +52,3 @@ export async function updateSession(request: NextRequest) {
 
   return response;
 }
-
