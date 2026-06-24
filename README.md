@@ -43,12 +43,20 @@ Then set:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<ANON_KEY>
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<PUBLISHABLE_KEY>
+# NEXT_PUBLIC_SUPABASE_ANON_KEY=<LEGACY_ANON_KEY>
+NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000
 SUPABASE_SERVICE_ROLE_KEY=<SERVICE_ROLE_KEY>
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-5.5
 AI_PROVIDER=mock
 ```
+
+For the production Vercel environment, set `NEXT_PUBLIC_SITE_URL` to the
+canonical deployment URL, such as `https://commit-bet.vercel.app`. Also set
+`NEXT_PUBLIC_SUPABASE_URL` to the hosted Supabase project URL, not
+`http://127.0.0.1:54321`, and use the project publishable key for
+`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 
 5. Run the app:
 
