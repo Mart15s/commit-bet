@@ -1,40 +1,194 @@
-import { ButtonLink, Card, EmptyState, PageHeader, StatusBadge } from "@/components/ui";
+import { AlertTriangle, CalendarClock, ClipboardCheck, Coins, Gauge, ListChecks, PlusCircle, Target } from "lucide-react";
+import { ButtonLink, Card, EmptyState, MetricCard, PageHeader, Progress, SectionHeader, StatusBadge } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
+import { sampleProject } from "@/lib/mock-data";
 import { formatDate, singleRelation } from "@/lib/utils";
+
+type DashboardTask = {
+  id: string;
+  title: string;
+  due_date: string;
+  status: string;
+  priority: string;
+  projects: { title: string } | { title: string }[] | null;
+  task_assignments?: Array<{ user_id: string }> | { user_id: string } | null;
+};
+
+function daysUntil(value: string) {
+  const today = new Date();
+  const end = new Date(`${value}T00:00:00`);
+  return Math.ceil((end.getTime() - today.getTime()) / 86_400_000);
+}
 
 export default async function DashboardPage() {
   const { supabase, user } = await requireUser();
-  const [{ data: projects }, { data: assignments }, { data: submitted }] = await Promise.all([
+  const [{ data: projects }, { data: assignments }, { data: submitted }, { data: pledges }] = await Promise.all([
     supabase.from("projects").select("*").order("created_at", { ascending: false }),
     supabase.from("task_assignments").select("tasks(*, projects(title))").eq("user_id", user.id),
     supabase.from("tasks").select("*, task_assignments(user_id), projects(title)").eq("status", "submitted"),
+    supabase.from("pledges").select("amount, currency"),
   ]);
+
   const active = projects?.filter((project) => project.status === "active") ?? [];
-  const myTasks = (assignments ?? []).map((row) => row.tasks as unknown as { id: string; title: string; due_date: string; status: string; projects: { title: string } }).filter((task) => task.status !== "approved");
-  const approvals = (submitted ?? []).filter((task) => {
+  const myTasks = (assignments ?? [])
+    .map((row) => row.tasks as unknown as DashboardTask)
+    .filter((task) => task && task.status !== "approved")
+    .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime());
+  const approvals = ((submitted ?? []) as unknown as DashboardTask[]).filter((task) => {
     const assigned = singleRelation(task.task_assignments as unknown as { user_id: string } | Array<{ user_id: string }>);
     return assigned?.user_id !== user.id;
   });
+  const dueSoon = myTasks.filter((task) => daysUntil(task.due_date) <= 2 && task.status !== "submitted");
+  const pledgePoints = (pledges ?? []).reduce((total, pledge) => total + Number(pledge.amount ?? 0), 0);
+  const projectPreview = active[0];
 
   return (
     <>
-      <PageHeader title="Your commitments" description="Today’s work, pending proof, and the sprints your team promised to finish." action={<ButtonLink href="/app/projects/new">New project</ButtonLink>} />
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Card><p className="text-sm font-bold text-[var(--muted)]">Active projects</p><p className="mt-1 text-3xl font-black">{active.length}</p></Card>
-        <Card><p className="text-sm font-bold text-[var(--muted)]">Assigned tasks</p><p className="mt-1 text-3xl font-black">{myTasks.length}</p></Card>
-        <Card><p className="text-sm font-bold text-[var(--muted)]">Pending approvals</p><p className="mt-1 text-3xl font-black">{approvals.length}</p></Card>
+      <PageHeader
+        eyebrow="Command center"
+        title="Your commitments"
+        description="Today’s work, pending proof, deadline risk, and the sprints your team promised to finish."
+        action={<ButtonLink href="/app/projects/new"><PlusCircle size={18} /> New project</ButtonLink>}
+      />
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <MetricCard label="Active projects" value={active.length} detail="Commitment sprints in motion" icon={<Target size={20} />} />
+        <MetricCard label="Today’s tasks" value={myTasks.length} detail={myTasks[0] ? `Next due ${formatDate(myTasks[0].due_date)}` : "No task pressure"} icon={<ListChecks size={20} />} />
+        <MetricCard label="Pending approvals" value={approvals.length} detail="Submitted work needing review" icon={<ClipboardCheck size={20} />} />
+        <MetricCard label="Virtual pledge" value={pledgePoints || sampleProject.pledgePool} detail="Declared points, no real money" icon={<Coins size={20} />} />
       </div>
-      <section className="mt-8">
-        <h2 className="mb-3 text-2xl font-black">Active projects</h2>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {active.map((project) => <ButtonLink key={project.id} href={`/app/projects/${project.id}`} variant="secondary" className="h-auto justify-start p-0 text-left"><Card className="w-full border-0"><div className="flex justify-between gap-3"><div><h3 className="text-lg font-black">{project.title}</h3><p className="mt-1 text-sm text-[var(--muted)]">Ends {formatDate(project.end_date)}</p></div><StatusBadge status={project.status} /></div></Card></ButtonLink>)}
-          {!active.length && <div className="sm:col-span-2"><EmptyState title="No active sprint" copy="Create a project, generate its plan, and make the commitment real." action={<ButtonLink href="/app/projects/new">Create project</ButtonLink>} /></div>}
-        </div>
-      </section>
-      <div className="mt-8 grid gap-6 md:grid-cols-2">
-        <section><h2 className="mb-3 text-xl font-black">Your open tasks</h2><div className="space-y-3">{myTasks.slice(0, 5).map((task) => <ButtonLink key={task.id} href={`/app/tasks/${task.id}`} variant="secondary" className="h-auto w-full justify-between p-4 text-left"><span><strong className="block">{task.title}</strong><small className="text-[var(--muted)]">{task.projects.title}</small></span><StatusBadge status={task.status} /></ButtonLink>)}{!myTasks.length && <Card className="text-sm text-[var(--muted)]">Nothing assigned right now.</Card>}</div></section>
-        <section><h2 className="mb-3 text-xl font-black">Needs your review</h2><div className="space-y-3">{approvals.slice(0, 5).map((task) => <ButtonLink key={task.id} href={`/app/tasks/${task.id}`} variant="secondary" className="h-auto w-full justify-between p-4 text-left"><span><strong className="block">{task.title}</strong><small className="text-[var(--muted)]">{(task.projects as unknown as { title: string }).title}</small></span><StatusBadge status="submitted" /></ButtonLink>)}{!approvals.length && <Card className="text-sm text-[var(--muted)]">No submissions are waiting.</Card>}</div></section>
+
+      <div className="mt-6 grid gap-4 lg:grid-cols-[1.35fr_.65fr]">
+        <section>
+          <SectionHeader title="Active projects" description="Each card centers the commitment, proof, and remaining risk." />
+          <div className="grid gap-3 md:grid-cols-2">
+            {active.map((project) => {
+              const remaining = daysUntil(project.end_date);
+              const progress = Math.max(12, Math.min(88, remaining <= 0 ? 100 : 100 - remaining * 7));
+              return (
+                <ButtonLink key={project.id} href={`/app/projects/${project.id}`} variant="secondary" className="h-auto justify-start p-0 text-left">
+                  <Card className="w-full border-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-lg font-black tracking-[-.02em]">{project.title}</h3>
+                        <p className="mt-1 line-clamp-2 text-sm leading-6 text-[var(--muted)]">{project.goal}</p>
+                      </div>
+                      <StatusBadge status={project.status} />
+                    </div>
+                    <div className="mt-5">
+                      <div className="mb-2 flex justify-between text-xs font-black text-[var(--muted)]"><span>Estimated progress</span><span>{progress}%</span></div>
+                      <Progress value={progress} />
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                      <div className="rounded-xl bg-[#f4f6f2] p-3"><span className="block text-xs font-bold text-[var(--muted)]">Deadline</span><strong>{formatDate(project.end_date)}</strong></div>
+                      <div className="rounded-xl bg-[#f4f6f2] p-3"><span className="block text-xs font-bold text-[var(--muted)]">Days left</span><strong>{Math.max(0, remaining)}</strong></div>
+                    </div>
+                  </Card>
+                </ButtonLink>
+              );
+            })}
+            {!active.length && (
+              <div className="md:col-span-2">
+                <EmptyState title="No active sprint" copy="Create a project, generate its AI plan, and turn the promise into reviewable evidence." action={<ButtonLink href="/app/projects/new">Create project</ButtonLink>} />
+              </div>
+            )}
+          </div>
+        </section>
+
+        <aside className="space-y-4">
+          <Card className="border-[#e4d09b] bg-[#fffaf0]">
+            <div className="flex items-start gap-3">
+              <Gauge className="mt-1 text-[#8a6814]" />
+              <div>
+                <h2 className="font-black">AI risk insight</h2>
+                <p className="mt-2 text-sm leading-6 text-[#735813]">
+                  {dueSoon.length
+                    ? `${dueSoon.length} assigned task${dueSoon.length === 1 ? "" : "s"} are near deadline without approval.`
+                    : projectPreview
+                      ? "No urgent blocker detected from your assigned queue."
+                      : sampleProject.aiRiskInsight.summary}
+                </p>
+                <p className="mt-3 rounded-xl bg-white/70 p-3 text-xs font-bold text-[#735813]">
+                  Why: {dueSoon[0] ? `${dueSoon[0].title} is due ${formatDate(dueSoon[0].due_date)} and still ${dueSoon[0].status.replaceAll("_", " ")}.` : sampleProject.aiRiskInsight.why}
+                </p>
+              </div>
+            </div>
+          </Card>
+          <Card>
+            <h2 className="font-black">Team progress signal</h2>
+            <div className="mt-4 space-y-3">
+              {sampleProject.members.map((member) => (
+                <div key={member.id}>
+                  <div className="mb-1 flex justify-between text-sm"><strong>{member.name}</strong><span className="text-[var(--muted)]">{member.contributionScore}%</span></div>
+                  <Progress value={member.contributionScore} />
+                </div>
+              ))}
+            </div>
+          </Card>
+        </aside>
       </div>
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        <section>
+          <SectionHeader title="Today’s task focus" description="Work that should move toward evidence or submission next." />
+          <div className="space-y-3">
+            {myTasks.slice(0, 6).map((task) => {
+              const project = singleRelation(task.projects as unknown as { title: string } | Array<{ title: string }>);
+              return (
+                <ButtonLink key={task.id} href={`/app/tasks/${task.id}`} variant="secondary" className="h-auto w-full justify-between p-4 text-left">
+                  <span>
+                    <strong className="block">{task.title}</strong>
+                    <small className="text-[var(--muted)]">{project?.title} · due {formatDate(task.due_date)}</small>
+                  </span>
+                  <StatusBadge status={task.status} />
+                </ButtonLink>
+              );
+            })}
+            {!myTasks.length && <Card className="text-sm text-[var(--muted)]">Nothing assigned right now. Nice and quiet.</Card>}
+          </div>
+        </section>
+
+        <section>
+          <SectionHeader title="Review queue" description="Submitted work that needs human approval before progress counts." />
+          <div className="space-y-3">
+            {approvals.slice(0, 6).map((task) => {
+              const project = singleRelation(task.projects as unknown as { title: string } | Array<{ title: string }>);
+              return (
+                <ButtonLink key={task.id} href={`/app/tasks/${task.id}`} variant="secondary" className="h-auto w-full justify-between p-4 text-left">
+                  <span>
+                    <strong className="block">{task.title}</strong>
+                    <small className="text-[var(--muted)]">{project?.title}</small>
+                  </span>
+                  <StatusBadge status="submitted" />
+                </ButtonLink>
+              );
+            })}
+            {!approvals.length && <Card className="text-sm text-[var(--muted)]">No teammate submissions are waiting.</Card>}
+          </div>
+        </section>
+      </div>
+
+      {dueSoon.length ? (
+        <Card className="mt-6 border-[#e2c3c3] bg-[#fff7f7]">
+          <div className="flex gap-3">
+            <AlertTriangle className="text-[var(--danger)]" />
+            <div>
+              <h2 className="font-black">Deadline risk</h2>
+              <p className="mt-1 text-sm text-[var(--muted)]">Prioritize proof for {dueSoon.map((task) => task.title).join(", ")}.</p>
+            </div>
+          </div>
+        </Card>
+      ) : (
+        <Card className="mt-6">
+          <div className="flex gap-3">
+            <CalendarClock className="text-[var(--brand)]" />
+            <div>
+              <h2 className="font-black">Daily rhythm</h2>
+              <p className="mt-1 text-sm text-[var(--muted)]">Log what changed today, attach evidence, and keep reviews moving.</p>
+            </div>
+          </div>
+        </Card>
+      )}
     </>
   );
 }

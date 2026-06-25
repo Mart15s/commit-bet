@@ -1,4 +1,4 @@
-import { ExternalLink, FileText, ShieldAlert } from "lucide-react";
+import { Brain, ExternalLink, FileText, ShieldAlert, Upload } from "lucide-react";
 import { addEvidence, markInProgress, openDispute, reviewTask, submitTask } from "@/app/(protected)/app/tasks/actions";
 import { Button, ButtonLink, Card, ErrorMessage, PageHeader, StatusBadge } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
@@ -31,7 +31,8 @@ export default async function TaskPage({
     | Array<{ user_id: string; assigned_reason: string; profiles: { name: string } }>);
   const isAssignee = assignment?.user_id === user.id;
   const canReview = !isAssignee && task.status === "submitted";
-  const criteria = task.acceptance_criteria as string[];
+  const criteria = (task.acceptance_criteria ?? []) as string[];
+  const expectedEvidence = (task.expected_evidence_types ?? []) as string[];
 
   return (
     <>
@@ -49,15 +50,16 @@ export default async function TaskPage({
               <div><span className="text-[var(--muted)]">Why assigned</span><strong className="block">{assignment?.assigned_reason}</strong></div>
             </div>
           </Card>
-          <Card>
+          <Card className="border-[#d8e2d9]">
             <h2 className="text-lg font-black">Acceptance criteria</h2>
             <ul className="mt-3 space-y-2">{criteria.map((item) => <li className="flex gap-2 text-sm" key={item}><span className="mt-1 size-2 shrink-0 rounded-full bg-[var(--brand)]" />{item}</li>)}</ul>
             <h3 className="mt-5 text-sm font-black">Expected evidence</h3>
-            <div className="mt-2 flex flex-wrap gap-2">{task.expected_evidence_types.map((item: string) => <span key={item} className="rounded-full bg-[#edf0eb] px-3 py-1 text-xs font-bold">{item}</span>)}</div>
+            <div className="mt-2 flex flex-wrap gap-2">{expectedEvidence.map((item: string) => <span key={item} className="rounded-full bg-[#edf0eb] px-3 py-1 text-xs font-bold">{item}</span>)}</div>
           </Card>
 
-          <Card>
+          <Card className="border-[#cfd9a1] bg-[#fbffe4]">
             <h2 className="text-lg font-black">Evidence ({evidence?.length ?? 0})</h2>
+            <p className="mt-1 text-sm text-[var(--muted)]">Proof is the source of truth for task progress. Reviewers should compare it to every criterion above.</p>
             <div className="mt-4 space-y-3">
               {evidence?.map(async (item) => {
                 const path = (item.metadata as { storage_path?: string }).storage_path;
@@ -71,7 +73,7 @@ export default async function TaskPage({
 
           {isAssignee && !["submitted", "approved", "disputed"].includes(task.status) && (
             <Card>
-              <h2 className="text-lg font-black">Add proof</h2>
+              <h2 className="flex items-center gap-2 text-lg font-black"><Upload size={19} className="text-[var(--brand)]" /> Submit evidence</h2>
               <form action={addEvidence} className="mt-4 grid gap-3">
                 <input type="hidden" name="task_id" value={id} />
                 <label>Evidence type<select name="type" defaultValue="link"><option>screenshot</option><option>document</option><option>github</option><option>video</option><option>link</option><option>demo</option><option>other</option></select></label>
@@ -106,6 +108,17 @@ export default async function TaskPage({
               </form>
             </Card>
           )}
+          <Card>
+            <div className="flex gap-3">
+              <Brain className="mt-1 text-[var(--brand)]" />
+              <div>
+                <h2 className="font-black">AI reviewer notes</h2>
+                <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+                  AI recommendations appear when a dispute or final report is generated. They explain evidence gaps and confidence, but peer and owner decisions remain human.
+                </p>
+              </div>
+            </div>
+          </Card>
           {isAssignee && task.status === "rejected" && !disputes?.some((item) => item.status === "open") && (
             <Card className="border-[#e2c3c3]">
               <div className="flex gap-2"><ShieldAlert className="text-[var(--danger)]" /><h2 className="font-black">Open a dispute</h2></div>

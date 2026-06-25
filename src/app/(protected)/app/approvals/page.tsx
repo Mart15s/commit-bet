@@ -1,20 +1,101 @@
-import { ButtonLink, Card, EmptyState, PageHeader, StatusBadge } from "@/components/ui";
+import { AlertTriangle, Check, FileCheck2, MessageSquare, X } from "lucide-react";
+import { reviewTask } from "@/app/(protected)/app/tasks/actions";
+import { Button, ButtonLink, Card, EmptyState, PageHeader, StatusBadge } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { singleRelation } from "@/lib/utils";
 
-export default async function ApprovalsPage() {
+type ReviewTask = {
+  id: string;
+  title: string;
+  description: string;
+  acceptance_criteria: string[];
+  expected_evidence_types: string[];
+  projects: { id: string; title: string } | { id: string; title: string }[] | null;
+  task_assignments: { user_id: string; profiles: { name: string } } | Array<{ user_id: string; profiles: { name: string } }> | null;
+  evidence: Array<{ id: string; type: string; description: string; url?: string | null }>;
+};
+
+export default async function ApprovalsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ project?: string }>;
+}) {
+  const params = await searchParams;
   const { supabase, user } = await requireUser();
-  const { data: tasks } = await supabase.from("tasks").select("*, projects(title), task_assignments(user_id, profiles(name))").eq("status", "submitted");
-  const reviewable = (tasks ?? []).filter((task) => {
-    const assignment = singleRelation(task.task_assignments as unknown as { user_id: string } | Array<{ user_id: string }>);
-    return assignment?.user_id !== user.id;
+  const { data: tasks } = await supabase
+    .from("tasks")
+    .select("*, projects(id, title), task_assignments(user_id, profiles(name)), evidence(id, type, description, url)")
+    .eq("status", "submitted");
+  const reviewable = ((tasks ?? []) as unknown as ReviewTask[]).filter((task) => {
+    const assignment = singleRelation(task.task_assignments);
+    const project = singleRelation(task.projects);
+    return assignment?.user_id !== user.id && (!params.project || project?.id === params.project);
   });
+
   return (
     <>
-      <PageHeader title="Pending approvals" description="Peer review turns a task claim into verified progress." />
-      <div className="grid gap-3 sm:grid-cols-2">
-        {reviewable.map((task) => <ButtonLink key={task.id} href={`/app/tasks/${task.id}`} variant="secondary" className="h-auto justify-start p-0 text-left"><Card className="w-full border-0"><div className="flex justify-between gap-3"><div><h2 className="font-black">{task.title}</h2><p className="mt-1 text-sm text-[var(--muted)]">{(task.projects as unknown as { title: string }).title}</p></div><StatusBadge status="submitted" /></div></Card></ButtonLink>)}
-        {!reviewable.length && <div className="sm:col-span-2"><EmptyState title="Inbox cleared" copy="No teammate submissions are waiting for your review." /></div>}
+      <PageHeader
+        eyebrow="Peer approval"
+        title="Review submitted evidence"
+        description="Compare each claim against acceptance criteria. AI can advise later, but teammates approve the work first."
+      />
+      <div className="grid gap-4">
+        {reviewable.map((task) => {
+          const assignment = singleRelation(task.task_assignments);
+          const project = singleRelation(task.projects);
+          return (
+            <Card key={task.id}>
+              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <StatusBadge status="submitted" />
+                    <span className="text-sm font-bold text-[var(--muted)]">{project?.title}</span>
+                  </div>
+                  <h2 className="mt-3 text-xl font-black tracking-[-.02em]">{task.title}</h2>
+                  <p className="mt-1 text-sm text-[var(--muted)]">Performed by {assignment?.profiles?.name || "teammate"}</p>
+                </div>
+                <ButtonLink href={`/app/tasks/${task.id}`} variant="secondary" size="sm">Open detail</ButtonLink>
+              </div>
+
+              <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_1fr]">
+                <div className="rounded-2xl bg-[#f4f6f2] p-4">
+                  <h3 className="flex items-center gap-2 font-black"><FileCheck2 size={18} className="text-[var(--brand)]" /> Submitted evidence</h3>
+                  <div className="mt-3 space-y-3">
+                    {task.evidence?.map((item) => (
+                      <div key={item.id} className="rounded-xl bg-white p-3">
+                        <p className="font-black capitalize">{item.type}</p>
+                        <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{item.description}</p>
+                        {item.url && <a className="mt-2 inline-block text-sm font-black text-[var(--brand)]" href={item.url} target="_blank" rel="noreferrer">Open evidence</a>}
+                      </div>
+                    ))}
+                    {!task.evidence?.length && <p className="text-sm text-[var(--muted)]">No evidence rows were found. Open detail before approving.</p>}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-[#f4f6f2] p-4">
+                  <h3 className="font-black">Acceptance criteria</h3>
+                  <ul className="mt-3 space-y-2">
+                    {(task.acceptance_criteria ?? []).map((criterion) => <li key={criterion} className="flex gap-2 text-sm leading-6"><span className="mt-2 size-1.5 shrink-0 rounded-full bg-[var(--brand)]" />{criterion}</li>)}
+                  </ul>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {(task.expected_evidence_types ?? []).map((item) => <span key={item} className="rounded-full bg-white px-3 py-1 text-xs font-black text-[var(--muted)]">{item}</span>)}
+                  </div>
+                </div>
+              </div>
+
+              <form action={reviewTask} className="mt-5 grid gap-3">
+                <input type="hidden" name="task_id" value={task.id} />
+                <label><span className="inline-flex items-center gap-2"><MessageSquare size={16} /> Reviewer note</span><textarea name="comment" className="min-h-20" placeholder="Short explanation. Required for changes, rejection, or dispute." /></label>
+                <div className="grid gap-2 sm:grid-cols-4">
+                  <Button name="status" value="approved" type="submit"><Check size={17} /> Approve</Button>
+                  <Button name="status" value="needs_changes" type="submit" variant="secondary">Needs changes</Button>
+                  <Button name="status" value="rejected" type="submit" variant="danger"><X size={17} /> Reject</Button>
+                  <ButtonLink href={`/app/tasks/${task.id}`} variant="secondary"><AlertTriangle size={17} /> Dispute path</ButtonLink>
+                </div>
+              </form>
+            </Card>
+          );
+        })}
+        {!reviewable.length && <EmptyState title="Inbox cleared" copy="No teammate submissions are waiting for your review." />}
       </div>
     </>
   );

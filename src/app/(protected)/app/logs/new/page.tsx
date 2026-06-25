@@ -15,10 +15,13 @@ export default async function DailyLogPage({
     const { data: rows } = await supabase
       .from("task_assignments")
       .select("tasks(id, title, status)")
-      .eq("user_id", user.id);
+      .eq("user_id", user.id)
+      .eq("tasks.project_id", project.id);
     withTasks.push({
       ...project,
-      tasks: (rows ?? []).map((row) => row.tasks as unknown as { id: string; title: string; status: string }),
+      tasks: (rows ?? [])
+        .map((row) => row.tasks as unknown as { id: string; title: string; status: string } | null)
+        .filter((task): task is { id: string; title: string; status: string } => Boolean(task)),
     });
   }
   return (
@@ -28,4 +31,3 @@ export default async function DailyLogPage({
     </>
   );
 }
-
