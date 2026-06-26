@@ -23,12 +23,12 @@ export function DailyLogForm({
   return (
     <form action={saveDailyLog} className="grid gap-4">
       <ErrorMessage message={error} />
-      <Card className="border-[#d8e2d9] bg-[#fbfcf8]">
+      <Card className="border-cyan-300/25 bg-cyan-400/10">
         <div className="flex gap-3">
-          <div className="rounded-xl bg-[#eef3ec] p-3 text-[var(--brand)]"><Sparkles size={20} /></div>
+          <div className="rounded-xl border border-cyan-300/25 bg-cyan-400/10 p-3 text-cyan-300"><Sparkles size={20} /></div>
           <div>
             <h2 className="text-xl font-black">Log the day in under 10 seconds.</h2>
-            <p className="mt-1 text-sm leading-6 text-[var(--muted)]">Say what changed, connect tasks, attach proof, and name the next step.</p>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">Say what changed, connect tasks, attach proof, and name the next step.</p>
           </div>
         </div>
       </Card>
@@ -45,16 +45,16 @@ export function DailyLogForm({
         </label>
 
         <div>
-          <div className="mb-2 flex items-center gap-2 text-sm font-black"><ListChecks size={17} className="text-[var(--brand)]" /> Related tasks</div>
+          <div className="mb-2 flex items-center gap-2 text-sm font-black"><ListChecks size={17} className="text-primary" /> Related tasks</div>
           <div className="grid gap-2">
             {openTasks.map((task) => (
-              <label key={task.id} className="flex cursor-pointer grid-cols-none items-center gap-3 rounded-xl border border-[var(--line)] bg-white p-3">
+              <label key={task.id} className="flex cursor-pointer grid-cols-none items-center gap-3 rounded-xl border border-border bg-secondary p-3 hover:border-primary/50">
                 <input className="size-5 w-auto" type="checkbox" name="task_id" value={task.id} />
                 <span className="min-w-0 flex-1"><strong className="block truncate">{task.title}</strong></span>
                 <StatusBadge status={task.status} />
               </label>
             ))}
-            {!openTasks.length && <div className="rounded-xl bg-[#f4f6f2] p-4 text-sm text-[var(--muted)]">No open tasks for this project.</div>}
+            {!openTasks.length && <div className="rounded-xl border border-border bg-secondary p-4 text-sm text-muted-foreground">No open tasks for this project.</div>}
           </div>
         </div>
 
@@ -63,7 +63,7 @@ export function DailyLogForm({
           <label><span className="inline-flex items-center gap-2"><Link2 size={16} /> Evidence link</span><input name="evidence_link" type="url" placeholder="https://github.com/... or demo link" /></label>
         </div>
 
-        <label><span className="inline-flex items-center gap-2"><FileUp size={16} /> Evidence upload placeholder</span><input type="file" disabled /><small className="font-normal text-[var(--muted)]">Daily-log uploads are UI-only for now. Task evidence upload is available from task detail.</small></label>
+        <label><span className="inline-flex items-center gap-2 text-cyan-200"><FileUp size={16} /> Evidence upload placeholder</span><input type="file" disabled /><small className="font-normal text-muted-foreground">Daily-log uploads are UI-only for now. Task evidence upload is available from task detail.</small></label>
         <label>Blockers<textarea name="blockers" className="min-h-20" placeholder="Leave blank if none" /></label>
         <label>Next steps<textarea name="next_steps" className="min-h-20" required placeholder="What will you move forward next?" /></label>
       </Card>

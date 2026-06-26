@@ -35,9 +35,9 @@ export default async function TeamsPage({ searchParams }: { searchParams: Promis
           const team = membership.teams as unknown as { id: string; name: string; invite_code: string };
           return (
             <Card key={team.id}>
-              <p className="text-xs font-black uppercase tracking-wider text-[var(--brand)]">{membership.role}</p>
+              <p className="text-xs font-black uppercase tracking-wider text-primary">{membership.role}</p>
               <h2 className="mt-2 text-xl font-black">{team.name}</h2>
-              <p className="mt-2 text-sm text-[var(--muted)]">Invite code: <strong>{team.invite_code}</strong></p>
+              <p className="mt-2 text-sm text-muted-foreground">Invite code: <strong>{team.invite_code}</strong></p>
               <ButtonLink href={`/app/teams/${team.id}`} className="mt-5 w-full" variant="secondary">Open team</ButtonLink>
             </Card>
           );
@@ -46,4 +46,3 @@ export default async function TeamsPage({ searchParams }: { searchParams: Promis
     </>
   );
 }
-

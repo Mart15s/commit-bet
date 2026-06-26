@@ -45,13 +45,13 @@ export default async function TeamPage({ params }: { params: Promise<{ id: strin
           {memberRows.map((member) => {
             const profile = member.profiles;
             return (
-              <div key={profile.id} className="flex items-center gap-3 rounded-xl bg-[#f5f7f3] p-3">
-                <div className="grid size-11 place-items-center rounded-full bg-[var(--brand)] font-black text-white">{initials(profile.name)}</div>
+              <div key={profile.id} className="flex items-center gap-3 rounded-xl border border-border bg-secondary p-3">
+                <div className="grid size-11 place-items-center rounded-full bg-primary font-black text-primary-foreground">{initials(profile.name)}</div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-black">{profile.name}</p>
-                  <p className="truncate text-sm text-[var(--muted)]">{profile.email}</p>
+                  <p className="truncate text-sm text-muted-foreground">{profile.email}</p>
                 </div>
-                <span className="rounded-full bg-white px-2.5 py-1 text-xs font-black capitalize">{member.role}</span>
+                <span className="rounded-full border border-border bg-card px-2.5 py-1 text-xs font-black capitalize">{member.role}</span>
               </div>
             );
           })}

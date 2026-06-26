@@ -44,10 +44,10 @@ export default async function FinalReportPage({
       <ErrorMessage message={query.error} />
 
       {!report && (
-        <Card className="mt-5 border-[#cfd9a1] bg-[#fbffe4] text-center">
-          <Scale className="mx-auto text-[var(--brand)]" size={42} />
+        <Card className="mt-5 border-cyan-300/25 bg-cyan-400/10 text-center">
+          <Scale className="mx-auto text-cyan-300" size={42} />
           <h2 className="mt-4 text-2xl font-black tracking-[-.03em]">Generate the evidence audit</h2>
-          <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[var(--muted)]">
+          <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
             The report evaluates success criteria, task statistics, member contribution, evidence quality, delay patterns, disputes, and virtual pledge recommendations.
           </p>
           <form action={generateFinal} className="mt-6">
@@ -59,18 +59,18 @@ export default async function FinalReportPage({
 
       {report && (
         <div className="mt-5 space-y-6">
-          <Card className="border-[#cfd9a1] bg-[#fbffe4]">
+          <Card className="border-cyan-300/25 bg-cyan-400/10">
             <div className="grid gap-5 lg:grid-cols-[1fr_18rem] lg:items-center">
               <div>
-                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[.16em] text-[var(--brand)]"><Brain size={16} /> Recommendation, not automatic judgment</div>
+                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[.16em] text-cyan-300"><Brain size={16} /> Recommendation, not automatic judgment</div>
                 <h2 className="mt-3 text-2xl font-black tracking-[-.035em]">AI summary</h2>
                 <p className="mt-3 leading-7">{report.project_summary}</p>
-                <p className="mt-4 rounded-xl bg-white/70 p-3 text-sm font-bold text-[#735813]">Why: {report.reasoning}</p>
+                <p className="mt-4 rounded-xl border border-cyan-300/20 bg-background/55 p-3 text-sm font-bold text-cyan-100">Why: {report.reasoning}</p>
               </div>
-              <div className="rounded-2xl bg-white p-5">
+              <div className="rounded-2xl border border-border bg-card p-5">
                 <div className="flex items-center justify-between"><span className="font-black">Confidence</span><strong>{report.confidence_score}%</strong></div>
                 <Progress value={report.confidence_score} className="mt-3" />
-                <p className="mt-4 text-xs font-bold text-[var(--muted)]">Human confirmation is required before the sprint outcome is recorded.</p>
+                <p className="mt-4 text-xs font-bold text-muted-foreground">Human confirmation is required before the sprint outcome is recorded.</p>
               </div>
             </div>
           </Card>
@@ -86,12 +86,12 @@ export default async function FinalReportPage({
             <SectionHeader title="Success criteria evaluation" description="Each criterion is evaluated against evidence and review outcomes." />
             <div className="grid gap-3">
               {report.success_criteria_evaluation.map((item) => (
-                <div key={item.criterion} className="rounded-xl bg-[#f5f7f3] p-4">
+                <div key={item.criterion} className="rounded-xl border border-border bg-secondary p-4">
                   <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
                     <strong>{item.criterion}</strong>
                     <StatusBadge status={item.status} />
                   </div>
-                  <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{item.comment}</p>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.comment}</p>
                 </div>
               ))}
             </div>
@@ -106,9 +106,9 @@ export default async function FinalReportPage({
                   const name = (pledge?.profiles as unknown as { name: string } | undefined)?.name || member.user_id;
                   return (
                     <div key={member.user_id}>
-                      <div className="mb-1 flex justify-between text-sm"><strong>{name}</strong><span className="text-[var(--muted)]">{member.contribution_score}/100</span></div>
+                      <div className="mb-1 flex justify-between text-sm"><strong>{name}</strong><span className="text-muted-foreground">{member.contribution_score}/100</span></div>
                       <Progress value={member.contribution_score} />
-                      <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{member.summary}</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{member.summary}</p>
                     </div>
                   );
                 })}
@@ -116,25 +116,25 @@ export default async function FinalReportPage({
             </Card>
             <Card>
               <SectionHeader title="Delay and dispute analysis" />
-              <div className="space-y-4 text-sm leading-6 text-[var(--muted)]">
-                <p><strong className="text-[var(--foreground)]">Delay analysis:</strong> {report.delay_analysis}</p>
-                <p><strong className="text-[var(--foreground)]">Dispute summary:</strong> {report.dispute_summary}</p>
+              <div className="space-y-4 text-sm leading-6 text-muted-foreground">
+                <p><strong className="text-foreground">Delay analysis:</strong> {report.delay_analysis}</p>
+                <p><strong className="text-foreground">Dispute summary:</strong> {report.dispute_summary}</p>
               </div>
             </Card>
           </div>
 
           {decision ? (
-            <Card className="border-[#b9d6bf] bg-[#eff8f1]">
-              <div className="flex gap-3"><CheckCircle2 className="text-[#28603a]" /><div><h2 className="font-black">Human decision confirmed</h2><p className="mt-1 text-sm text-[var(--muted)]">This manual action is the final recorded outcome. No funds were transferred.</p></div></div>
-              <div className="mt-4 space-y-2">{Object.entries(finalActions ?? {}).map(([userId, action]) => <div key={userId} className="flex justify-between rounded-xl bg-white p-3"><strong>{action.name}</strong><span>Return {action.return_percentage}% pledge</span></div>)}</div>
+            <Card className="border-emerald-400/30 bg-emerald-400/10">
+              <div className="flex gap-3"><CheckCircle2 className="text-emerald-300" /><div><h2 className="font-black">Human decision confirmed</h2><p className="mt-1 text-sm text-muted-foreground">This manual action is the final recorded outcome. No funds were transferred.</p></div></div>
+              <div className="mt-4 space-y-2">{Object.entries(finalActions ?? {}).map(([userId, action]) => <div key={userId} className="flex justify-between rounded-xl border border-border bg-card p-3"><strong>{action.name}</strong><span>Return {action.return_percentage}% pledge</span></div>)}</div>
             </Card>
           ) : (
-            <Card className="border-[#e4d09b]">
+            <Card className="border-amber-300/30 bg-amber-400/10">
               <div className="flex gap-3">
-                <ShieldCheck className="text-[#8a6814]" />
+                <ShieldCheck className="text-amber-300" />
                 <div>
                   <h2 className="text-lg font-black">Human confirmation required</h2>
-                  <p className="text-sm leading-6 text-[var(--muted)]">Review the recommendation and set each virtual pledge outcome manually. CommitBet does not collect or transfer money.</p>
+                  <p className="text-sm leading-6 text-muted-foreground">Review the recommendation and set each virtual pledge outcome manually. CommitBet does not collect or transfer money.</p>
                 </div>
               </div>
               <form action={confirmFinalDecision} className="mt-5 grid gap-4">
@@ -145,11 +145,11 @@ export default async function FinalReportPage({
                     <label key={pledge.user_id}>
                       {(pledge.profiles as unknown as { name: string }).name}: pledge return percentage
                       <input name={`return_${pledge.user_id}`} type="number" min={0} max={100} defaultValue={recommendation?.pledge_return_percentage ?? 0} required />
-                      <small className="font-normal text-[var(--muted)]">AI suggested {recommendation?.pledge_return_percentage ?? 0}%: {recommendation?.reason}</small>
+                      <small className="font-normal text-muted-foreground">AI suggested {recommendation?.pledge_return_percentage ?? 0}%: {recommendation?.reason}</small>
                     </label>
                   );
                 })}
-                <label className="flex grid-cols-none items-start gap-3 rounded-xl bg-[#fff6d9] p-4">
+                <label className="flex grid-cols-none items-start gap-3 rounded-xl border border-amber-300/30 bg-background/45 p-4">
                   <input className="mt-1 size-5 w-auto" type="checkbox" name="human_confirmation" value="yes" required />
                   <span>I understand this is my team’s manual virtual-pledge decision. No funds are transferred.</span>
                 </label>

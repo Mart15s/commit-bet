@@ -3,11 +3,12 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 const variants = {
-  primary: "bg-[var(--brand)] text-white hover:bg-[var(--brand-strong)]",
-  secondary: "border border-[var(--line)] bg-white text-[var(--foreground)] hover:bg-[#f0f2ed]",
-  ghost: "text-[var(--brand)] hover:bg-white/70",
-  dark: "bg-[var(--foreground)] text-white hover:bg-[#223027]",
-  danger: "bg-[var(--danger)] text-white hover:bg-[#812525]",
+  primary: "bg-primary text-primary-foreground shadow-[0_0_26px_rgba(124,58,237,.22)] hover:bg-[#6D28D9]",
+  secondary: "border border-border bg-secondary text-secondary-foreground hover:bg-elevated",
+  ghost: "text-primary hover:bg-primary/10",
+  dark: "bg-elevated text-foreground hover:bg-secondary",
+  danger: "bg-destructive text-destructive-foreground hover:bg-[#DC2626]",
+  amber: "bg-accent text-accent-foreground hover:bg-[#D97706]",
 };
 
 const sizes = {
@@ -28,7 +29,7 @@ export function Button({
   return (
     <button
       className={cn(
-        "inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl font-extrabold transition disabled:cursor-not-allowed disabled:opacity-50",
+        "inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl font-extrabold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50",
         variants[variant],
         sizes[size],
         className,
@@ -55,7 +56,7 @@ export function ButtonLink({
     <Link
       href={href}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-xl font-extrabold transition",
+        "inline-flex items-center justify-center gap-2 rounded-xl font-extrabold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         variants[variant],
         sizes[size],
         className,
@@ -67,7 +68,7 @@ export function ButtonLink({
 }
 
 export function Card({ children, className }: { children: ReactNode; className?: string }) {
-  return <section className={cn("rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5 shadow-[0_1px_0_rgba(23,32,25,.04)]", className)}>{children}</section>;
+  return <section className={cn("rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-[0_1px_0_rgba(248,250,252,.04)]", className)}>{children}</section>;
 }
 
 export function PageHeader({
@@ -84,9 +85,9 @@ export function PageHeader({
   return (
     <header className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row">
       <div>
-        {eyebrow && <p className="mb-1 text-xs font-black uppercase tracking-[.16em] text-[var(--brand)]">{eyebrow}</p>}
+        {eyebrow && <p className="mb-1 text-xs font-black uppercase tracking-[.16em] text-primary">{eyebrow}</p>}
         <h1 className="text-3xl font-black tracking-[-.035em]">{title}</h1>
-        {description && <p className="mt-2 max-w-2xl leading-6 text-[var(--muted)]">{description}</p>}
+        {description && <p className="mt-2 max-w-2xl leading-6 text-muted-foreground">{description}</p>}
       </div>
       {action}
     </header>
@@ -97,23 +98,25 @@ export function StatusBadge({ status }: { status: string }) {
   const normalized = status.toLowerCase();
   const tone =
     normalized === "approved" || normalized === "active" || normalized === "completed" || normalized === "met" || normalized === "low"
-      ? "bg-[#e4f4e7] text-[#28603a]"
-      : normalized === "rejected" || normalized === "critical" || normalized === "high" || normalized === "missed"
-        ? "bg-[#fae7e7] text-[#922f2f]"
-        : normalized === "submitted" || normalized === "disputed" || normalized === "medium" || normalized === "partial"
-          ? "bg-[#fff2c9] text-[#735813]"
-          : normalized === "in_progress"
-            ? "bg-[#e5eefc] text-[#254c85]"
-            : normalized === "needs_changes"
-              ? "bg-[#f3e8ff] text-[#6b3d99]"
-              : "bg-[#edf0eb] text-[#566057]";
-  return <span className={cn("inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-black capitalize", tone)}>{status.replaceAll("_", " ")}</span>;
+      ? "border-emerald-400/30 bg-emerald-400/12 text-emerald-300"
+      : normalized === "submitted"
+        ? "border-violet-400/30 bg-violet-500/15 text-violet-200"
+        : normalized === "in_progress" || normalized === "info" || normalized === "ai"
+          ? "border-cyan-300/30 bg-cyan-400/12 text-cyan-200"
+          : normalized === "needs_changes" || normalized === "medium" || normalized === "partial" || normalized === "warning"
+            ? "border-amber-300/35 bg-amber-400/14 text-amber-200"
+            : normalized === "disputed"
+              ? "border-rose-300/35 bg-rose-500/16 text-rose-200"
+              : normalized === "rejected" || normalized === "critical" || normalized === "high" || normalized === "missed"
+                ? "border-red-300/35 bg-red-500/16 text-red-200"
+                : "border-slate-500/40 bg-slate-700/40 text-slate-300";
+  return <span className={cn("inline-flex whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-black capitalize", tone)}>{status.replaceAll("_", " ")}</span>;
 }
 
 export function Progress({ value, className }: { value: number; className?: string }) {
   return (
-    <div className={cn("h-2.5 overflow-hidden rounded-full bg-[#dde3db]", className)}>
-      <div className="h-full rounded-full bg-[var(--brand)] transition-all" style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
+    <div className={cn("h-2.5 overflow-hidden rounded-full bg-muted", className)}>
+      <div className="h-full rounded-full bg-primary shadow-[0_0_18px_rgba(124,58,237,.45)] transition-all" style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
     </div>
   );
 }
@@ -135,11 +138,11 @@ export function MetricCard({
     <Card className={cn("p-4", className)}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-black uppercase tracking-[.12em] text-[var(--muted)]">{label}</p>
+          <p className="text-xs font-black uppercase tracking-[.12em] text-muted-foreground">{label}</p>
           <p className="mt-2 text-2xl font-black tracking-[-.02em]">{value}</p>
-          {detail && <p className="mt-1 text-sm text-[var(--muted)]">{detail}</p>}
+          {detail && <p className="mt-1 text-sm text-muted-foreground">{detail}</p>}
         </div>
-        {icon && <div className="rounded-xl bg-[#eef3ec] p-2 text-[var(--brand)]">{icon}</div>}
+        {icon && <div className="rounded-xl border border-primary/20 bg-primary/10 p-2 text-primary">{icon}</div>}
       </div>
     </Card>
   );
@@ -150,7 +153,7 @@ export function SectionHeader({ title, description, action }: { title: string; d
     <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
       <div>
         <h2 className="text-xl font-black tracking-[-.02em]">{title}</h2>
-        {description && <p className="mt-1 max-w-2xl text-sm leading-6 text-[var(--muted)]">{description}</p>}
+        {description && <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p>}
       </div>
       {action}
     </div>
@@ -161,7 +164,7 @@ export function EmptyState({ title, copy, action }: { title: string; copy: strin
   return (
     <Card className="py-10 text-center">
       <h2 className="text-xl font-black">{title}</h2>
-      <p className="mx-auto mt-2 max-w-md text-[var(--muted)]">{copy}</p>
+      <p className="mx-auto mt-2 max-w-md text-muted-foreground">{copy}</p>
       {action && <div className="mt-5">{action}</div>}
     </Card>
   );
@@ -169,5 +172,5 @@ export function EmptyState({ title, copy, action }: { title: string; copy: strin
 
 export function ErrorMessage({ message }: { message?: string }) {
   if (!message) return null;
-  return <div className="rounded-xl bg-[#fae7e7] p-3 text-sm font-bold text-[#922f2f]">{message}</div>;
+  return <div className="rounded-xl border border-red-400/30 bg-red-500/15 p-3 text-sm font-bold text-red-200">{message}</div>;
 }

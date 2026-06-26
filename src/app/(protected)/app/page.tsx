@@ -71,17 +71,17 @@ export default async function DashboardPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <h3 className="text-lg font-black tracking-[-.02em]">{project.title}</h3>
-                        <p className="mt-1 line-clamp-2 text-sm leading-6 text-[var(--muted)]">{project.goal}</p>
+                        <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted-foreground">{project.goal}</p>
                       </div>
                       <StatusBadge status={project.status} />
                     </div>
                     <div className="mt-5">
-                      <div className="mb-2 flex justify-between text-xs font-black text-[var(--muted)]"><span>Estimated progress</span><span>{progress}%</span></div>
+                      <div className="mb-2 flex justify-between text-xs font-black text-muted-foreground"><span>Estimated progress</span><span>{progress}%</span></div>
                       <Progress value={progress} />
                     </div>
                     <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-                      <div className="rounded-xl bg-[#f4f6f2] p-3"><span className="block text-xs font-bold text-[var(--muted)]">Deadline</span><strong>{formatDate(project.end_date)}</strong></div>
-                      <div className="rounded-xl bg-[#f4f6f2] p-3"><span className="block text-xs font-bold text-[var(--muted)]">Days left</span><strong>{Math.max(0, remaining)}</strong></div>
+                      <div className="rounded-xl border border-amber-300/20 bg-amber-400/10 p-3"><span className="block text-xs font-bold text-amber-200">Deadline</span><strong>{formatDate(project.end_date)}</strong></div>
+                      <div className="rounded-xl border border-primary/20 bg-primary/10 p-3"><span className="block text-xs font-bold text-violet-200">Days left</span><strong>{Math.max(0, remaining)}</strong></div>
                     </div>
                   </Card>
                 </ButtonLink>
@@ -96,19 +96,19 @@ export default async function DashboardPage() {
         </section>
 
         <aside className="space-y-4">
-          <Card className="border-[#e4d09b] bg-[#fffaf0]">
+          <Card className="border-cyan-300/25 bg-cyan-400/10">
             <div className="flex items-start gap-3">
-              <Gauge className="mt-1 text-[#8a6814]" />
+              <Gauge className="mt-1 text-cyan-300" />
               <div>
                 <h2 className="font-black">AI risk insight</h2>
-                <p className="mt-2 text-sm leading-6 text-[#735813]">
+                <p className="mt-2 text-sm leading-6 text-cyan-100">
                   {dueSoon.length
                     ? `${dueSoon.length} assigned task${dueSoon.length === 1 ? "" : "s"} are near deadline without approval.`
                     : projectPreview
                       ? "No urgent blocker detected from your assigned queue."
                       : sampleProject.aiRiskInsight.summary}
                 </p>
-                <p className="mt-3 rounded-xl bg-white/70 p-3 text-xs font-bold text-[#735813]">
+                <p className="mt-3 rounded-xl border border-cyan-300/20 bg-background/50 p-3 text-xs font-bold text-cyan-100">
                   Why: {dueSoon[0] ? `${dueSoon[0].title} is due ${formatDate(dueSoon[0].due_date)} and still ${dueSoon[0].status.replaceAll("_", " ")}.` : sampleProject.aiRiskInsight.why}
                 </p>
               </div>
@@ -119,7 +119,7 @@ export default async function DashboardPage() {
             <div className="mt-4 space-y-3">
               {sampleProject.members.map((member) => (
                 <div key={member.id}>
-                  <div className="mb-1 flex justify-between text-sm"><strong>{member.name}</strong><span className="text-[var(--muted)]">{member.contributionScore}%</span></div>
+                  <div className="mb-1 flex justify-between text-sm"><strong>{member.name}</strong><span className="text-muted-foreground">{member.contributionScore}%</span></div>
                   <Progress value={member.contributionScore} />
                 </div>
               ))}
@@ -138,13 +138,13 @@ export default async function DashboardPage() {
                 <ButtonLink key={task.id} href={`/app/tasks/${task.id}`} variant="secondary" className="h-auto w-full justify-between p-4 text-left">
                   <span>
                     <strong className="block">{task.title}</strong>
-                    <small className="text-[var(--muted)]">{project?.title} · due {formatDate(task.due_date)}</small>
+                    <small className="text-muted-foreground">{project?.title} · due {formatDate(task.due_date)}</small>
                   </span>
                   <StatusBadge status={task.status} />
                 </ButtonLink>
               );
             })}
-            {!myTasks.length && <Card className="text-sm text-[var(--muted)]">Nothing assigned right now. Nice and quiet.</Card>}
+            {!myTasks.length && <Card className="text-sm text-muted-foreground">Nothing assigned right now. Nice and quiet.</Card>}
           </div>
         </section>
 
@@ -157,34 +157,34 @@ export default async function DashboardPage() {
                 <ButtonLink key={task.id} href={`/app/tasks/${task.id}`} variant="secondary" className="h-auto w-full justify-between p-4 text-left">
                   <span>
                     <strong className="block">{task.title}</strong>
-                    <small className="text-[var(--muted)]">{project?.title}</small>
+                    <small className="text-muted-foreground">{project?.title}</small>
                   </span>
                   <StatusBadge status="submitted" />
                 </ButtonLink>
               );
             })}
-            {!approvals.length && <Card className="text-sm text-[var(--muted)]">No teammate submissions are waiting.</Card>}
+            {!approvals.length && <Card className="text-sm text-muted-foreground">No teammate submissions are waiting.</Card>}
           </div>
         </section>
       </div>
 
       {dueSoon.length ? (
-        <Card className="mt-6 border-[#e2c3c3] bg-[#fff7f7]">
+        <Card className="mt-6 border-red-400/30 bg-red-500/12">
           <div className="flex gap-3">
-            <AlertTriangle className="text-[var(--danger)]" />
+            <AlertTriangle className="text-red-300" />
             <div>
               <h2 className="font-black">Deadline risk</h2>
-              <p className="mt-1 text-sm text-[var(--muted)]">Prioritize proof for {dueSoon.map((task) => task.title).join(", ")}.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Prioritize proof for {dueSoon.map((task) => task.title).join(", ")}.</p>
             </div>
           </div>
         </Card>
       ) : (
         <Card className="mt-6">
           <div className="flex gap-3">
-            <CalendarClock className="text-[var(--brand)]" />
+            <CalendarClock className="text-primary" />
             <div>
               <h2 className="font-black">Daily rhythm</h2>
-              <p className="mt-1 text-sm text-[var(--muted)]">Log what changed today, attach evidence, and keep reviews moving.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Log what changed today, attach evidence, and keep reviews moving.</p>
             </div>
           </div>
         </Card>

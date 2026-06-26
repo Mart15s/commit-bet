@@ -15,9 +15,8 @@ export default async function SettingsPage() {
           <label>Email<input value={profile?.email} disabled /></label>
           <Button type="submit">Save profile</Button>
         </form>
-        <form action={logout} className="mt-6 border-t border-[var(--line)] pt-6"><Button variant="secondary" type="submit">Log out</Button></form>
+        <form action={logout} className="mt-6 border-t border-border pt-6"><Button variant="secondary" type="submit">Log out</Button></form>
       </Card>
     </>
   );
 }
-

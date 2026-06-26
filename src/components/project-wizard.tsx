@@ -79,13 +79,13 @@ export function ProjectWizard({
       <input type="hidden" name="end_date" value={endDate} />
       <input type="hidden" name="success_criteria" value={criteria.filter(Boolean).join("\n")} />
 
-      <Card className="mb-4 border-[#d8e2d9] bg-[#fbfcf8]">
+      <Card className="mb-4 border-primary/25 bg-primary/10">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-xs font-black uppercase tracking-[.16em] text-[var(--brand)]">Step {step + 1} of {steps.length}</p>
+            <p className="text-xs font-black uppercase tracking-[.16em] text-primary">Step {step + 1} of {steps.length}</p>
             <h2 className="mt-1 text-2xl font-black tracking-[-.03em]">{steps[step]}</h2>
           </div>
-          <span className="text-sm font-black text-[var(--muted)]">{progress}%</span>
+          <span className="text-sm font-black text-muted-foreground">{progress}%</span>
         </div>
         <Progress value={progress} className="mt-4" />
       </Card>
@@ -96,9 +96,9 @@ export function ProjectWizard({
         <div hidden={step !== 0}>
           <div className="grid gap-4">
             <div>
-              <p className="text-xs font-black uppercase tracking-wider text-[var(--brand)]">Project basics</p>
+              <p className="text-xs font-black uppercase tracking-wider text-primary">Project basics</p>
               <h2 className="mt-1 text-2xl font-black">What promise is this team making?</h2>
-              <p className="mt-2 text-sm leading-6 text-[var(--muted)]">CommitBet works best when the project has a sharp goal, a deadline, and an owner group.</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">CommitBet works best when the project has a sharp goal, a deadline, and an owner group.</p>
             </div>
             <label>Team<select value={teamId} onChange={(event) => {
               const nextTeamId = event.target.value;
@@ -114,9 +114,9 @@ export function ProjectWizard({
         <div hidden={step !== 1}>
           <div className="grid gap-4">
             <div>
-              <p className="text-xs font-black uppercase tracking-wider text-[var(--brand)]">Success criteria</p>
+              <p className="text-xs font-black uppercase tracking-wider text-primary">Success criteria</p>
               <h2 className="mt-1 text-2xl font-black">Make success measurable.</h2>
-              <p className="mt-2 text-sm leading-6 text-[var(--muted)]">One criterion should be independently reviewable from evidence.</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">One criterion should be independently reviewable from evidence.</p>
             </div>
             <div className="grid gap-3">
               {criteria.map((criterion, index) => (
@@ -147,7 +147,7 @@ export function ProjectWizard({
         <div hidden={step !== 2}>
           <div className="grid gap-5">
             <div>
-              <p className="text-xs font-black uppercase tracking-wider text-[var(--brand)]">Duration and sprint</p>
+              <p className="text-xs font-black uppercase tracking-wider text-amber-300">Duration and sprint</p>
               <h2 className="mt-1 text-2xl font-black">Choose the commitment window.</h2>
             </div>
             <label>Start date<input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} /></label>
@@ -157,15 +157,15 @@ export function ProjectWizard({
                   key={days}
                   type="button"
                   onClick={() => setDuration(days)}
-                  className={`min-h-14 rounded-xl border font-black capitalize ${duration === days ? "border-[var(--brand)] bg-[#e6f0e8] text-[var(--brand)]" : "border-[var(--line)] bg-white"}`}
+                  className={`min-h-14 rounded-xl border font-black capitalize transition ${duration === days ? "border-primary bg-primary/15 text-violet-100 shadow-[0_0_22px_rgba(124,58,237,.18)]" : "border-border bg-secondary text-muted-foreground hover:bg-elevated hover:text-foreground"}`}
                 >
                   {days === "custom" ? "Custom" : `${days} days`}
                 </button>
               ))}
             </div>
             {duration === "custom" && <label>Custom end date<input type="date" value={customEndDate} onChange={(event) => setCustomEndDate(event.target.value)} /></label>}
-            <div className="flex items-center gap-3 rounded-xl bg-[#f4f6f2] p-4 text-sm">
-              <CalendarDays className="text-[var(--brand)]" size={20} />
+            <div className="flex items-center gap-3 rounded-xl border border-amber-300/25 bg-amber-400/10 p-4 text-sm">
+              <CalendarDays className="text-amber-300" size={20} />
               <span><strong>{startDate}</strong> to <strong>{endDate}</strong></span>
             </div>
           </div>
@@ -174,12 +174,12 @@ export function ProjectWizard({
         <div hidden={step !== 3}>
           <div className="grid gap-4">
             <div>
-              <p className="text-xs font-black uppercase tracking-wider text-[var(--brand)]">Team members</p>
+              <p className="text-xs font-black uppercase tracking-wider text-primary">Team members</p>
               <h2 className="mt-1 text-2xl font-black">Assign people before AI plans work.</h2>
-              <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Roles and strengths help the plan assign realistic ownership.</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">Roles and strengths help the plan assign realistic ownership.</p>
             </div>
             {currentTeam?.members.map((member) => (
-              <fieldset key={member.id} className="grid gap-3 rounded-2xl border border-[var(--line)] p-4">
+              <fieldset key={member.id} className="grid gap-3 rounded-2xl border border-border p-4">
                 <label className="flex cursor-pointer grid-cols-none items-center gap-3">
                   <input
                     className="size-5 w-auto"
@@ -193,7 +193,7 @@ export function ProjectWizard({
                         : current.filter((id) => id !== member.id),
                     )}
                   />
-                  <span><strong className="block">{member.name}</strong><small className="font-normal text-[var(--muted)]">{member.email}</small></span>
+                  <span><strong className="block">{member.name}</strong><small className="font-normal text-muted-foreground">{member.email}</small></span>
                 </label>
                 {selectedMemberIds.includes(member.id) && (
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -214,15 +214,15 @@ export function ProjectWizard({
         <div hidden={step !== 4}>
           <div className="grid gap-5">
             <div>
-              <p className="text-xs font-black uppercase tracking-wider text-[var(--brand)]">Commitment</p>
+              <p className="text-xs font-black uppercase tracking-wider text-amber-300">Commitment</p>
               <h2 className="mt-1 text-2xl font-black">Declare virtual pledge points.</h2>
-              <p className="mt-2 text-sm leading-6 text-[var(--muted)]">This MVP records commitment pressure only. It does not collect, escrow, or transfer money.</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">This MVP records commitment pressure only. It does not collect, escrow, or transfer money.</p>
             </div>
-            <div className="rounded-xl bg-[#fff6d9] p-4 text-sm font-bold text-[#67521c]">
+            <div className="rounded-xl border border-amber-300/30 bg-amber-400/12 p-4 text-sm font-bold text-amber-200">
               Use points for the cleanest team ritual. Declared amounts are labels only, not payment instructions.
             </div>
             {selectedMembers.map((member) => (
-              <fieldset key={member.id} className="grid gap-3 rounded-2xl border border-[var(--line)] p-4 sm:grid-cols-[1fr_1.1fr]">
+              <fieldset key={member.id} className="grid gap-3 rounded-2xl border border-border p-4 sm:grid-cols-[1fr_1.1fr]">
                 <legend className="px-2 font-black">{member.name}</legend>
                 <label>Amount<input name={`pledge_${member.id}`} type="number" min={0} defaultValue={30} required /></label>
                 <label>Unit<select name={`currency_${member.id}`} defaultValue="POINTS"><option value="POINTS">Virtual points</option><option value="EUR_DECLARED">EUR declared label</option></select></label>
@@ -234,9 +234,9 @@ export function ProjectWizard({
         <div hidden={step !== 5}>
           <div className="grid gap-5">
             <div>
-              <p className="text-xs font-black uppercase tracking-wider text-[var(--brand)]">AI-generated plan preview</p>
+              <p className="text-xs font-black uppercase tracking-wider text-cyan-300">AI-generated plan preview</p>
               <h2 className="mt-1 text-2xl font-black">Preview the shape of the execution plan.</h2>
-              <p className="mt-2 text-sm leading-6 text-[var(--muted)]">After creating the draft, the project page can generate and edit the real AI plan from your inputs.</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">After creating the draft, the project page can generate and edit the real AI plan from your inputs.</p>
             </div>
             <div className="grid gap-3">
               {expectedPlan.map((task, index) => {
@@ -246,13 +246,13 @@ export function ProjectWizard({
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <h3 className="font-black">{task.title}</h3>
-                        <p className="mt-1 text-sm text-[var(--muted)]">Owner: {owner?.name || "Selected teammate"} · Due {addDays(startDate, task.daysFromStart)}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">Owner: {owner?.name || "Selected teammate"} · Due {addDays(startDate, task.daysFromStart)}</p>
                       </div>
                       <StatusBadge status="todo" />
                     </div>
                     <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
-                      <div className="rounded-xl bg-[#f4f6f2] p-3"><strong>Acceptance</strong><p className="mt-1 text-[var(--muted)]">{task.criteria}</p></div>
-                      <div className="rounded-xl bg-[#f4f6f2] p-3"><strong>Expected evidence</strong><p className="mt-1 text-[var(--muted)]">{task.evidence}</p></div>
+                      <div className="rounded-xl border border-primary/20 bg-primary/10 p-3"><strong>Acceptance</strong><p className="mt-1 text-muted-foreground">{task.criteria}</p></div>
+                      <div className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-3"><strong>Expected evidence</strong><p className="mt-1 text-muted-foreground">{task.evidence}</p></div>
                     </div>
                   </Card>
                 );
@@ -264,24 +264,24 @@ export function ProjectWizard({
         <div hidden={step !== 6}>
           <div className="grid gap-5">
             <div>
-              <p className="text-xs font-black uppercase tracking-wider text-[var(--brand)]">Review and start</p>
+              <p className="text-xs font-black uppercase tracking-wider text-primary">Review and start</p>
               <h2 className="mt-1 text-2xl font-black">Create the draft commitment.</h2>
-              <p className="mt-2 text-sm leading-6 text-[var(--muted)]">You will review and start the AI-generated plan from the project overview before it becomes active.</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">You will review and start the AI-generated plan from the project overview before it becomes active.</p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
-              <Card className="p-4"><Users className="text-[var(--brand)]" /><p className="mt-3 text-2xl font-black">{selectedMembers.length}</p><p className="text-sm text-[var(--muted)]">Members</p></Card>
-              <Card className="p-4"><ShieldCheck className="text-[var(--brand)]" /><p className="mt-3 text-2xl font-black">{selectedMembers.length * 30}</p><p className="text-sm text-[var(--muted)]">Default points</p></Card>
-              <Card className="p-4"><Brain className="text-[var(--brand)]" /><p className="mt-3 text-2xl font-black">{criteria.filter(Boolean).length}</p><p className="text-sm text-[var(--muted)]">Criteria</p></Card>
+              <Card className="p-4"><Users className="text-primary" /><p className="mt-3 text-2xl font-black">{selectedMembers.length}</p><p className="text-sm text-muted-foreground">Members</p></Card>
+              <Card className="p-4"><ShieldCheck className="text-amber-300" /><p className="mt-3 text-2xl font-black">{selectedMembers.length * 30}</p><p className="text-sm text-muted-foreground">Default points</p></Card>
+              <Card className="p-4"><Brain className="text-cyan-300" /><p className="mt-3 text-2xl font-black">{criteria.filter(Boolean).length}</p><p className="text-sm text-muted-foreground">Criteria</p></Card>
             </div>
-            <div className="rounded-xl border border-[var(--line)] bg-[#f8faf5] p-4">
+            <div className="rounded-xl border border-border bg-secondary p-4">
               <h3 className="font-black">Accountability flow</h3>
-              <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Project {"->"} Commitment {"->"} AI Plan {"->"} Daily Evidence {"->"} Peer Approval {"->"} AI Final Report {"->"} Human Confirmation</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">Project {"->"} Commitment {"->"} AI Plan {"->"} Daily Evidence {"->"} Peer Approval {"->"} AI Final Report {"->"} Human Confirmation</p>
             </div>
           </div>
         </div>
       </Card>
 
-      <div className="sticky bottom-16 mt-4 flex gap-3 rounded-2xl border border-[var(--line)] bg-[#f6f7f2]/95 p-3 backdrop-blur md:bottom-0">
+      <div className="sticky bottom-16 mt-4 flex gap-3 rounded-2xl border border-border bg-background/90 p-3 backdrop-blur md:bottom-0">
         <Button type="button" variant="secondary" disabled={step === 0} onClick={() => setStep((value) => value - 1)}><ArrowLeft size={18} /> Back</Button>
         {step < steps.length - 1 ? (
           <Button

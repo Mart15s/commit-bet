@@ -86,12 +86,12 @@ export default async function ProjectPage({
       </Card>
 
       {project.status === "draft" && isOwner && (
-        <Card className="mt-6 border-[#cfd9a1] bg-[#fbffe4]">
+        <Card className="mt-6 border-cyan-300/25 bg-cyan-400/10">
           <div className="flex gap-3">
-            <Brain className="mt-1 text-[var(--brand)]" />
+            <Brain className="mt-1 text-cyan-300" />
             <div>
               <h2 className="text-xl font-black">{taskRows.length ? "Review the AI plan" : "Generate your execution plan"}</h2>
-              <p className="mt-1 text-sm leading-6 text-[var(--muted)]">AI turns the commitment into tasks with owners, due dates, acceptance criteria, expected evidence, and risk notes.</p>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">AI turns the commitment into tasks with owners, due dates, acceptance criteria, expected evidence, and risk notes.</p>
             </div>
           </div>
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
@@ -106,7 +106,7 @@ export default async function ProjectPage({
           <SectionHeader title="Tasks by status" description="Progress only becomes real when submitted evidence is reviewed." action={<ButtonLink href={`/app/projects/${id}/tasks`} variant="secondary" size="sm">Open board</ButtonLink>} />
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {statusCounts.map((item) => (
-              <div key={item.status} className="rounded-xl bg-[#f4f6f2] p-3">
+              <div key={item.status} className="rounded-xl border border-border bg-secondary p-3">
                 <StatusBadge status={item.status} />
                 <p className="mt-2 text-2xl font-black">{item.count}</p>
               </div>
@@ -114,15 +114,15 @@ export default async function ProjectPage({
           </div>
         </Card>
 
-        <Card className="border-[#e4d09b] bg-[#fffaf0]">
+        <Card className="border-cyan-300/25 bg-cyan-400/10">
           <div className="flex gap-3">
-            <Brain className="mt-1 text-[#8a6814]" />
+            <Brain className="mt-1 text-cyan-300" />
             <div>
               <h2 className="font-black">AI risk insight</h2>
-              <p className="mt-2 text-sm leading-6 text-[#735813]">
+              <p className="mt-2 text-sm leading-6 text-cyan-100">
                 {plan?.risks?.[0] || (remaining <= 2 && progress < 80 ? "Deadline is close and approved evidence is below target." : "No generated risk note yet. Generate the AI plan to get a specific review.")}
               </p>
-              <p className="mt-3 rounded-xl bg-white/70 p-3 text-xs font-bold text-[#735813]">
+              <p className="mt-3 rounded-xl border border-cyan-300/20 bg-background/50 p-3 text-xs font-bold text-cyan-100">
                 Why: {plan?.minimum_success_version || plan?.reasoning || `${submitted} submitted tasks and ${projectDisputes.length} open dispute signals are included in the score.`}
               </p>
             </div>
@@ -173,9 +173,9 @@ export default async function ProjectPage({
               const score = memberTasks.length ? Math.round((memberApproved / memberTasks.length) * 100) : 0;
               return (
                 <div key={profile.user_id}>
-                  <div className="mb-1 flex justify-between text-sm"><strong>{(profile.profiles as unknown as { name: string }).name}</strong><span className="text-[var(--muted)]">{score}%</span></div>
+                  <div className="mb-1 flex justify-between text-sm"><strong>{(profile.profiles as unknown as { name: string }).name}</strong><span className="text-muted-foreground">{score}%</span></div>
                   <Progress value={score} />
-                  <p className="mt-1 text-xs text-[var(--muted)]">{memberApproved}/{memberTasks.length} assigned tasks approved</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{memberApproved}/{memberTasks.length} assigned tasks approved</p>
                 </div>
               );
             })}
@@ -186,12 +186,12 @@ export default async function ProjectPage({
           <SectionHeader title="Recent daily logs" action={project.status === "active" ? <ButtonLink href={`/app/logs/new?project=${id}`} variant="secondary" size="sm">Log today</ButtonLink> : null} />
           <div className="space-y-3">
             {logs?.map((log) => (
-              <div key={log.id} className="border-b border-[var(--line)] pb-3 last:border-0">
+              <div key={log.id} className="border-b border-border pb-3 last:border-0">
                 <p className="font-bold">{(log.profiles as unknown as { name: string }).name} · {log.time_spent_minutes} min</p>
-                <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{log.summary}</p>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">{log.summary}</p>
               </div>
             ))}
-            {!logs?.length && <p className="text-sm text-[var(--muted)]">No daily logs yet.</p>}
+            {!logs?.length && <p className="text-sm text-muted-foreground">No daily logs yet.</p>}
           </div>
         </Card>
 
@@ -199,8 +199,8 @@ export default async function ProjectPage({
           <SectionHeader title="Reviews and disputes" action={<ButtonLink href={`/app/projects/${id}/reviews`} variant="secondary" size="sm">Review queue</ButtonLink>} />
           <div className="space-y-3">
             {pendingReviews.map((task) => <ButtonLink key={task.id} href={`/app/tasks/${task.id}`} variant="secondary" className="h-auto w-full justify-between p-3 text-left"><span className="font-bold">{task.title}</span><StatusBadge status="submitted" /></ButtonLink>)}
-            {projectDisputes.map((dispute) => <div key={dispute.id} className="rounded-xl bg-[#fff6d9] p-3 text-sm"><strong>{(dispute.tasks as unknown as { title: string }).title}</strong><p className="mt-1 text-[var(--muted)]">{dispute.reason}</p></div>)}
-            {!pendingReviews.length && !projectDisputes.length && <p className="text-sm text-[var(--muted)]">No pending reviews or disputes.</p>}
+            {projectDisputes.map((dispute) => <div key={dispute.id} className="rounded-xl border border-rose-300/30 bg-rose-500/12 p-3 text-sm"><strong>{(dispute.tasks as unknown as { title: string }).title}</strong><p className="mt-1 text-muted-foreground">{dispute.reason}</p></div>)}
+            {!pendingReviews.length && !projectDisputes.length && <p className="text-sm text-muted-foreground">No pending reviews or disputes.</p>}
           </div>
         </Card>
       </div>
@@ -208,26 +208,26 @@ export default async function ProjectPage({
       <div className="mt-8 grid gap-4 lg:grid-cols-[.85fr_1.15fr]">
         <Card>
           <div className="flex items-start gap-3">
-            <Coins className="text-[var(--brand)]" />
+            <Coins className="text-amber-300" />
             <div>
               <h2 className="font-black">Virtual pledges</h2>
-              <p className="mt-1 text-xs text-[var(--muted)]">Declared commitments only. CommitBet does not hold money.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Declared commitments only. CommitBet does not hold money.</p>
             </div>
           </div>
           <div className="mt-4 space-y-2">
-            {pledges?.map((pledge) => <div key={pledge.id} className="flex justify-between rounded-xl bg-[#f5f7f3] p-3"><span>{(pledge.profiles as unknown as { name: string }).name}</span><strong>{pledge.amount} {pledge.currency}</strong></div>)}
+            {pledges?.map((pledge) => <div key={pledge.id} className="flex justify-between rounded-xl border border-amber-300/20 bg-amber-400/10 p-3"><span>{(pledge.profiles as unknown as { name: string }).name}</span><strong className="text-amber-200">{pledge.amount} {pledge.currency}</strong></div>)}
           </div>
         </Card>
 
         {project.status === "active" && isOwner ? (
-          <Card className="flex flex-col items-start justify-between gap-4 border-[#b9d6bf] bg-[#eff8f1] sm:flex-row sm:items-center">
-            <div className="flex gap-3"><ShieldCheck className="text-[var(--brand)]" /><div><h2 className="font-black">Ready to close the sprint?</h2><p className="text-sm text-[var(--muted)]">Generate an evidence-based AI final report before confirming virtual pledge outcomes.</p></div></div>
+          <Card className="flex flex-col items-start justify-between gap-4 border-amber-300/30 bg-amber-400/10 sm:flex-row sm:items-center">
+            <div className="flex gap-3"><ShieldCheck className="text-amber-300" /><div><h2 className="font-black">Ready to close the sprint?</h2><p className="text-sm text-muted-foreground">Generate an evidence-based AI final report before confirming virtual pledge outcomes.</p></div></div>
             <ButtonLink href={`/app/projects/${id}/final`}>Final report</ButtonLink>
           </Card>
         ) : (
           <Card className="flex gap-3">
-            <FileCheck2 className="text-[var(--brand)]" />
-            <div><h2 className="font-black">Evidence is the source of truth</h2><p className="mt-1 text-sm text-[var(--muted)]">Use task detail pages to attach proof and peer reviews before the final report.</p></div>
+            <FileCheck2 className="text-cyan-300" />
+            <div><h2 className="font-black">Evidence is the source of truth</h2><p className="mt-1 text-sm text-muted-foreground">Use task detail pages to attach proof and peer reviews before the final report.</p></div>
           </Card>
         )}
       </div>
