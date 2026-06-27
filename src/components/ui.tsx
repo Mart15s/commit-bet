@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { T, type TranslationKey } from "@/i18n/useTranslation";
 import { cn } from "@/lib/utils";
 
 const variants = {
@@ -77,9 +78,9 @@ export function PageHeader({
   description,
   action,
 }: {
-  eyebrow?: string;
-  title: string;
-  description?: string;
+  eyebrow?: ReactNode;
+  title: ReactNode;
+  description?: ReactNode;
   action?: ReactNode;
 }) {
   return (
@@ -96,6 +97,7 @@ export function PageHeader({
 
 export function StatusBadge({ status }: { status: string }) {
   const normalized = status.toLowerCase();
+  const key = `status.${normalized.replaceAll(" ", "_")}` as TranslationKey;
   const tone =
     normalized === "approved" || normalized === "active" || normalized === "completed" || normalized === "met" || normalized === "low"
       ? "border-emerald-400/30 bg-emerald-400/12 text-emerald-300"
@@ -110,7 +112,7 @@ export function StatusBadge({ status }: { status: string }) {
               : normalized === "rejected" || normalized === "critical" || normalized === "high" || normalized === "missed"
                 ? "border-red-300/35 bg-red-500/16 text-red-200"
                 : "border-slate-500/40 bg-slate-700/40 text-slate-300";
-  return <span className={cn("inline-flex whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-black capitalize", tone)}>{status.replaceAll("_", " ")}</span>;
+  return <span className={cn("inline-flex whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-black capitalize", tone)}><T k={key} fallback={status.replaceAll("_", " ")} /></span>;
 }
 
 export function Progress({ value, className }: { value: number; className?: string }) {
@@ -128,9 +130,9 @@ export function MetricCard({
   icon,
   className,
 }: {
-  label: string;
+  label: ReactNode;
   value: ReactNode;
-  detail?: string;
+  detail?: ReactNode;
   icon?: ReactNode;
   className?: string;
 }) {
@@ -148,7 +150,7 @@ export function MetricCard({
   );
 }
 
-export function SectionHeader({ title, description, action }: { title: string; description?: string; action?: ReactNode }) {
+export function SectionHeader({ title, description, action }: { title: ReactNode; description?: ReactNode; action?: ReactNode }) {
   return (
     <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
       <div>
@@ -160,7 +162,7 @@ export function SectionHeader({ title, description, action }: { title: string; d
   );
 }
 
-export function EmptyState({ title, copy, action }: { title: string; copy: string; action?: ReactNode }) {
+export function EmptyState({ title, copy, action }: { title: ReactNode; copy: ReactNode; action?: ReactNode }) {
   return (
     <Card className="py-10 text-center">
       <h2 className="text-xl font-black">{title}</h2>

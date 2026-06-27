@@ -1,5 +1,6 @@
 import { ButtonLink, PageHeader } from "@/components/ui";
 import { TaskBoard, type BoardTask } from "@/components/tasks/task-board";
+import { T } from "@/i18n/useTranslation";
 import { requireProjectMember } from "@/lib/auth";
 import { singleRelation } from "@/lib/utils";
 
@@ -31,12 +32,12 @@ export default async function ProjectTasksPage({ params }: { params: Promise<{ i
 
   return (
     <>
-      <ButtonLink href={`/app/projects/${id}`} variant="ghost" size="sm" className="mb-3">Back to project</ButtonLink>
+      <ButtonLink href={`/app/projects/${id}`} variant="ghost" size="sm" className="mb-3"><T k="projectTasks.back" /></ButtonLink>
       <PageHeader
-        eyebrow="Task board"
+        eyebrow={<T k="projectTasks.eyebrow" />}
         title={project.title}
-        description="Move work from todo to approved through evidence submission and peer review."
-        action={project.status === "active" ? <ButtonLink href={`/app/logs/new?project=${id}`} variant="secondary">Daily log</ButtonLink> : undefined}
+        description={<T k="projectTasks.description" />}
+        action={project.status === "active" ? <ButtonLink href={`/app/logs/new?project=${id}`} variant="secondary"><T k="projectTasks.dailyLog" /></ButtonLink> : undefined}
       />
       <TaskBoard tasks={boardTasks} />
     </>

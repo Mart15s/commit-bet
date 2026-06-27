@@ -1,5 +1,6 @@
 import { AlertTriangle, CalendarClock, ClipboardCheck, Coins, Gauge, ListChecks, PlusCircle, Target } from "lucide-react";
 import { ButtonLink, Card, EmptyState, MetricCard, PageHeader, Progress, SectionHeader, StatusBadge } from "@/components/ui";
+import { T } from "@/i18n/useTranslation";
 import { requireUser } from "@/lib/auth";
 import { sampleProject } from "@/lib/mock-data";
 import { formatDate, singleRelation } from "@/lib/utils";
@@ -45,22 +46,22 @@ export default async function DashboardPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Command center"
-        title="Your commitments"
-        description="Today’s work, pending proof, deadline risk, and the sprints your team promised to finish."
-        action={<ButtonLink href="/app/projects/new"><PlusCircle size={18} /> New project</ButtonLink>}
+        eyebrow={<T k="dashboard.eyebrow" />}
+        title={<T k="dashboard.title" />}
+        description={<T k="dashboard.description" />}
+        action={<ButtonLink href="/app/projects/new"><PlusCircle size={18} /> <T k="common.newProject" /></ButtonLink>}
       />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Active projects" value={active.length} detail="Commitment sprints in motion" icon={<Target size={20} />} />
-        <MetricCard label="Today’s tasks" value={myTasks.length} detail={myTasks[0] ? `Next due ${formatDate(myTasks[0].due_date)}` : "No task pressure"} icon={<ListChecks size={20} />} />
-        <MetricCard label="Pending approvals" value={approvals.length} detail="Submitted work needing review" icon={<ClipboardCheck size={20} />} />
-        <MetricCard label="Virtual pledge" value={pledgePoints || sampleProject.pledgePool} detail="Declared points, no real money" icon={<Coins size={20} />} />
+        <MetricCard label={<T k="dashboard.activeProjects" />} value={active.length} detail={<T k="dashboard.activeProjectsDetail" />} icon={<Target size={20} />} />
+        <MetricCard label={<T k="dashboard.todaysTasks" />} value={myTasks.length} detail={myTasks[0] ? <T k="dashboard.nextDue" params={{ date: formatDate(myTasks[0].due_date) }} /> : <T k="dashboard.noTaskPressure" />} icon={<ListChecks size={20} />} />
+        <MetricCard label={<T k="dashboard.pendingApprovals" />} value={approvals.length} detail={<T k="dashboard.pendingApprovalsDetail" />} icon={<ClipboardCheck size={20} />} />
+        <MetricCard label={<T k="dashboard.virtualPledge" />} value={pledgePoints || sampleProject.pledgePool} detail={<T k="dashboard.virtualPledgeDetail" />} icon={<Coins size={20} />} />
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[1.35fr_.65fr]">
         <section>
-          <SectionHeader title="Active projects" description="Each card centers the commitment, proof, and remaining risk." />
+          <SectionHeader title={<T k="dashboard.activeProjects" />} description={<T k="dashboard.activeProjectsDescription" />} />
           <div className="grid gap-3 md:grid-cols-2">
             {active.map((project) => {
               const remaining = daysUntil(project.end_date);
@@ -76,12 +77,12 @@ export default async function DashboardPage() {
                       <StatusBadge status={project.status} />
                     </div>
                     <div className="mt-5">
-                      <div className="mb-2 flex justify-between text-xs font-black text-muted-foreground"><span>Estimated progress</span><span>{progress}%</span></div>
+                      <div className="mb-2 flex justify-between text-xs font-black text-muted-foreground"><span><T k="dashboard.estimatedProgress" /></span><span>{progress}%</span></div>
                       <Progress value={progress} />
                     </div>
                     <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-                      <div className="rounded-xl border border-amber-300/20 bg-amber-400/10 p-3"><span className="block text-xs font-bold text-amber-200">Deadline</span><strong>{formatDate(project.end_date)}</strong></div>
-                      <div className="rounded-xl border border-primary/20 bg-primary/10 p-3"><span className="block text-xs font-bold text-violet-200">Days left</span><strong>{Math.max(0, remaining)}</strong></div>
+                      <div className="rounded-xl border border-amber-300/20 bg-amber-400/10 p-3"><span className="block text-xs font-bold text-amber-200"><T k="dashboard.deadline" /></span><strong>{formatDate(project.end_date)}</strong></div>
+                      <div className="rounded-xl border border-primary/20 bg-primary/10 p-3"><span className="block text-xs font-bold text-violet-200"><T k="dashboard.daysLeft" /></span><strong>{Math.max(0, remaining)}</strong></div>
                     </div>
                   </Card>
                 </ButtonLink>
@@ -89,7 +90,7 @@ export default async function DashboardPage() {
             })}
             {!active.length && (
               <div className="md:col-span-2">
-                <EmptyState title="No active sprint" copy="Create a project, generate its AI plan, and turn the promise into reviewable evidence." action={<ButtonLink href="/app/projects/new">Create project</ButtonLink>} />
+                <EmptyState title={<T k="dashboard.noActiveSprintTitle" />} copy={<T k="dashboard.noActiveSprintCopy" />} action={<ButtonLink href="/app/projects/new"><T k="common.createProject" /></ButtonLink>} />
               </div>
             )}
           </div>
@@ -100,22 +101,22 @@ export default async function DashboardPage() {
             <div className="flex items-start gap-3">
               <Gauge className="mt-1 text-cyan-300" />
               <div>
-                <h2 className="font-black">AI risk insight</h2>
+                <h2 className="font-black"><T k="dashboard.aiRiskInsight" /></h2>
                 <p className="mt-2 text-sm leading-6 text-cyan-100">
                   {dueSoon.length
-                    ? `${dueSoon.length} assigned task${dueSoon.length === 1 ? "" : "s"} are near deadline without approval.`
+                    ? <T k="dashboard.dueSoonRisk" params={{ count: dueSoon.length, plural: dueSoon.length === 1 ? "" : "s" }} />
                     : projectPreview
-                      ? "No urgent blocker detected from your assigned queue."
+                      ? <T k="dashboard.noUrgentBlocker" />
                       : sampleProject.aiRiskInsight.summary}
                 </p>
                 <p className="mt-3 rounded-xl border border-cyan-300/20 bg-background/50 p-3 text-xs font-bold text-cyan-100">
-                  Why: {dueSoon[0] ? `${dueSoon[0].title} is due ${formatDate(dueSoon[0].due_date)} and still ${dueSoon[0].status.replaceAll("_", " ")}.` : sampleProject.aiRiskInsight.why}
+                  <T k="common.why" />: {dueSoon[0] ? <T k="dashboard.dueSoonWhy" params={{ title: dueSoon[0].title, date: formatDate(dueSoon[0].due_date), status: dueSoon[0].status.replaceAll("_", " ") }} /> : sampleProject.aiRiskInsight.why}
                 </p>
               </div>
             </div>
           </Card>
           <Card>
-            <h2 className="font-black">Team progress signal</h2>
+            <h2 className="font-black"><T k="dashboard.teamProgressSignal" /></h2>
             <div className="mt-4 space-y-3">
               {sampleProject.members.map((member) => (
                 <div key={member.id}>
@@ -130,7 +131,7 @@ export default async function DashboardPage() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <section>
-          <SectionHeader title="Today’s task focus" description="Work that should move toward evidence or submission next." />
+          <SectionHeader title={<T k="dashboard.taskFocusTitle" />} description={<T k="dashboard.taskFocusDescription" />} />
           <div className="space-y-3">
             {myTasks.slice(0, 6).map((task) => {
               const project = singleRelation(task.projects as unknown as { title: string } | Array<{ title: string }>);
@@ -138,18 +139,18 @@ export default async function DashboardPage() {
                 <ButtonLink key={task.id} href={`/app/tasks/${task.id}`} variant="secondary" className="h-auto w-full justify-between p-4 text-left">
                   <span>
                     <strong className="block">{task.title}</strong>
-                    <small className="text-muted-foreground">{project?.title} · due {formatDate(task.due_date)}</small>
+                    <small className="text-muted-foreground">{project?.title} · <T k="common.due" /> {formatDate(task.due_date)}</small>
                   </span>
                   <StatusBadge status={task.status} />
                 </ButtonLink>
               );
             })}
-            {!myTasks.length && <Card className="text-sm text-muted-foreground">Nothing assigned right now. Nice and quiet.</Card>}
+            {!myTasks.length && <Card className="text-sm text-muted-foreground"><T k="dashboard.nothingAssigned" /></Card>}
           </div>
         </section>
 
         <section>
-          <SectionHeader title="Review queue" description="Submitted work that needs human approval before progress counts." />
+          <SectionHeader title={<T k="dashboard.reviewQueue" />} description={<T k="dashboard.reviewQueueDescription" />} />
           <div className="space-y-3">
             {approvals.slice(0, 6).map((task) => {
               const project = singleRelation(task.projects as unknown as { title: string } | Array<{ title: string }>);
@@ -163,7 +164,7 @@ export default async function DashboardPage() {
                 </ButtonLink>
               );
             })}
-            {!approvals.length && <Card className="text-sm text-muted-foreground">No teammate submissions are waiting.</Card>}
+            {!approvals.length && <Card className="text-sm text-muted-foreground"><T k="dashboard.noSubmissions" /></Card>}
           </div>
         </section>
       </div>
@@ -173,8 +174,8 @@ export default async function DashboardPage() {
           <div className="flex gap-3">
             <AlertTriangle className="text-red-300" />
             <div>
-              <h2 className="font-black">Deadline risk</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Prioritize proof for {dueSoon.map((task) => task.title).join(", ")}.</p>
+              <h2 className="font-black"><T k="dashboard.deadlineRisk" /></h2>
+              <p className="mt-1 text-sm text-muted-foreground"><T k="dashboard.prioritizeProof" params={{ tasks: dueSoon.map((task) => task.title).join(", ") }} /></p>
             </div>
           </div>
         </Card>
@@ -183,8 +184,8 @@ export default async function DashboardPage() {
           <div className="flex gap-3">
             <CalendarClock className="text-primary" />
             <div>
-              <h2 className="font-black">Daily rhythm</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Log what changed today, attach evidence, and keep reviews moving.</p>
+              <h2 className="font-black"><T k="dashboard.dailyRhythm" /></h2>
+              <p className="mt-1 text-sm text-muted-foreground"><T k="dashboard.dailyRhythmCopy" /></p>
             </div>
           </div>
         </Card>

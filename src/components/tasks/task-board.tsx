@@ -1,5 +1,6 @@
 import { CalendarDays, FileCheck2, UserRound } from "lucide-react";
 import { ButtonLink, Card, StatusBadge } from "@/components/ui";
+import { T, type TranslationKey } from "@/i18n/useTranslation";
 import { formatDate } from "@/lib/utils";
 
 export type BoardTask = {
@@ -15,13 +16,13 @@ export type BoardTask = {
 };
 
 const columns = [
-  { key: "todo", label: "Todo" },
-  { key: "in_progress", label: "In progress" },
-  { key: "submitted", label: "Submitted" },
-  { key: "approved", label: "Approved" },
-  { key: "needs_changes", label: "Needs changes" },
-  { key: "rejected", label: "Rejected" },
-  { key: "disputed", label: "Disputed" },
+  { key: "todo", label: "status.todo" },
+  { key: "in_progress", label: "status.in_progress" },
+  { key: "submitted", label: "status.submitted" },
+  { key: "approved", label: "status.approved" },
+  { key: "needs_changes", label: "status.needs_changes" },
+  { key: "rejected", label: "status.rejected" },
+  { key: "disputed", label: "status.disputed" },
 ];
 
 export function TaskBoard({ tasks }: { tasks: BoardTask[] }) {
@@ -32,7 +33,7 @@ export function TaskBoard({ tasks }: { tasks: BoardTask[] }) {
         return (
           <section key={column.key} className="min-w-0 rounded-2xl border border-border bg-surface/80 p-3">
             <div className="mb-3 flex items-center justify-between gap-2 px-1">
-              <h2 className="text-sm font-black">{column.label}</h2>
+              <h2 className="text-sm font-black"><T k={column.label as TranslationKey} /></h2>
               <span className="rounded-full border border-border bg-elevated px-2 py-1 text-xs font-black text-muted-foreground">{items.length}</span>
             </div>
             <div className="grid gap-3">
@@ -44,15 +45,15 @@ export function TaskBoard({ tasks }: { tasks: BoardTask[] }) {
                       <StatusBadge status={task.priority} />
                     </div>
                     <div className="mt-3 space-y-2 text-xs text-muted-foreground">
-                      <p className="flex items-center gap-2"><UserRound size={14} /> {task.ownerName || "Unassigned"}</p>
+                      <p className="flex items-center gap-2"><UserRound size={14} /> {task.ownerName || <T k="taskBoard.unassigned" />}</p>
                       <p className="flex items-center gap-2"><CalendarDays size={14} /> {formatDate(task.dueDate)}</p>
-                      <p className="flex items-center gap-2"><FileCheck2 size={14} /> {task.expectedEvidenceTypes.join(", ") || "Evidence expected"}</p>
+                      <p className="flex items-center gap-2"><FileCheck2 size={14} /> {task.expectedEvidenceTypes.join(", ") || <T k="taskBoard.evidenceExpected" />}</p>
                     </div>
-                    <p className="mt-3 line-clamp-2 text-xs leading-5 text-muted-foreground">{task.acceptanceCriteria[0] || task.description || "Acceptance criteria pending."}</p>
+                    <p className="mt-3 line-clamp-2 text-xs leading-5 text-muted-foreground">{task.acceptanceCriteria[0] || task.description || <T k="taskBoard.acceptancePending" />}</p>
                   </Card>
                 </ButtonLink>
               ))}
-              {!items.length && <div className="rounded-xl border border-dashed border-border bg-secondary/55 p-4 text-center text-xs font-bold text-muted-foreground">No tasks</div>}
+              {!items.length && <div className="rounded-xl border border-dashed border-border bg-secondary/55 p-4 text-center text-xs font-bold text-muted-foreground"><T k="taskBoard.noTasks" /></div>}
             </div>
           </section>
         );
