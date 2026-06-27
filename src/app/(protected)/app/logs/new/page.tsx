@@ -1,5 +1,6 @@
 import { DailyLogForm } from "@/components/daily-log-form";
 import { EmptyState, PageHeader } from "@/components/ui";
+import { T } from "@/i18n/useTranslation";
 import { requireUser } from "@/lib/auth";
 
 export default async function DailyLogPage({
@@ -26,8 +27,8 @@ export default async function DailyLogPage({
   }
   return (
     <>
-      <PageHeader title="Daily progress" description="Keep it brief. Record what changed, link it to tasks, and move on." />
-      {withTasks.length ? <DailyLogForm projects={withTasks} initialProject={params.project} error={params.error} /> : <EmptyState title="No active project" copy="Start a project before adding a daily log." />}
+      <PageHeader title={<T k="dailyLog.pageTitle" />} description={<T k="dailyLog.pageDescription" />} />
+      {withTasks.length ? <DailyLogForm projects={withTasks} initialProject={params.project} error={params.error} /> : <EmptyState title={<T k="dailyLog.emptyTitle" />} copy={<T k="dailyLog.emptyCopy" />} />}
     </>
   );
 }

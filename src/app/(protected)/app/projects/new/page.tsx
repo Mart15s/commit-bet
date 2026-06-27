@@ -1,5 +1,6 @@
 import { ProjectWizard } from "@/components/project-wizard";
 import { EmptyState, PageHeader } from "@/components/ui";
+import { T } from "@/i18n/useTranslation";
 import { requireUser } from "@/lib/auth";
 
 export default async function NewProjectPage({
@@ -31,9 +32,8 @@ export default async function NewProjectPage({
 
   return (
     <>
-      <PageHeader title="Create a commitment sprint" description="Define the agreement first. AI will help turn it into an executable plan." />
-      {teams.length ? <ProjectWizard teams={teams} initialTeam={params.team} error={params.error} /> : <EmptyState title="Create a team first" copy="Projects belong to a small team. Create one or join with an invite code." />}
+      <PageHeader title={<T k="projectNew.title" />} description={<T k="projectNew.description" />} />
+      {teams.length ? <ProjectWizard teams={teams} initialTeam={params.team} error={params.error} /> : <EmptyState title={<T k="projectNew.emptyTitle" />} copy={<T k="projectNew.emptyCopy" />} />}
     </>
   );
 }
-

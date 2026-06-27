@@ -1,6 +1,8 @@
 import { AlertTriangle, Check, FileCheck2, MessageSquare, X } from "lucide-react";
 import { reviewTask } from "@/app/(protected)/app/tasks/actions";
+import { I18nTextarea } from "@/components/i18n-fields";
 import { Button, ButtonLink, Card, EmptyState, PageHeader, StatusBadge } from "@/components/ui";
+import { T } from "@/i18n/useTranslation";
 import { requireUser } from "@/lib/auth";
 import { singleRelation } from "@/lib/utils";
 
@@ -35,9 +37,9 @@ export default async function ApprovalsPage({
   return (
     <>
       <PageHeader
-        eyebrow="Peer approval"
-        title="Review submitted evidence"
-        description="Compare each claim against acceptance criteria. AI can advise later, but teammates approve the work first."
+        eyebrow={<T k="approvals.eyebrow" />}
+        title={<T k="approvals.title" />}
+        description={<T k="approvals.description" />}
       />
       <div className="grid gap-4">
         {reviewable.map((task) => {
@@ -52,27 +54,27 @@ export default async function ApprovalsPage({
                     <span className="text-sm font-bold text-muted-foreground">{project?.title}</span>
                   </div>
                   <h2 className="mt-3 text-xl font-black tracking-[-.02em]">{task.title}</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">Performed by {assignment?.profiles?.name || "teammate"}</p>
+                  <p className="mt-1 text-sm text-muted-foreground"><T k="approvals.performedBy" params={{ name: assignment?.profiles?.name || "teammate" }} /></p>
                 </div>
-                <ButtonLink href={`/app/tasks/${task.id}`} variant="secondary" size="sm">Open detail</ButtonLink>
+                <ButtonLink href={`/app/tasks/${task.id}`} variant="secondary" size="sm"><T k="common.openDetail" /></ButtonLink>
               </div>
 
               <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_1fr]">
                 <div className="rounded-2xl border border-cyan-300/20 bg-cyan-400/10 p-4">
-                  <h3 className="flex items-center gap-2 font-black"><FileCheck2 size={18} className="text-cyan-300" /> Submitted evidence</h3>
+                  <h3 className="flex items-center gap-2 font-black"><FileCheck2 size={18} className="text-cyan-300" /> <T k="approvals.submittedEvidence" /></h3>
                   <div className="mt-3 space-y-3">
                     {task.evidence?.map((item) => (
                       <div key={item.id} className="rounded-xl border border-border bg-card p-3">
                         <p className="font-black capitalize">{item.type}</p>
                         <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.description}</p>
-                        {item.url && <a className="mt-2 inline-block text-sm font-black text-cyan-300" href={item.url} target="_blank" rel="noreferrer">Open evidence</a>}
+                        {item.url && <a className="mt-2 inline-block text-sm font-black text-cyan-300" href={item.url} target="_blank" rel="noreferrer"><T k="common.openEvidence" /></a>}
                       </div>
                     ))}
-                    {!task.evidence?.length && <p className="text-sm text-muted-foreground">No evidence rows were found. Open detail before approving.</p>}
+                    {!task.evidence?.length && <p className="text-sm text-muted-foreground"><T k="approvals.noEvidence" /></p>}
                   </div>
                 </div>
                 <div className="rounded-2xl border border-amber-300/20 bg-amber-400/10 p-4">
-                  <h3 className="font-black">Acceptance criteria</h3>
+                  <h3 className="font-black"><T k="approvals.acceptanceCriteria" /></h3>
                   <ul className="mt-3 space-y-2">
                     {(task.acceptance_criteria ?? []).map((criterion) => <li key={criterion} className="flex gap-2 text-sm leading-6"><span className="mt-2 size-1.5 shrink-0 rounded-full bg-amber-300" />{criterion}</li>)}
                   </ul>
@@ -84,18 +86,18 @@ export default async function ApprovalsPage({
 
               <form action={reviewTask} className="mt-5 grid gap-3">
                 <input type="hidden" name="task_id" value={task.id} />
-                <label><span className="inline-flex items-center gap-2"><MessageSquare size={16} /> Reviewer note</span><textarea name="comment" className="min-h-20" placeholder="Short explanation. Required for changes, rejection, or dispute." /></label>
+                <label><span className="inline-flex items-center gap-2"><MessageSquare size={16} /> <T k="common.reviewerNote" /></span><I18nTextarea name="comment" className="min-h-20" placeholderKey="approvals.notePlaceholder" /></label>
                 <div className="grid gap-2 sm:grid-cols-4">
-                  <Button name="status" value="approved" type="submit"><Check size={17} /> Approve</Button>
-                  <Button name="status" value="needs_changes" type="submit" variant="amber">Needs changes</Button>
-                  <Button name="status" value="rejected" type="submit" variant="danger"><X size={17} /> Reject</Button>
-                  <ButtonLink href={`/app/tasks/${task.id}`} variant="secondary"><AlertTriangle size={17} /> Dispute path</ButtonLink>
+                  <Button name="status" value="approved" type="submit"><Check size={17} /> <T k="common.approve" /></Button>
+                  <Button name="status" value="needs_changes" type="submit" variant="amber"><T k="common.needsChanges" /></Button>
+                  <Button name="status" value="rejected" type="submit" variant="danger"><X size={17} /> <T k="common.reject" /></Button>
+                  <ButtonLink href={`/app/tasks/${task.id}`} variant="secondary"><AlertTriangle size={17} /> <T k="common.disputePath" /></ButtonLink>
                 </div>
               </form>
             </Card>
           );
         })}
-        {!reviewable.length && <EmptyState title="Inbox cleared" copy="No teammate submissions are waiting for your review." />}
+        {!reviewable.length && <EmptyState title={<T k="approvals.inboxClearedTitle" />} copy={<T k="approvals.inboxClearedCopy" />} />}
       </div>
     </>
   );

@@ -1,4 +1,5 @@
 import { ButtonLink, Card, PageHeader } from "@/components/ui";
+import { T } from "@/i18n/useTranslation";
 import { requireUser } from "@/lib/auth";
 import { initials, singleRelation } from "@/lib/utils";
 import { notFound } from "next/navigation";
@@ -34,13 +35,13 @@ export default async function TeamPage({ params }: { params: Promise<{ id: strin
   return (
     <>
       <PageHeader
-        eyebrow="Team"
+        eyebrow={<T k="teams.teamEyebrow" />}
         title={team.name}
-        description={`Invite code: ${team.invite_code}`}
-        action={<ButtonLink href={`/app/projects/new?team=${team.id}`}>New project</ButtonLink>}
+        description={<T k="teams.inviteCodeValue" params={{ code: team.invite_code }} />}
+        action={<ButtonLink href={`/app/projects/new?team=${team.id}`}><T k="common.newProject" /></ButtonLink>}
       />
       <Card>
-        <h2 className="text-lg font-black">Members ({members?.length ?? 0}/5)</h2>
+        <h2 className="text-lg font-black"><T k="teams.membersCount" params={{ count: members?.length ?? 0 }} /></h2>
         <div className="mt-4 grid gap-3">
           {memberRows.map((member) => {
             const profile = member.profiles;

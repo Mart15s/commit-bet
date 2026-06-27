@@ -1,7 +1,9 @@
 import { Brain, CalendarDays, Coins, FileCheck2, Gauge, ShieldCheck, Users } from "lucide-react";
 import { generatePlan, startProject, updateDraftTask } from "@/app/(protected)/app/projects/actions";
+import { PrioritySelect } from "@/components/i18n-fields";
 import { Button, ButtonLink, Card, ErrorMessage, MetricCard, PageHeader, Progress, SectionHeader, StatusBadge } from "@/components/ui";
 import { TaskBoard, type BoardTask } from "@/components/tasks/task-board";
+import { T } from "@/i18n/useTranslation";
 import { requireProjectMember } from "@/lib/auth";
 import { formatDate, singleRelation } from "@/lib/utils";
 
@@ -69,19 +71,19 @@ export default async function ProjectPage({
         eyebrow={project.status}
         title={project.title}
         description={project.goal}
-        action={<div className="flex flex-wrap gap-2"><StatusBadge status={project.status} /><ButtonLink href={`/app/projects/${id}/tasks`} variant="secondary" size="sm">Task board</ButtonLink></div>}
+        action={<div className="flex flex-wrap gap-2"><StatusBadge status={project.status} /><ButtonLink href={`/app/projects/${id}/tasks`} variant="secondary" size="sm"><T k="project.taskBoard" /></ButtonLink></div>}
       />
       <ErrorMessage message={query.error} />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Success score" value={`${evidenceAdjustedScore}%`} detail={`${approved}/${taskRows.length || 0} approved`} icon={<Gauge size={20} />} />
-        <MetricCard label="Days remaining" value={remaining} detail={`${formatDate(project.start_date)} - ${formatDate(project.end_date)}`} icon={<CalendarDays size={20} />} />
-        <MetricCard label="Pledge pool" value={pledgePool || 0} detail="Virtual points or declared labels" icon={<Coins size={20} />} />
-        <MetricCard label="Team" value={profiles?.length ?? 0} detail="Members in commitment" icon={<Users size={20} />} />
+        <MetricCard label={<T k="project.successScore" />} value={`${evidenceAdjustedScore}%`} detail={<T k="project.approvedRatio" params={{ approved, total: taskRows.length || 0 }} />} icon={<Gauge size={20} />} />
+        <MetricCard label={<T k="project.daysRemaining" />} value={remaining} detail={`${formatDate(project.start_date)} - ${formatDate(project.end_date)}`} icon={<CalendarDays size={20} />} />
+        <MetricCard label={<T k="project.pledgePool" />} value={pledgePool || 0} detail={<T k="project.pledgePoolDetail" />} icon={<Coins size={20} />} />
+        <MetricCard label={<T k="nav.team" />} value={profiles?.length ?? 0} detail={<T k="project.teamDetail" />} icon={<Users size={20} />} />
       </div>
 
       <Card className="mt-4">
-        <div className="mb-2 flex justify-between text-sm font-black"><span>Approved progress</span><span>{progress}%</span></div>
+        <div className="mb-2 flex justify-between text-sm font-black"><span><T k="project.approvedProgress" /></span><span>{progress}%</span></div>
         <Progress value={progress} />
       </Card>
 
@@ -90,20 +92,20 @@ export default async function ProjectPage({
           <div className="flex gap-3">
             <Brain className="mt-1 text-cyan-300" />
             <div>
-              <h2 className="text-xl font-black">{taskRows.length ? "Review the AI plan" : "Generate your execution plan"}</h2>
-              <p className="mt-1 text-sm leading-6 text-muted-foreground">AI turns the commitment into tasks with owners, due dates, acceptance criteria, expected evidence, and risk notes.</p>
+              <h2 className="text-xl font-black">{taskRows.length ? <T k="project.reviewAiPlan" /> : <T k="project.generatePlanTitle" />}</h2>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground"><T k="project.generatePlanCopy" /></p>
             </div>
           </div>
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-            <form action={generatePlan}><input type="hidden" name="project_id" value={id} /><Button className="w-full" type="submit">{taskRows.length ? "Regenerate plan" : "Generate AI plan"}</Button></form>
-            {taskRows.length ? <form action={startProject}><input type="hidden" name="project_id" value={id} /><Button className="w-full" variant="secondary" type="submit">Confirm and start project</Button></form> : null}
+            <form action={generatePlan}><input type="hidden" name="project_id" value={id} /><Button className="w-full" type="submit">{taskRows.length ? <T k="project.regeneratePlan" /> : <T k="project.generateAiPlan" />}</Button></form>
+            {taskRows.length ? <form action={startProject}><input type="hidden" name="project_id" value={id} /><Button className="w-full" variant="secondary" type="submit"><T k="project.confirmStart" /></Button></form> : null}
           </div>
         </Card>
       )}
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[1.1fr_.9fr]">
         <Card>
-          <SectionHeader title="Tasks by status" description="Progress only becomes real when submitted evidence is reviewed." action={<ButtonLink href={`/app/projects/${id}/tasks`} variant="secondary" size="sm">Open board</ButtonLink>} />
+          <SectionHeader title={<T k="project.tasksByStatus" />} description={<T k="project.tasksByStatusCopy" />} action={<ButtonLink href={`/app/projects/${id}/tasks`} variant="secondary" size="sm"><T k="project.openBoard" /></ButtonLink>} />
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {statusCounts.map((item) => (
               <div key={item.status} className="rounded-xl border border-border bg-secondary p-3">
@@ -118,12 +120,12 @@ export default async function ProjectPage({
           <div className="flex gap-3">
             <Brain className="mt-1 text-cyan-300" />
             <div>
-              <h2 className="font-black">AI risk insight</h2>
+              <h2 className="font-black"><T k="project.aiRiskInsight" /></h2>
               <p className="mt-2 text-sm leading-6 text-cyan-100">
-                {plan?.risks?.[0] || (remaining <= 2 && progress < 80 ? "Deadline is close and approved evidence is below target." : "No generated risk note yet. Generate the AI plan to get a specific review.")}
+                {plan?.risks?.[0] || (remaining <= 2 && progress < 80 ? <T k="project.deadlineCloseRisk" /> : <T k="project.noGeneratedRisk" />)}
               </p>
               <p className="mt-3 rounded-xl border border-cyan-300/20 bg-background/50 p-3 text-xs font-bold text-cyan-100">
-                Why: {plan?.minimum_success_version || plan?.reasoning || `${submitted} submitted tasks and ${projectDisputes.length} open dispute signals are included in the score.`}
+                <T k="common.why" />: {plan?.minimum_success_version || plan?.reasoning || <T k="project.scoreWhy" params={{ submitted, disputes: projectDisputes.length }} />}
               </p>
             </div>
           </div>
@@ -132,14 +134,14 @@ export default async function ProjectPage({
 
       {taskRows.length ? (
         <section className="mt-8">
-          <SectionHeader title="Task board" description="Todo, in progress, submitted, approved, changes, rejected, and disputed work in one view." />
+          <SectionHeader title={<T k="project.taskBoard" />} description={<T k="project.boardDescription" />} />
           <TaskBoard tasks={boardTasks} />
         </section>
       ) : null}
 
       {project.status === "draft" && isOwner && taskRows.length ? (
         <section className="mt-8">
-          <SectionHeader title="Edit draft AI tasks" description="Adjust owner, due date, and priority before starting the project." />
+          <SectionHeader title={<T k="project.editDraftTasks" />} description={<T k="project.editDraftTasksCopy" />} />
           <div className="grid gap-3">
             {taskRows.map((task) => {
               const assignment = singleRelation(task.task_assignments as unknown as Assignment | Assignment[]);
@@ -147,11 +149,11 @@ export default async function ProjectPage({
                 <Card key={task.id}>
                   <form action={updateDraftTask} className="grid gap-3 sm:grid-cols-[1fr_10rem_9rem]">
                     <input type="hidden" name="project_id" value={id} /><input type="hidden" name="task_id" value={task.id} />
-                    <label>Task<input name="title" defaultValue={task.title} required /></label>
-                    <label>Due<input name="due_date" type="date" defaultValue={task.due_date} required /></label>
-                    <label>Priority<select name="priority" defaultValue={task.priority}><option>low</option><option>medium</option><option>high</option><option>critical</option></select></label>
-                    <label className="sm:col-span-2">Assignee<select name="assigned_user_id" defaultValue={assignment?.user_id}>{profiles?.map((profile) => <option key={profile.user_id} value={profile.user_id}>{(profile.profiles as unknown as { name: string }).name}</option>)}</select></label>
-                    <Button className="self-end" type="submit" variant="secondary">Save task</Button>
+                    <label><T k="common.task" /><input name="title" defaultValue={task.title} required /></label>
+                    <label><T k="taskDetail.due" /><input name="due_date" type="date" defaultValue={task.due_date} required /></label>
+                    <label><T k="common.priority" /><PrioritySelect name="priority" defaultValue={task.priority} /></label>
+                    <label className="sm:col-span-2"><T k="common.assignee" /><select name="assigned_user_id" defaultValue={assignment?.user_id}>{profiles?.map((profile) => <option key={profile.user_id} value={profile.user_id}>{(profile.profiles as unknown as { name: string }).name}</option>)}</select></label>
+                    <Button className="self-end" type="submit" variant="secondary"><T k="project.saveTask" /></Button>
                   </form>
                 </Card>
               );
@@ -162,7 +164,7 @@ export default async function ProjectPage({
 
       <div className="mt-8 grid gap-4 lg:grid-cols-3">
         <Card>
-          <SectionHeader title="Member contribution" />
+          <SectionHeader title={<T k="project.memberContribution" />} />
           <div className="space-y-4">
             {profiles?.map((profile) => {
               const memberTasks = taskRows.filter((task) => {
@@ -175,7 +177,7 @@ export default async function ProjectPage({
                 <div key={profile.user_id}>
                   <div className="mb-1 flex justify-between text-sm"><strong>{(profile.profiles as unknown as { name: string }).name}</strong><span className="text-muted-foreground">{score}%</span></div>
                   <Progress value={score} />
-                  <p className="mt-1 text-xs text-muted-foreground">{memberApproved}/{memberTasks.length} assigned tasks approved</p>
+                  <p className="mt-1 text-xs text-muted-foreground"><T k="project.assignedApproved" params={{ approved: memberApproved, total: memberTasks.length }} /></p>
                 </div>
               );
             })}
@@ -183,24 +185,24 @@ export default async function ProjectPage({
         </Card>
 
         <Card>
-          <SectionHeader title="Recent daily logs" action={project.status === "active" ? <ButtonLink href={`/app/logs/new?project=${id}`} variant="secondary" size="sm">Log today</ButtonLink> : null} />
+          <SectionHeader title={<T k="project.recentDailyLogs" />} action={project.status === "active" ? <ButtonLink href={`/app/logs/new?project=${id}`} variant="secondary" size="sm"><T k="project.logToday" /></ButtonLink> : null} />
           <div className="space-y-3">
             {logs?.map((log) => (
               <div key={log.id} className="border-b border-border pb-3 last:border-0">
-                <p className="font-bold">{(log.profiles as unknown as { name: string }).name} · {log.time_spent_minutes} min</p>
+                <p className="font-bold">{(log.profiles as unknown as { name: string }).name} · {log.time_spent_minutes} <T k="common.minutes" /></p>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">{log.summary}</p>
               </div>
             ))}
-            {!logs?.length && <p className="text-sm text-muted-foreground">No daily logs yet.</p>}
+            {!logs?.length && <p className="text-sm text-muted-foreground"><T k="project.noDailyLogs" /></p>}
           </div>
         </Card>
 
         <Card>
-          <SectionHeader title="Reviews and disputes" action={<ButtonLink href={`/app/projects/${id}/reviews`} variant="secondary" size="sm">Review queue</ButtonLink>} />
+          <SectionHeader title={<T k="project.reviewsAndDisputes" />} action={<ButtonLink href={`/app/projects/${id}/reviews`} variant="secondary" size="sm"><T k="project.reviewQueue" /></ButtonLink>} />
           <div className="space-y-3">
             {pendingReviews.map((task) => <ButtonLink key={task.id} href={`/app/tasks/${task.id}`} variant="secondary" className="h-auto w-full justify-between p-3 text-left"><span className="font-bold">{task.title}</span><StatusBadge status="submitted" /></ButtonLink>)}
             {projectDisputes.map((dispute) => <div key={dispute.id} className="rounded-xl border border-rose-300/30 bg-rose-500/12 p-3 text-sm"><strong>{(dispute.tasks as unknown as { title: string }).title}</strong><p className="mt-1 text-muted-foreground">{dispute.reason}</p></div>)}
-            {!pendingReviews.length && !projectDisputes.length && <p className="text-sm text-muted-foreground">No pending reviews or disputes.</p>}
+            {!pendingReviews.length && !projectDisputes.length && <p className="text-sm text-muted-foreground"><T k="project.noReviewsDisputes" /></p>}
           </div>
         </Card>
       </div>
@@ -210,8 +212,8 @@ export default async function ProjectPage({
           <div className="flex items-start gap-3">
             <Coins className="text-amber-300" />
             <div>
-              <h2 className="font-black">Virtual pledges</h2>
-              <p className="mt-1 text-xs text-muted-foreground">Declared commitments only. CommitBet does not hold money.</p>
+              <h2 className="font-black"><T k="project.virtualPledges" /></h2>
+              <p className="mt-1 text-xs text-muted-foreground"><T k="project.virtualPledgesCopy" /></p>
             </div>
           </div>
           <div className="mt-4 space-y-2">
@@ -221,13 +223,13 @@ export default async function ProjectPage({
 
         {project.status === "active" && isOwner ? (
           <Card className="flex flex-col items-start justify-between gap-4 border-amber-300/30 bg-amber-400/10 sm:flex-row sm:items-center">
-            <div className="flex gap-3"><ShieldCheck className="text-amber-300" /><div><h2 className="font-black">Ready to close the sprint?</h2><p className="text-sm text-muted-foreground">Generate an evidence-based AI final report before confirming virtual pledge outcomes.</p></div></div>
-            <ButtonLink href={`/app/projects/${id}/final`}>Final report</ButtonLink>
+            <div className="flex gap-3"><ShieldCheck className="text-amber-300" /><div><h2 className="font-black"><T k="project.readyToClose" /></h2><p className="text-sm text-muted-foreground"><T k="project.readyToCloseCopy" /></p></div></div>
+            <ButtonLink href={`/app/projects/${id}/final`}><T k="project.finalReport" /></ButtonLink>
           </Card>
         ) : (
           <Card className="flex gap-3">
             <FileCheck2 className="text-cyan-300" />
-            <div><h2 className="font-black">Evidence is the source of truth</h2><p className="mt-1 text-sm text-muted-foreground">Use task detail pages to attach proof and peer reviews before the final report.</p></div>
+            <div><h2 className="font-black"><T k="project.evidenceTruth" /></h2><p className="mt-1 text-sm text-muted-foreground"><T k="project.evidenceTruthCopy" /></p></div>
           </Card>
         )}
       </div>
