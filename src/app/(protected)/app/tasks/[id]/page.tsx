@@ -1,5 +1,6 @@
 import { Brain, Check, ExternalLink, FileText, MessageSquare, ShieldAlert, Upload, X } from "lucide-react";
 import { addEvidence, markInProgress, openDispute, reviewTask, submitTask } from "@/app/(protected)/app/tasks/actions";
+import { AIEnhanceButton, EvidenceAIReviewButton, EvidenceAIReviewPanel } from "@/components/ai-controls";
 import { Button, ButtonLink, Card, EmptyState, ErrorMessage, EvidenceExamples, HelpCard, PageHeader, StatusBadge } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { formatDate, singleRelation } from "@/lib/utils";
@@ -21,10 +22,11 @@ export default async function TaskPage({
     .eq("id", id)
     .single();
   if (!task) notFound();
-  const [{ data: evidence }, { data: reviews }, { data: disputes }] = await Promise.all([
+  const [{ data: evidence }, { data: reviews }, { data: disputes }, { data: aiReviews }] = await Promise.all([
     supabase.from("evidence").select("*, profiles(name)").eq("task_id", id).order("created_at", { ascending: false }),
     supabase.from("reviews").select("*, profiles(name)").eq("task_id", id).order("created_at", { ascending: false }),
     supabase.from("disputes").select("id, status, created_at").eq("task_id", id).order("created_at", { ascending: false }),
+    supabase.from("ai_reports").select("output").eq("task_id", id).eq("type", "evidence_review").order("created_at", { ascending: false }).limit(1),
   ]);
   const assignment = singleRelation(task.task_assignments as unknown as
     | { user_id: string; assigned_reason: string; profiles: { name: string } }
@@ -33,6 +35,7 @@ export default async function TaskPage({
   const canReview = !isAssignee && task.status === "submitted";
   const criteria = (task.acceptance_criteria ?? []) as string[];
   const expectedEvidence = (task.expected_evidence_types ?? []) as string[];
+  const evidenceReview = aiReviews?.[0]?.output as Parameters<typeof EvidenceAIReviewPanel>[0]["review"] | undefined;
 
   return (
     <>
@@ -91,6 +94,7 @@ export default async function TaskPage({
                 <input type="hidden" name="task_id" value={id} />
                 <label>Proof type<select name="type" defaultValue="link"><option>screenshot</option><option>document</option><option>github</option><option>video</option><option>link</option><option>demo</option><option>other</option></select></label>
                 <label>What does this prove?<textarea name="description" required placeholder="Example: This demo link shows the new approval flow matching all three criteria." /></label>
+                <AIEnhanceButton targetName="description" context="evidence_description" />
                 <label>Proof link (optional)<input name="url" type="url" placeholder="https://github.com/... or demo link" /></label>
                 <label>Proof file (optional, max 10 MB)<input name="file" type="file" /></label>
                 <Button type="submit">Add proof of work</Button>
@@ -139,6 +143,14 @@ export default async function TaskPage({
               </div>
             </div>
           </Card>
+          {task.status === "submitted" && evidence?.length ? (
+            <>
+              <EvidenceAIReviewButton taskId={id} />
+              <EvidenceAIReviewPanel review={evidenceReview} />
+            </>
+          ) : (
+            <EvidenceAIReviewPanel review={evidenceReview} />
+          )}
           {isAssignee && task.status === "rejected" && !disputes?.some((item) => item.status === "open") && (
             <Card className="border-red-400/30 bg-red-500/10">
               <div className="flex gap-2"><ShieldAlert className="text-red-300" /><h2 className="font-black">Open a dispute</h2></div>

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { mockFinalReport, mockProjectPlan } from "@/lib/ai/mock";
-import { finalReportSchema, projectPlanSchema } from "@/lib/validation";
+import {
+  enhancedTextSchema,
+  evidenceReviewSchema,
+  finalReportSchema,
+  projectPlanSchema,
+} from "@/lib/ai/schemas";
 
 const members = [
   { user_id: "11111111-1111-4111-8111-111111111111", name: "Martynas", strengths: ["backend"], availability_minutes_per_day: 120 },
@@ -19,7 +24,8 @@ describe("mock AI", () => {
     });
     expect(() => projectPlanSchema.parse(plan)).not.toThrow();
     expect(plan.tasks).toHaveLength(3);
-    expect(plan.tasks.every((task) => task.acceptance_criteria.length > 0)).toBe(true);
+    expect(plan.tasks.every((task) => task.acceptanceCriteria.length > 0)).toBe(true);
+    expect(plan.tasks.every((task) => task.expectedEvidenceTypes.length > 0)).toBe(true);
   });
 
   it("generates a final report that requires human confirmation", () => {
@@ -31,6 +37,12 @@ describe("mock AI", () => {
       disputeCount: 0,
     });
     expect(() => finalReportSchema.parse(report)).not.toThrow();
-    expect(report.human_confirmation_required).toBe(true);
+    expect(report.humanConfirmationNotice).toContain("recommendation");
+  });
+
+  it("rejects invalid Gemini JSON shapes", () => {
+    expect(() => enhancedTextSchema.parse({ enhancedText: "", language: "en" })).toThrow();
+    expect(() => evidenceReviewSchema.parse({ recommendedStatus: "approve" })).toThrow();
+    expect(() => projectPlanSchema.parse({ tasks: [] })).toThrow();
   });
 });

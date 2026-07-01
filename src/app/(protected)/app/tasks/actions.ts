@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { normalizeAIError } from "@/lib/ai/gemini";
 import { generateDisputeRecommendation } from "@/lib/ai/service";
 import { requireUser } from "@/lib/auth";
 import { evidenceSchema, reviewSchema } from "@/lib/validation";
@@ -121,21 +122,31 @@ export async function openDispute(formData: FormData) {
   }).select("id").single();
   if (error || !dispute) redirect(`/app/tasks/${taskId}?error=${encodeURIComponent(error?.message || "Could not open dispute")}`);
 
-  const recommendation = await generateDisputeRecommendation({
+  const input = {
     taskTitle: task.title,
     performerExplanation,
     rejectionReason: review?.comment || "",
     evidenceCount: count || 0,
-  });
-  await supabase.rpc("attach_dispute_recommendation", { dispute_id: dispute.id, recommendation });
+    disputeReason: reason,
+  };
+  try {
+    const { output: recommendation, model } = await generateDisputeRecommendation(input);
+    await supabase.rpc("attach_dispute_recommendation", { dispute_id: dispute.id, recommendation });
+    await supabase.from("ai_reports").insert({
+      project_id: task.project_id,
+      task_id: taskId,
+      dispute_id: dispute.id,
+      type: "dispute",
+      input_snapshot: input,
+      output: recommendation,
+      model,
+      created_by: user.id,
+    });
+  } catch (error) {
+    await supabase.from("disputes").delete().eq("id", dispute.id);
+    redirect(`/app/tasks/${taskId}?error=${encodeURIComponent(normalizeAIError(error))}`);
+  }
   await supabase.from("tasks").update({ status: "disputed" }).eq("id", taskId);
-  await supabase.from("ai_reports").insert({
-    project_id: task.project_id,
-    type: "dispute",
-    input_snapshot: { task_id: taskId, reason, performerExplanation },
-    output: recommendation,
-    model: process.env.OPENAI_API_KEY && process.env.AI_PROVIDER === "openai" ? process.env.OPENAI_MODEL || "gpt-5.5" : "mock-v1",
-  });
   await supabase.from("audit_logs").insert({
     project_id: task.project_id,
     user_id: user.id,
@@ -167,4 +178,3 @@ export async function resolveDispute(formData: FormData) {
   revalidatePath(`/app/tasks/${dispute.task_id}`);
   redirect(`/app/tasks/${dispute.task_id}`);
 }
-

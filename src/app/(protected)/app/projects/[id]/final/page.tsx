@@ -1,5 +1,6 @@
 import { Brain, CheckCircle2, FileCheck2, Gauge, Scale, ShieldCheck, TriangleAlert, Users } from "lucide-react";
 import { confirmFinalDecision, generateFinal } from "@/app/(protected)/app/projects/[id]/final/actions";
+import { AISubmitButton } from "@/components/ai-controls";
 import { Button, ButtonLink, Card, ErrorMessage, HelpCard, MetricCard, PageHeader, Progress, SectionHeader, StatusBadge } from "@/components/ui";
 import { requireProjectOwner } from "@/lib/auth";
 
@@ -19,27 +20,37 @@ export default async function FinalReportPage({
     supabase.from("final_decisions").select("*").eq("project_id", id).maybeSingle(),
   ]);
   const report = reportRows?.[0]?.output as {
-    project_summary: string;
-    success_criteria_evaluation: Array<{ criterion: string; status: string; comment: string }>;
-    task_statistics: { planned: number; approved: number; rejected: number; disputed: number; late: number };
-    member_contributions: Array<{ user_id: string; contribution_score: number; summary: string; strongest_evidence: string[]; issues: string[] }>;
-    evidence_quality_score: number;
-    delay_analysis: string;
-    dispute_summary: string;
-    pledge_recommendation: Array<{ user_id: string; pledge_return_percentage: number; reason: string }>;
-    reasoning: string;
-    confidence_score: number;
+    projectSummary: string;
+    successCriteriaEvaluation: Array<{ criterion: string; status: string; reasoning: string }>;
+    taskStatistics: { total: number; approved: number; rejected: number; needsChanges: number; disputed: number; overdue: number };
+    memberContributions: Array<{
+      userId: string;
+      contributionScore: number;
+      strengthsObserved: string[];
+      issues: string[];
+      evidenceQuality: number;
+      consistency: number;
+      reasoning: string;
+      pledgeRecommendation: { recommendedReturnPercentage: number; reasoning: string };
+    }>;
+    evidenceQualityAnalysis: string;
+    delayAnalysis: string;
+    disputeSummary: string;
+    finalRecommendation: string;
+    projectSuccessScore: number;
+    confidence: number;
+    humanConfirmationNotice: string;
   } | undefined;
   const finalActions = decision?.final_action as Record<string, { name: string; return_percentage: number }> | undefined;
-  const metCount = report?.success_criteria_evaluation.filter((item) => item.status === "met").length ?? 0;
-  const totalCriteria = report?.success_criteria_evaluation.length ?? 0;
+  const metCount = report?.successCriteriaEvaluation.filter((item) => item.status === "achieved").length ?? 0;
+  const totalCriteria = report?.successCriteriaEvaluation.length ?? 0;
   const outcome = !report
     ? "Needs manual review"
-    : report.task_statistics.planned === 0
+    : report.taskStatistics.total === 0
       ? "Needs manual review"
-      : report.task_statistics.approved === 0
+      : report.taskStatistics.approved === 0
         ? "Not completed"
-        : report.task_statistics.disputed > 0 || report.confidence_score < 60
+        : report.taskStatistics.disputed > 0 || report.confidence < 60
           ? "Needs manual review"
           : totalCriteria && metCount === totalCriteria
             ? "Success"
@@ -68,7 +79,7 @@ export default async function FinalReportPage({
           </p>
           <form action={generateFinal} className="mt-6">
             <input type="hidden" name="project_id" value={id} />
-            <Button type="submit" size="lg"><Brain size={18} /> Generate final report</Button>
+            <AISubmitButton labelKey="ai.generateFinalReport" pendingKey="ai.generatingFinalReport" />
           </form>
         </Card>
       )}
@@ -80,13 +91,15 @@ export default async function FinalReportPage({
               <div>
                 <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[.16em] text-cyan-300"><Brain size={16} /> AI recommendation</div>
                 <h2 className="mt-3 text-3xl font-black tracking-[-.035em]">{outcome}</h2>
-                <p className="mt-3 leading-7">{report.project_summary}</p>
-                <p className="mt-4 rounded-xl border border-cyan-300/20 bg-background/55 p-3 text-sm font-bold text-cyan-100"><span className="text-foreground">Why AI thinks this:</span> {report.reasoning}</p>
+                <p className="mt-3 leading-7">{report.projectSummary}</p>
+                <p className="mt-4 rounded-xl border border-cyan-300/20 bg-background/55 p-3 text-sm font-bold text-cyan-100"><span className="text-foreground">Why AI thinks this:</span> {report.finalRecommendation}</p>
               </div>
               <div className="rounded-2xl border border-border bg-card p-5">
-                <div className="flex items-center justify-between"><span className="font-black">Confidence</span><strong>{report.confidence_score}%</strong></div>
-                <Progress value={report.confidence_score} className="mt-3" />
-                <p className="mt-4 text-xs font-bold text-muted-foreground">Human confirmation is required before the sprint outcome is recorded.</p>
+                <div className="flex items-center justify-between"><span className="font-black">Project success</span><strong>{report.projectSuccessScore}%</strong></div>
+                <Progress value={report.projectSuccessScore} className="mt-3" />
+                <div className="mt-4 flex items-center justify-between"><span className="font-black">Confidence</span><strong>{report.confidence}%</strong></div>
+                <Progress value={report.confidence} className="mt-3" />
+                <p className="mt-4 text-xs font-bold text-muted-foreground">{report.humanConfirmationNotice}</p>
               </div>
             </div>
           </Card>
@@ -96,22 +109,22 @@ export default async function FinalReportPage({
           </HelpCard>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <MetricCard label="Planned tasks" value={report.task_statistics.planned} icon={<FileCheck2 size={20} />} />
-            <MetricCard label="Approved" value={report.task_statistics.approved} icon={<CheckCircle2 size={20} />} />
-            <MetricCard label="Disputed" value={report.task_statistics.disputed} icon={<TriangleAlert size={20} />} />
-            <MetricCard label="Evidence quality" value={`${report.evidence_quality_score}/100`} icon={<Gauge size={20} />} />
+            <MetricCard label="Planned tasks" value={report.taskStatistics.total} icon={<FileCheck2 size={20} />} />
+            <MetricCard label="Approved" value={report.taskStatistics.approved} icon={<CheckCircle2 size={20} />} />
+            <MetricCard label="Disputed" value={report.taskStatistics.disputed} icon={<TriangleAlert size={20} />} />
+            <MetricCard label="Overdue" value={report.taskStatistics.overdue} icon={<Gauge size={20} />} />
           </div>
 
           <Card>
             <SectionHeader title="Success criteria evaluation" description="Each criterion is evaluated against evidence and review outcomes." />
             <div className="grid gap-3">
-              {report.success_criteria_evaluation.map((item) => (
+              {report.successCriteriaEvaluation.map((item) => (
                 <div key={item.criterion} className="rounded-xl border border-border bg-secondary p-4">
                   <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
                     <strong>{item.criterion}</strong>
                     <StatusBadge status={item.status} />
                   </div>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.comment}</p>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.reasoning}</p>
                 </div>
               ))}
             </div>
@@ -121,16 +134,19 @@ export default async function FinalReportPage({
             <Card>
               <SectionHeader title="Member contribution scores" />
               <div className="space-y-4">
-                {report.member_contributions.map((member) => {
-                  const pledge = pledges?.find((item) => item.user_id === member.user_id);
-                  const name = (pledge?.profiles as unknown as { name: string } | undefined)?.name || member.user_id;
+                {report.memberContributions.map((member) => {
+                  const pledge = pledges?.find((item) => item.user_id === member.userId);
+                  const name = (pledge?.profiles as unknown as { name: string } | undefined)?.name || member.userId;
                   return (
-                    <div key={member.user_id}>
-                      <div className="mb-1 flex justify-between text-sm"><strong>{name}</strong><span className="text-muted-foreground">{member.contribution_score}/100</span></div>
-                      <Progress value={member.contribution_score} />
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{member.summary}</p>
-                      {member.strongest_evidence.length ? <p className="mt-2 text-xs font-bold text-cyan-100">Strongest evidence: {member.strongest_evidence.join(", ")}</p> : null}
+                    <div key={member.userId}>
+                      <div className="mb-1 flex justify-between text-sm"><strong>{name}</strong><span className="text-muted-foreground">{member.contributionScore}/100</span></div>
+                      <Progress value={member.contributionScore} />
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{member.reasoning}</p>
+                      {member.strengthsObserved.length ? <p className="mt-2 text-xs font-bold text-cyan-100">Strengths observed: {member.strengthsObserved.join(", ")}</p> : null}
                       {member.issues.length ? <p className="mt-1 text-xs font-bold text-amber-100">Open issues: {member.issues.join(", ")}</p> : null}
+                      <p className="mt-2 rounded-xl border border-amber-300/20 bg-amber-400/10 p-2 text-xs font-bold text-amber-100">
+                        AI pledge recommendation: {member.pledgeRecommendation.recommendedReturnPercentage}% - {member.pledgeRecommendation.reasoning}
+                      </p>
                     </div>
                   );
                 })}
@@ -139,8 +155,9 @@ export default async function FinalReportPage({
             <Card>
               <SectionHeader title="Delay and dispute analysis" />
               <div className="space-y-4 text-sm leading-6 text-muted-foreground">
-                <p><strong className="text-foreground">Delay analysis:</strong> {report.delay_analysis}</p>
-                <p><strong className="text-foreground">Dispute summary:</strong> {report.dispute_summary}</p>
+                <p><strong className="text-foreground">Evidence quality:</strong> {report.evidenceQualityAnalysis}</p>
+                <p><strong className="text-foreground">Delay analysis:</strong> {report.delayAnalysis}</p>
+                <p><strong className="text-foreground">Dispute summary:</strong> {report.disputeSummary}</p>
               </div>
             </Card>
           </div>
@@ -162,12 +179,12 @@ export default async function FinalReportPage({
               <form action={confirmFinalDecision} className="mt-5 grid gap-4">
                 <input type="hidden" name="project_id" value={id} />
                 {pledges?.map((pledge) => {
-                  const recommendation = report.pledge_recommendation.find((item) => item.user_id === pledge.user_id);
+                  const recommendation = report.memberContributions.find((item) => item.userId === pledge.user_id)?.pledgeRecommendation;
                   return (
                     <label key={pledge.user_id}>
                       {(pledge.profiles as unknown as { name: string }).name}: virtual pledge return percentage
-                      <input name={`return_${pledge.user_id}`} type="number" min={0} max={100} defaultValue={recommendation?.pledge_return_percentage ?? 0} required />
-                      <small className="font-normal text-muted-foreground">AI suggested {recommendation?.pledge_return_percentage ?? 0}%: {recommendation?.reason}</small>
+                      <input name={`return_${pledge.user_id}`} type="number" min={0} max={100} defaultValue={recommendation?.recommendedReturnPercentage ?? 0} required />
+                      <small className="font-normal text-muted-foreground">AI suggested {recommendation?.recommendedReturnPercentage ?? 0}%: {recommendation?.reasoning}</small>
                     </label>
                   );
                 })}

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Clock3, FileUp, Link2, ListChecks, Loader2, Send, Sparkles } from "lucide-react";
 import { saveDailyLog } from "@/app/(protected)/app/logs/actions";
+import { AIEnhanceButton } from "@/components/ai-controls";
 import { Button, Card, EmptyState, ErrorMessage, EvidenceExamples, HelpCard, StatusBadge } from "@/components/ui";
 
 type Project = { id: string; title: string; tasks: Array<{ id: string; title: string; status: string }> };
@@ -55,6 +56,7 @@ export function DailyLogForm({
           <small className="font-normal text-muted-foreground">One plain-language update is enough.</small>
           <textarea name="summary" required className="min-h-28" placeholder="Example: Finished the evidence submission UI and attached the first mobile screenshots." />
         </label>
+        <AIEnhanceButton targetName="summary" context="daily_log" />
 
         <div>
           <div className="mb-2 flex items-center gap-2 text-sm font-black"><ListChecks size={17} className="text-primary" /> 2. Which task does this support?</div>

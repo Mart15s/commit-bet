@@ -9,8 +9,7 @@ AI is advisory only. The MVP does not collect, hold, transfer, or distribute rea
 - Next.js 16 App Router with TypeScript
 - Tailwind CSS
 - Supabase Auth, Postgres, Row Level Security, and Storage
-- OpenAI Responses API behind a server-only service layer
-- Mock AI mode by default
+- Gemini API behind a server-only service layer
 - Vitest and Playwright for focused verification
 
 ## Setup
@@ -47,9 +46,8 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<PUBLISHABLE_KEY>
 # NEXT_PUBLIC_SUPABASE_ANON_KEY=<LEGACY_ANON_KEY>
 NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000
 SUPABASE_SERVICE_ROLE_KEY=<SERVICE_ROLE_KEY>
-OPENAI_API_KEY=
-OPENAI_MODEL=gpt-5.5
-AI_PROVIDER=mock
+GEMINI_API_KEY=<your Gemini API key>
+GEMINI_MODEL=gemini-3.5-flash
 ```
 
 For the production Vercel environment, set `NEXT_PUBLIC_SITE_URL` to the
@@ -88,28 +86,9 @@ Main schema:
 
 RLS is enabled on all public tables. Server Actions also verify the authenticated user and team/project relationship before mutating data.
 
-## Mocked AI Mode
+## Gemini AI
 
-Mocked AI is the default and works without an OpenAI key:
-
-```bash
-AI_PROVIDER=mock
-OPENAI_API_KEY=
-```
-
-The mock planner returns deterministic phases, tasks, risks, evidence requirements, dispute recommendations, and final reports based on project inputs.
-
-## Optional OpenAI Mode
-
-Set:
-
-```bash
-AI_PROVIDER=openai
-OPENAI_API_KEY=<your-key>
-OPENAI_MODEL=gpt-5.5
-```
-
-OpenAI calls are server-only and use structured Zod output validation. If no API key is present, the app falls back to mock mode.
+Gemini calls are server-only and use structured JSON plus Zod validation before database writes. Set `GEMINI_API_KEY` on the server or Vercel project. Do not expose it with a `NEXT_PUBLIC_` prefix.
 
 ## MVP Flow
 
