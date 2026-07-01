@@ -7,12 +7,13 @@ import {
   languageStorageKey,
   translate,
   type Language,
+  type TranslationKey,
 } from "@/lib/i18n";
 
 type LanguageContextValue = {
   language: Language;
   setLanguage: (language: Language) => void;
-  t: (key: string) => string;
+  t: (key: TranslationKey | string) => string;
 };
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);

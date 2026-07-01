@@ -1,4 +1,5 @@
 import { ProjectWizard } from "@/components/project-wizard";
+import { T } from "@/components/i18n-text";
 import { ButtonLink, EmptyState, PageHeader } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 
@@ -31,15 +32,15 @@ export default async function NewProjectPage({
 
   return (
     <>
-      <PageHeader title="Create a commitment sprint" description="Define the agreement first. AI will help turn it into an executable plan." />
+      <PageHeader title={<T k="project.newTitle" />} description={<T k="project.newDescription" />} />
       {teams.length ? (
         <ProjectWizard teams={teams} initialTeam={params.team} error={params.error} />
       ) : (
         <EmptyState
-          title="Create a team first"
-          copy="CommitBet works best with a small group that can commit, submit proof, and approve each other's work."
-          tip="Next, create a team or join one with an invite code. Then you can start your first project."
-          action={<ButtonLink href="/app/teams">Set up a team</ButtonLink>}
+          title={<T k="project.createTeamFirst" />}
+          copy={<T k="project.createTeamFirstCopy" />}
+          tip={<T k="project.createTeamFirstTip" />}
+          action={<ButtonLink href="/app/teams"><T k="project.setUpTeam" /></ButtonLink>}
         />
       )}
     </>

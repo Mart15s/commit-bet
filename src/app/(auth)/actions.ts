@@ -35,11 +35,11 @@ export async function register(formData: FormData) {
     password,
     options: {
       data: { name },
-      emailRedirectTo: `${getSiteUrl()}/login?notice=${encodeURIComponent("Email confirmed. You can now log in.")}`,
+      emailRedirectTo: `${getSiteUrl()}/login?notice=auth.emailConfirmed`,
     },
   });
   if (error) redirect(messageUrl("/register", getAuthErrorMessage(error)));
-  if (!data.session) redirect("/login?notice=Check your email to confirm your account.");
+  if (!data.session) redirect("/login?notice=auth.confirmEmail");
   redirect("/app");
 }
 

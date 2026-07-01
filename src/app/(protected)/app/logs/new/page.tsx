@@ -1,4 +1,5 @@
 import { DailyLogForm } from "@/components/daily-log-form";
+import { T } from "@/components/i18n-text";
 import { ButtonLink, EmptyState, PageHeader, SuccessState } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 
@@ -26,20 +27,20 @@ export default async function DailyLogPage({
   }
   return (
     <>
-      <PageHeader title="Daily progress" description="Keep it brief. Record what changed, attach proof to tasks, and move on." />
+      <PageHeader title={<T k="daily.title" />} description={<T k="daily.description" />} />
       {params.saved && (
         <div className="mb-4">
           <SuccessState
-            title="Progress logged"
-            copy="Your team can now review your work. Proof links were attached to the selected task when you added one."
+            title={<T k="daily.loggedTitle" />}
+            copy={<T k="daily.loggedCopy" />}
             details={(
               <div>
-                <p className="font-bold">Submitted update</p>
-                <p className="mt-1 text-muted-foreground">{params.summary || "Daily progress saved."}</p>
-                <p className="mt-2 text-xs font-black uppercase tracking-[.12em] text-emerald-200">{params.tasks || 0} linked task{params.tasks === "1" ? "" : "s"}</p>
+                <p className="font-bold"><T k="daily.submittedUpdate" /></p>
+                <p className="mt-1 text-muted-foreground">{params.summary || <T k="daily.savedFallback" />}</p>
+                <p className="mt-2 text-xs font-black uppercase tracking-[.12em] text-emerald-200">{params.tasks || 0} <T k={params.tasks === "1" ? "daily.linkedTask" : "daily.linkedTasks"} /></p>
               </div>
             )}
-            action={<ButtonLink href={params.project ? `/app/projects/${params.project}` : "/app"} variant="secondary">View project progress</ButtonLink>}
+            action={<ButtonLink href={params.project ? `/app/projects/${params.project}` : "/app"} variant="secondary"><T k="daily.viewProjectProgress" /></ButtonLink>}
           />
         </div>
       )}
@@ -47,10 +48,10 @@ export default async function DailyLogPage({
         <DailyLogForm projects={withTasks} initialProject={params.project} error={params.error} />
       ) : (
         <EmptyState
-          title="No active project yet"
-          copy="Daily check-ins start after a project is created, the AI plan is reviewed, and the team starts the commitment."
-          tip="Next: create a project or ask the owner to start the drafted plan."
-          action={<ButtonLink href="/app/projects/new">Create first project</ButtonLink>}
+          title={<T k="daily.noActiveTitle" />}
+          copy={<T k="daily.noActiveCopy" />}
+          tip={<T k="daily.noActiveTip" />}
+          action={<ButtonLink href="/app/projects/new"><T k="dashboard.createFirstProject" /></ButtonLink>}
         />
       )}
     </>
