@@ -1,5 +1,6 @@
 "use client";
 
+import { Globe2 } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { updatePreferredLanguage } from "@/app/(protected)/app/profile/actions";
 import { useI18n } from "@/components/language-provider";
@@ -29,6 +30,7 @@ export function LanguageSwitcher({
 
   function handleChange(value: string) {
     if (!isLanguage(value)) return;
+    if (value === language) return;
     const nextLanguage: Language = value;
     setLanguage(nextLanguage);
     setMessage("");
@@ -43,21 +45,37 @@ export function LanguageSwitcher({
 
   return (
     <div className={cn("grid gap-2", compact && "w-auto", className)}>
-      <label className={cn(compact && "gap-1 text-xs", labelClassName)}>
-        <span>{t("language.label")}</span>
-        <select
+      <div className="grid gap-2">
+        <span className={cn("text-sm font-bold text-muted-foreground", compact && "sr-only", labelClassName)}>
+          {t("language.label")}
+        </span>
+        <div
           aria-label={t("language.label")}
-          className={cn("min-w-32", compact && "w-auto rounded-lg px-3 py-2 text-sm")}
-          value={language}
-          onChange={(event) => handleChange(event.target.value)}
+          className={cn(
+            "inline-flex w-fit items-center gap-1 rounded-xl border border-primary/35 bg-primary/10 p-1 text-sm font-black text-foreground shadow-[0_0_20px_rgba(124,58,237,.14)]",
+            compact && "rounded-lg",
+          )}
+          role="group"
         >
+          <Globe2 className="ml-2 text-primary" size={compact ? 15 : 17} />
           {languages.map((option) => (
-            <option value={option} key={option}>
-              {languageLabels[option]}
-            </option>
+            <button
+              aria-label={languageLabels[option]}
+              aria-pressed={language === option}
+              className={cn(
+                "min-h-8 min-w-10 rounded-lg px-2.5 uppercase transition hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                language === option ? "bg-primary text-primary-foreground shadow-[0_0_14px_rgba(124,58,237,.28)]" : "text-muted-foreground",
+              )}
+              disabled={isPending}
+              key={option}
+              onClick={() => handleChange(option)}
+              type="button"
+            >
+              {option}
+            </button>
           ))}
-        </select>
-      </label>
+        </div>
+      </div>
       {isPending && <p className="text-xs font-bold text-muted-foreground">{t("language.saving")}</p>}
       {message && <p className="text-xs font-bold text-muted-foreground">{message}</p>}
     </div>
