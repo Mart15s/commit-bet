@@ -121,26 +121,36 @@ export async function openDispute(formData: FormData) {
   }).select("id").single();
   if (error || !dispute) redirect(`/app/tasks/${taskId}?error=${encodeURIComponent(error?.message || "Could not open dispute")}`);
 
-  const recommendation = await generateDisputeRecommendation({
+  const result = await generateDisputeRecommendation({
     taskTitle: task.title,
     performerExplanation,
     rejectionReason: review?.comment || "",
     evidenceCount: count || 0,
   });
+  const recommendation = result.output;
   await supabase.rpc("attach_dispute_recommendation", { dispute_id: dispute.id, recommendation });
   await supabase.from("tasks").update({ status: "disputed" }).eq("id", taskId);
   await supabase.from("ai_reports").insert({
     project_id: task.project_id,
     type: "dispute",
-    input_snapshot: { task_id: taskId, reason, performerExplanation },
+    input_snapshot: {
+      task_id: taskId,
+      reason,
+      performerExplanation,
+      evidence_count: count || 0,
+      ai: {
+        fallback_used: result.fallbackUsed,
+        error: result.error,
+      },
+    },
     output: recommendation,
-    model: process.env.OPENAI_API_KEY && process.env.AI_PROVIDER === "openai" ? process.env.OPENAI_MODEL || "gpt-5.5" : "mock-v1",
+    model: result.model,
   });
   await supabase.from("audit_logs").insert({
     project_id: task.project_id,
     user_id: user.id,
     action: "dispute_opened",
-    details: { task_id: taskId, dispute_id: dispute.id },
+    details: { task_id: taskId, dispute_id: dispute.id, model: result.model, fallback_used: result.fallbackUsed, ai_error: result.error },
   });
   revalidatePath(`/app/tasks/${taskId}`);
   redirect(`/app/disputes/${dispute.id}`);
@@ -167,4 +177,3 @@ export async function resolveDispute(formData: FormData) {
   revalidatePath(`/app/tasks/${dispute.task_id}`);
   redirect(`/app/tasks/${dispute.task_id}`);
 }
-

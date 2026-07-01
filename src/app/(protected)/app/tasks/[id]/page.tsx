@@ -1,5 +1,6 @@
 import { Brain, Check, ExternalLink, FileText, MessageSquare, ShieldAlert, Upload, X } from "lucide-react";
 import { addEvidence, markInProgress, openDispute, reviewTask, submitTask } from "@/app/(protected)/app/tasks/actions";
+import { AiManualReviewNote, AiSubmitButton } from "@/components/ai-status";
 import { Button, ButtonLink, Card, EmptyState, ErrorMessage, EvidenceExamples, HelpCard, PageHeader, StatusBadge } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { formatDate, singleRelation } from "@/lib/utils";
@@ -114,6 +115,7 @@ export default async function TaskPage({
             <Card>
               <h2 className="font-black">Peer review</h2>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">Compare the evidence with every acceptance criterion. Your decision controls whether this task counts toward project progress.</p>
+              <div className="mt-3"><AiManualReviewNote /></div>
               <HelpCard title="Reviewer guide" tone="amber" className="mt-3">
                 Approve if the proof clearly matches the task. Request changes if the work is started but not fully proven. Reject only if the evidence does not support the task.
               </HelpCard>
@@ -147,7 +149,7 @@ export default async function TaskPage({
                 <input type="hidden" name="task_id" value={id} />
                 <label>Reason<input name="reason" required placeholder="Why should this be reconsidered?" /></label>
                 <label>Your explanation<textarea name="performer_explanation" required placeholder="Point to the proof and the criteria you believe it satisfies." /></label>
-                <Button type="submit" variant="danger">Ask AI to structure the dispute</Button>
+                <AiSubmitButton labelKey="ai.openDispute" pendingKey="ai.preparingDispute" type="submit" variant="danger" />
               </form>
             </Card>
           )}
