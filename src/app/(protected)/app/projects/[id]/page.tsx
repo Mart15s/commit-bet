@@ -1,6 +1,6 @@
 import { Brain, CalendarDays, Coins, FileCheck2, Gauge, ShieldCheck, Users } from "lucide-react";
 import { generatePlan, startProject, updateDraftTask } from "@/app/(protected)/app/projects/actions";
-import { Button, ButtonLink, Card, ErrorMessage, MetricCard, PageHeader, Progress, SectionHeader, StatusBadge } from "@/components/ui";
+import { Button, ButtonLink, Card, EmptyState, ErrorMessage, EvidenceExamples, HelpCard, MetricCard, NextActionCard, PageHeader, Progress, SectionHeader, StatusBadge } from "@/components/ui";
 import { TaskBoard, type BoardTask } from "@/components/tasks/task-board";
 import { requireProjectMember } from "@/lib/auth";
 import { formatDate, singleRelation } from "@/lib/utils";
@@ -40,13 +40,22 @@ export default async function ProjectPage({
   const evidenceAdjustedScore = taskRows.length ? Math.min(100, progress + submitted * 4) : 0;
   const remaining = daysUntil(project.end_date);
   const pledgePool = (pledges ?? []).reduce((total, pledge) => total + Number(pledge.amount ?? 0), 0);
-  const plan = reports?.[0]?.output as { risks?: string[]; minimum_success_version?: string; reasoning?: string } | undefined;
+  const plan = reports?.[0]?.output as {
+    phases?: Array<{ name: string; description: string }>;
+    deliverables?: string[];
+    risks?: string[];
+    minimum_success_version?: string;
+    ambitious_success_version?: string;
+    reasoning?: string;
+  } | undefined;
   const projectDisputes = (disputes ?? []).filter((dispute) => (dispute.tasks as unknown as { project_id?: string } | null)?.project_id === id);
   const pendingReviews = taskRows.filter((task) => task.status === "submitted");
   const statusCounts = ["todo", "in_progress", "submitted", "approved", "needs_changes", "rejected", "disputed"].map((status) => ({
     status,
     count: taskRows.filter((task) => task.status === status).length,
   }));
+  const durationDays = Math.max(1, Math.ceil((new Date(`${project.end_date}T00:00:00`).getTime() - new Date(`${project.start_date}T00:00:00`).getTime()) / 86_400_000) + 1);
+  const planLooksLarge = taskRows.length > Math.max(4, Math.ceil(durationDays / 2));
 
   const boardTasks: BoardTask[] = taskRows.map((task) => {
     const assignment = singleRelation(task.task_assignments as unknown as Assignment | Assignment[]);
@@ -90,16 +99,67 @@ export default async function ProjectPage({
           <div className="flex gap-3">
             <Brain className="mt-1 text-cyan-300" />
             <div>
-              <h2 className="text-xl font-black">{taskRows.length ? "Review the AI plan" : "Generate your execution plan"}</h2>
-              <p className="mt-1 text-sm leading-6 text-muted-foreground">AI turns the commitment into tasks with owners, due dates, acceptance criteria, expected evidence, and risk notes.</p>
+              <h2 className="text-xl font-black">{taskRows.length ? "Review the draft AI plan" : "Generate your execution plan"}</h2>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">AI turns the commitment into editable tasks with owners, deadlines, acceptance criteria, expected evidence, and risk notes.</p>
             </div>
           </div>
+          {taskRows.length ? (
+            <HelpCard title="You are not locked into this plan" tone="cyan" className="mt-4">
+              Review the draft before starting. You can edit task names, owners, due dates, and priorities below. Keep evidence requirements concrete so reviewers know what to check.
+            </HelpCard>
+          ) : (
+            <HelpCard title="What happens after generation" tone="cyan" className="mt-4">
+              Review the plan before starting. You can edit tasks, deadlines, and evidence requirements before the project becomes active.
+            </HelpCard>
+          )}
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-            <form action={generatePlan}><input type="hidden" name="project_id" value={id} /><Button className="w-full" type="submit">{taskRows.length ? "Regenerate plan" : "Generate AI plan"}</Button></form>
-            {taskRows.length ? <form action={startProject}><input type="hidden" name="project_id" value={id} /><Button className="w-full" variant="secondary" type="submit">Confirm and start project</Button></form> : null}
+            <form action={generatePlan}><input type="hidden" name="project_id" value={id} /><Button className="w-full" type="submit">{taskRows.length ? "Regenerate AI plan" : "Generate AI plan"}</Button></form>
+            {taskRows.length ? <ButtonLink href="#edit-plan" variant="secondary">Edit plan first</ButtonLink> : null}
+            {taskRows.length ? <form action={startProject}><input type="hidden" name="project_id" value={id} /><Button className="w-full" variant="secondary" type="submit">Start project with this plan</Button></form> : null}
           </div>
         </Card>
       )}
+
+      {project.status === "draft" && taskRows.length ? (
+        <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_.85fr]">
+          <Card>
+            <SectionHeader title="AI plan draft" description="The draft should be useful, but your team should still tune it before starting." />
+            <div className="grid gap-3 sm:grid-cols-2">
+              {(plan?.phases ?? []).map((phase) => (
+                <div key={phase.name} className="rounded-xl border border-border bg-secondary p-4">
+                  <p className="text-xs font-black uppercase tracking-[.12em] text-cyan-300">Phase</p>
+                  <h3 className="mt-1 font-black">{phase.name}</h3>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">{phase.description}</p>
+                </div>
+              ))}
+              {(plan?.deliverables ?? []).slice(0, 4).map((deliverable) => (
+                <div key={deliverable} className="rounded-xl border border-primary/20 bg-primary/10 p-4">
+                  <p className="text-xs font-black uppercase tracking-[.12em] text-primary">Deliverable</p>
+                  <p className="mt-1 text-sm font-bold leading-6">{deliverable}</p>
+                </div>
+              ))}
+            </div>
+            {!plan?.phases?.length && !plan?.deliverables?.length && (
+              <p className="text-sm leading-6 text-muted-foreground">Generate or regenerate the AI plan to see phases and deliverables here.</p>
+            )}
+          </Card>
+          <Card className={planLooksLarge ? "border-amber-300/30 bg-amber-400/10" : "border-cyan-300/25 bg-cyan-400/10"}>
+            <SectionHeader title={planLooksLarge ? "Plan may be too large" : "Proof expectations"} />
+            <p className="text-sm leading-6 text-muted-foreground">
+              {planLooksLarge
+                ? `This draft has ${taskRows.length} tasks for a ${durationDays}-day commitment. Consider trimming scope before starting.`
+                : "Each task should have evidence that a teammate can open, inspect, and compare to acceptance criteria."}
+            </p>
+            <div className="mt-4"><EvidenceExamples compact /></div>
+            {plan?.risks?.length ? (
+              <div className="mt-4 rounded-xl border border-border bg-background/45 p-3 text-sm">
+                <p className="font-black">AI risk note</p>
+                <p className="mt-1 text-muted-foreground">{plan.risks[0]}</p>
+              </div>
+            ) : null}
+          </Card>
+        </div>
+      ) : null}
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[1.1fr_.9fr]">
         <Card>
@@ -135,11 +195,19 @@ export default async function ProjectPage({
           <SectionHeader title="Task board" description="Todo, in progress, submitted, approved, changes, rejected, and disputed work in one view." />
           <TaskBoard tasks={boardTasks} />
         </section>
-      ) : null}
+      ) : (
+        <section className="mt-8">
+          <EmptyState
+            title="No tasks yet"
+            copy="Tasks will appear after the owner generates an AI plan. The plan is editable before the project starts."
+            action={project.status === "draft" && isOwner ? <form action={generatePlan}><input type="hidden" name="project_id" value={id} /><Button type="submit">Generate AI plan</Button></form> : null}
+          />
+        </section>
+      )}
 
       {project.status === "draft" && isOwner && taskRows.length ? (
-        <section className="mt-8">
-          <SectionHeader title="Edit draft AI tasks" description="Adjust owner, due date, and priority before starting the project." />
+        <section className="mt-8" id="edit-plan">
+          <SectionHeader title="Edit plan before starting" description="Adjust owner, due date, and priority before starting the project. Acceptance criteria and proof expectations stay visible while you edit." />
           <div className="grid gap-3">
             {taskRows.map((task) => {
               const assignment = singleRelation(task.task_assignments as unknown as Assignment | Assignment[]);
@@ -152,11 +220,28 @@ export default async function ProjectPage({
                     <label>Priority<select name="priority" defaultValue={task.priority}><option>low</option><option>medium</option><option>high</option><option>critical</option></select></label>
                     <label className="sm:col-span-2">Assignee<select name="assigned_user_id" defaultValue={assignment?.user_id}>{profiles?.map((profile) => <option key={profile.user_id} value={profile.user_id}>{(profile.profiles as unknown as { name: string }).name}</option>)}</select></label>
                     <Button className="self-end" type="submit" variant="secondary">Save task</Button>
+                    <div className="sm:col-span-3 grid gap-2 text-sm sm:grid-cols-2">
+                      <div className="rounded-xl border border-primary/20 bg-primary/10 p-3">
+                        <p className="font-black">Acceptance criteria</p>
+                        <p className="mt-1 text-muted-foreground">{(task.acceptance_criteria ?? []).join("; ") || "Add criteria in the task detail after starting."}</p>
+                      </div>
+                      <div className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-3">
+                        <p className="font-black">Expected evidence</p>
+                        <p className="mt-1 text-muted-foreground">{(task.expected_evidence_types ?? []).join(", ") || "Proof requirement pending."}</p>
+                        {assignment?.assigned_reason && <p className="mt-2 text-xs text-muted-foreground">Why this member: {assignment.assigned_reason}</p>}
+                      </div>
+                    </div>
                   </form>
                 </Card>
               );
             })}
           </div>
+          <NextActionCard
+            className="mt-4"
+            title="Start when the draft feels fair"
+            copy="Once the owners, deadlines, and proof expectations look right, start the project with this plan."
+            action={<form action={startProject}><input type="hidden" name="project_id" value={id} /><Button type="submit">Start project with this plan</Button></form>}
+          />
         </section>
       ) : null}
 
@@ -191,7 +276,14 @@ export default async function ProjectPage({
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">{log.summary}</p>
               </div>
             ))}
-            {!logs?.length && <p className="text-sm text-muted-foreground">No daily logs yet.</p>}
+            {!logs?.length && (
+              <EmptyState
+                title="No daily logs yet"
+                copy="Daily check-ins should take less than 2 minutes. They help the team see progress before review time."
+                action={project.status === "active" ? <ButtonLink href={`/app/logs/new?project=${id}`} variant="secondary">Log today</ButtonLink> : null}
+                className="py-7"
+              />
+            )}
           </div>
         </Card>
 
@@ -200,7 +292,14 @@ export default async function ProjectPage({
           <div className="space-y-3">
             {pendingReviews.map((task) => <ButtonLink key={task.id} href={`/app/tasks/${task.id}`} variant="secondary" className="h-auto w-full justify-between p-3 text-left"><span className="font-bold">{task.title}</span><StatusBadge status="submitted" /></ButtonLink>)}
             {projectDisputes.map((dispute) => <div key={dispute.id} className="rounded-xl border border-rose-300/30 bg-rose-500/12 p-3 text-sm"><strong>{(dispute.tasks as unknown as { title: string }).title}</strong><p className="mt-1 text-muted-foreground">{dispute.reason}</p></div>)}
-            {!pendingReviews.length && !projectDisputes.length && <p className="text-sm text-muted-foreground">No pending reviews or disputes.</p>}
+            {!pendingReviews.length && !projectDisputes.length && (
+              <EmptyState
+                title="No pending approvals"
+                copy="Nice. When a teammate submits proof, it will appear here for a quick human review."
+                tip="Approve if the proof clearly matches the task."
+                className="py-7"
+              />
+            )}
           </div>
         </Card>
       </div>

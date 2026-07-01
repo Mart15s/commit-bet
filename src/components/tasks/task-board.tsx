@@ -15,13 +15,13 @@ export type BoardTask = {
 };
 
 const columns = [
-  { key: "todo", label: "Todo" },
-  { key: "in_progress", label: "In progress" },
-  { key: "submitted", label: "Submitted" },
-  { key: "approved", label: "Approved" },
-  { key: "needs_changes", label: "Needs changes" },
-  { key: "rejected", label: "Rejected" },
-  { key: "disputed", label: "Disputed" },
+  { key: "todo", label: "Todo", empty: "AI-planned tasks will start here." },
+  { key: "in_progress", label: "In progress", empty: "Work appears here once someone starts." },
+  { key: "submitted", label: "Submitted", empty: "Proof waiting for peer review lands here." },
+  { key: "approved", label: "Approved", empty: "Approved proof counts toward progress." },
+  { key: "needs_changes", label: "Needs changes", empty: "Tasks needing clearer proof show here." },
+  { key: "rejected", label: "Rejected", empty: "Only unsupported proof should land here." },
+  { key: "disputed", label: "Disputed", empty: "AI can structure disagreements here." },
 ];
 
 export function TaskBoard({ tasks }: { tasks: BoardTask[] }) {
@@ -52,7 +52,7 @@ export function TaskBoard({ tasks }: { tasks: BoardTask[] }) {
                   </Card>
                 </ButtonLink>
               ))}
-              {!items.length && <div className="rounded-xl border border-dashed border-border bg-secondary/55 p-4 text-center text-xs font-bold text-muted-foreground">No tasks</div>}
+              {!items.length && <div className="rounded-xl border border-dashed border-border bg-secondary/55 p-4 text-center text-xs font-bold leading-5 text-muted-foreground">{column.empty}</div>}
             </div>
           </section>
         );

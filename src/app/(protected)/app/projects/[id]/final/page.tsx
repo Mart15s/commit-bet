@@ -1,6 +1,6 @@
 import { Brain, CheckCircle2, FileCheck2, Gauge, Scale, ShieldCheck, TriangleAlert, Users } from "lucide-react";
 import { confirmFinalDecision, generateFinal } from "@/app/(protected)/app/projects/[id]/final/actions";
-import { Button, ButtonLink, Card, ErrorMessage, MetricCard, PageHeader, Progress, SectionHeader, StatusBadge } from "@/components/ui";
+import { Button, ButtonLink, Card, ErrorMessage, HelpCard, MetricCard, PageHeader, Progress, SectionHeader, StatusBadge } from "@/components/ui";
 import { requireProjectOwner } from "@/lib/auth";
 
 export default async function FinalReportPage({
@@ -31,6 +31,19 @@ export default async function FinalReportPage({
     confidence_score: number;
   } | undefined;
   const finalActions = decision?.final_action as Record<string, { name: string; return_percentage: number }> | undefined;
+  const metCount = report?.success_criteria_evaluation.filter((item) => item.status === "met").length ?? 0;
+  const totalCriteria = report?.success_criteria_evaluation.length ?? 0;
+  const outcome = !report
+    ? "Needs manual review"
+    : report.task_statistics.planned === 0
+      ? "Needs manual review"
+      : report.task_statistics.approved === 0
+        ? "Not completed"
+        : report.task_statistics.disputed > 0 || report.confidence_score < 60
+          ? "Needs manual review"
+          : totalCriteria && metCount === totalCriteria
+            ? "Success"
+            : "Partial success";
 
   return (
     <>
@@ -46,9 +59,12 @@ export default async function FinalReportPage({
       {!report && (
         <Card className="mt-5 border-cyan-300/25 bg-cyan-400/10 text-center">
           <Scale className="mx-auto text-cyan-300" size={42} />
-          <h2 className="mt-4 text-2xl font-black tracking-[-.03em]">Generate the evidence audit</h2>
+          <h2 className="mt-4 text-2xl font-black tracking-[-.03em]">No final report yet</h2>
           <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-            The report evaluates success criteria, task statistics, member contribution, evidence quality, delay patterns, disputes, and virtual pledge recommendations.
+            The report appears after you generate an evidence audit. It evaluates success criteria, task statistics, member contribution, evidence quality, delay patterns, disputes, and virtual pledge recommendations.
+          </p>
+          <p className="mx-auto mt-4 max-w-xl rounded-xl border border-cyan-300/20 bg-background/45 p-3 text-sm font-bold text-cyan-100">
+            Human confirmation is still required after AI recommends an outcome.
           </p>
           <form action={generateFinal} className="mt-6">
             <input type="hidden" name="project_id" value={id} />
@@ -62,10 +78,10 @@ export default async function FinalReportPage({
           <Card className="border-cyan-300/25 bg-cyan-400/10">
             <div className="grid gap-5 lg:grid-cols-[1fr_18rem] lg:items-center">
               <div>
-                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[.16em] text-cyan-300"><Brain size={16} /> Recommendation, not automatic judgment</div>
-                <h2 className="mt-3 text-2xl font-black tracking-[-.035em]">AI summary</h2>
+                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[.16em] text-cyan-300"><Brain size={16} /> AI recommendation</div>
+                <h2 className="mt-3 text-3xl font-black tracking-[-.035em]">{outcome}</h2>
                 <p className="mt-3 leading-7">{report.project_summary}</p>
-                <p className="mt-4 rounded-xl border border-cyan-300/20 bg-background/55 p-3 text-sm font-bold text-cyan-100">Why: {report.reasoning}</p>
+                <p className="mt-4 rounded-xl border border-cyan-300/20 bg-background/55 p-3 text-sm font-bold text-cyan-100"><span className="text-foreground">Why AI thinks this:</span> {report.reasoning}</p>
               </div>
               <div className="rounded-2xl border border-border bg-card p-5">
                 <div className="flex items-center justify-between"><span className="font-black">Confidence</span><strong>{report.confidence_score}%</strong></div>
@@ -74,6 +90,10 @@ export default async function FinalReportPage({
               </div>
             </div>
           </Card>
+
+          <HelpCard title="Evidence considered" tone="cyan">
+            AI considered approved, rejected, disputed, and late tasks; attached proof; member contribution signals; delay analysis; and recorded disputes. It recommends only. Your team confirms the final outcome manually.
+          </HelpCard>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <MetricCard label="Planned tasks" value={report.task_statistics.planned} icon={<FileCheck2 size={20} />} />
@@ -109,6 +129,8 @@ export default async function FinalReportPage({
                       <div className="mb-1 flex justify-between text-sm"><strong>{name}</strong><span className="text-muted-foreground">{member.contribution_score}/100</span></div>
                       <Progress value={member.contribution_score} />
                       <p className="mt-2 text-sm leading-6 text-muted-foreground">{member.summary}</p>
+                      {member.strongest_evidence.length ? <p className="mt-2 text-xs font-bold text-cyan-100">Strongest evidence: {member.strongest_evidence.join(", ")}</p> : null}
+                      {member.issues.length ? <p className="mt-1 text-xs font-bold text-amber-100">Open issues: {member.issues.join(", ")}</p> : null}
                     </div>
                   );
                 })}
@@ -134,7 +156,7 @@ export default async function FinalReportPage({
                 <ShieldCheck className="text-amber-300" />
                 <div>
                   <h2 className="text-lg font-black">Human confirmation required</h2>
-                  <p className="text-sm leading-6 text-muted-foreground">Review the recommendation and set each virtual pledge outcome manually. CommitBet does not collect or transfer money.</p>
+                  <p className="text-sm leading-6 text-muted-foreground">Review the AI recommendation together, then confirm the final outcome manually. CommitBet does not collect or transfer money.</p>
                 </div>
               </div>
               <form action={confirmFinalDecision} className="mt-5 grid gap-4">
@@ -143,7 +165,7 @@ export default async function FinalReportPage({
                   const recommendation = report.pledge_recommendation.find((item) => item.user_id === pledge.user_id);
                   return (
                     <label key={pledge.user_id}>
-                      {(pledge.profiles as unknown as { name: string }).name}: pledge return percentage
+                      {(pledge.profiles as unknown as { name: string }).name}: virtual pledge return percentage
                       <input name={`return_${pledge.user_id}`} type="number" min={0} max={100} defaultValue={recommendation?.pledge_return_percentage ?? 0} required />
                       <small className="font-normal text-muted-foreground">AI suggested {recommendation?.pledge_return_percentage ?? 0}%: {recommendation?.reason}</small>
                     </label>
@@ -153,7 +175,7 @@ export default async function FinalReportPage({
                   <input className="mt-1 size-5 w-auto" type="checkbox" name="human_confirmation" value="yes" required />
                   <span>I understand this is my team’s manual virtual-pledge decision. No funds are transferred.</span>
                 </label>
-                <Button type="submit" size="lg"><Users size={18} /> Confirm final decision</Button>
+                <Button type="submit" size="lg"><Users size={18} /> Confirm final outcome</Button>
               </form>
             </Card>
           )}

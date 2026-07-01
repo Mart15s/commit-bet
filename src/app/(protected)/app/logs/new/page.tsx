@@ -1,11 +1,11 @@
 import { DailyLogForm } from "@/components/daily-log-form";
-import { EmptyState, PageHeader } from "@/components/ui";
+import { ButtonLink, EmptyState, PageHeader, SuccessState } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 
 export default async function DailyLogPage({
   searchParams,
 }: {
-  searchParams: Promise<{ project?: string; error?: string }>;
+  searchParams: Promise<{ project?: string; error?: string; saved?: string; summary?: string; tasks?: string }>;
 }) {
   const params = await searchParams;
   const { supabase, user } = await requireUser();
@@ -26,8 +26,33 @@ export default async function DailyLogPage({
   }
   return (
     <>
-      <PageHeader title="Daily progress" description="Keep it brief. Record what changed, link it to tasks, and move on." />
-      {withTasks.length ? <DailyLogForm projects={withTasks} initialProject={params.project} error={params.error} /> : <EmptyState title="No active project" copy="Start a project before adding a daily log." />}
+      <PageHeader title="Daily progress" description="Keep it brief. Record what changed, attach proof to tasks, and move on." />
+      {params.saved && (
+        <div className="mb-4">
+          <SuccessState
+            title="Progress logged"
+            copy="Your team can now review your work. Proof links were attached to the selected task when you added one."
+            details={(
+              <div>
+                <p className="font-bold">Submitted update</p>
+                <p className="mt-1 text-muted-foreground">{params.summary || "Daily progress saved."}</p>
+                <p className="mt-2 text-xs font-black uppercase tracking-[.12em] text-emerald-200">{params.tasks || 0} linked task{params.tasks === "1" ? "" : "s"}</p>
+              </div>
+            )}
+            action={<ButtonLink href={params.project ? `/app/projects/${params.project}` : "/app"} variant="secondary">View project progress</ButtonLink>}
+          />
+        </div>
+      )}
+      {withTasks.length ? (
+        <DailyLogForm projects={withTasks} initialProject={params.project} error={params.error} />
+      ) : (
+        <EmptyState
+          title="No active project yet"
+          copy="Daily check-ins start after a project is created, the AI plan is reviewed, and the team starts the commitment."
+          tip="Next: create a project or ask the owner to start the drafted plan."
+          action={<ButtonLink href="/app/projects/new">Create first project</ButtonLink>}
+        />
+      )}
     </>
   );
 }

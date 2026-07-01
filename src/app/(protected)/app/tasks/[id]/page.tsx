@@ -1,6 +1,6 @@
-import { Brain, ExternalLink, FileText, ShieldAlert, Upload } from "lucide-react";
+import { Brain, Check, ExternalLink, FileText, MessageSquare, ShieldAlert, Upload, X } from "lucide-react";
 import { addEvidence, markInProgress, openDispute, reviewTask, submitTask } from "@/app/(protected)/app/tasks/actions";
-import { Button, ButtonLink, Card, ErrorMessage, PageHeader, StatusBadge } from "@/components/ui";
+import { Button, ButtonLink, Card, EmptyState, ErrorMessage, EvidenceExamples, HelpCard, PageHeader, StatusBadge } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { formatDate, singleRelation } from "@/lib/utils";
 import { notFound } from "next/navigation";
@@ -52,9 +52,13 @@ export default async function TaskPage({
           </Card>
           <Card className="border-primary/25">
             <h2 className="text-lg font-black">Acceptance criteria</h2>
-            <ul className="mt-3 space-y-2">{criteria.map((item) => <li className="flex gap-2 text-sm" key={item}><span className="mt-1 size-2 shrink-0 rounded-full bg-primary" />{item}</li>)}</ul>
+            <p className="mt-1 text-sm text-muted-foreground">This is the checklist reviewers compare against the submitted proof.</p>
+            <ul className="mt-3 space-y-2">{criteria.map((item) => <li className="flex gap-2 text-sm leading-6" key={item}><span className="mt-2 size-2 shrink-0 rounded-full bg-primary" />{item}</li>)}</ul>
+            {!criteria.length && <p className="mt-3 text-sm text-muted-foreground">No criteria were added yet. Ask the project owner to clarify what approval should mean.</p>}
             <h3 className="mt-5 text-sm font-black">Expected evidence</h3>
+            <p className="mt-1 text-sm text-muted-foreground">Good proof is easy to open and directly supports the criteria above.</p>
             <div className="mt-2 flex flex-wrap gap-2">{expectedEvidence.map((item: string) => <span key={item} className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-xs font-bold text-cyan-100">{item}</span>)}</div>
+            {!expectedEvidence.length && <div className="mt-3"><EvidenceExamples compact /></div>}
           </Card>
 
           <Card className="border-cyan-300/25 bg-cyan-400/10">
@@ -67,20 +71,29 @@ export default async function TaskPage({
                 const url = item.url || signed?.data?.signedUrl;
                 return <div key={item.id} className="rounded-xl border border-border bg-card p-4"><div className="flex items-start justify-between gap-2"><div><p className="font-black capitalize">{item.type}</p><p className="mt-1 text-sm text-muted-foreground">{item.description}</p></div><FileText size={20} className="text-cyan-300" /></div>{url && <a href={url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 text-sm font-black text-cyan-300">Open evidence <ExternalLink size={14} /></a>}</div>;
               })}
-              {!evidence?.length && <p className="text-sm text-muted-foreground">No proof has been attached yet.</p>}
+              {!evidence?.length && (
+                <EmptyState
+                  title="No proof of work yet"
+                  copy="Attach a commit, screenshot, demo link, Figma link, document, or short video before submitting this task for review."
+                  tip="Proof should show the work, not just describe it."
+                  className="py-7"
+                />
+              )}
             </div>
           </Card>
 
           {isAssignee && !["submitted", "approved", "disputed"].includes(task.status) && (
             <Card>
               <h2 className="flex items-center gap-2 text-lg font-black"><Upload size={19} className="text-cyan-300" /> Submit evidence</h2>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">Add proof your reviewer can open and compare with the acceptance criteria.</p>
+              <div className="mt-3"><EvidenceExamples compact /></div>
               <form action={addEvidence} className="mt-4 grid gap-3">
                 <input type="hidden" name="task_id" value={id} />
-                <label>Evidence type<select name="type" defaultValue="link"><option>screenshot</option><option>document</option><option>github</option><option>video</option><option>link</option><option>demo</option><option>other</option></select></label>
-                <label>Description<textarea name="description" required placeholder="What does this evidence demonstrate?" /></label>
-                <label>Link (optional)<input name="url" type="url" placeholder="https://..." /></label>
-                <label>File (optional, max 10 MB)<input name="file" type="file" /></label>
-                <Button type="submit">Add evidence</Button>
+                <label>Proof type<select name="type" defaultValue="link"><option>screenshot</option><option>document</option><option>github</option><option>video</option><option>link</option><option>demo</option><option>other</option></select></label>
+                <label>What does this prove?<textarea name="description" required placeholder="Example: This demo link shows the new approval flow matching all three criteria." /></label>
+                <label>Proof link (optional)<input name="url" type="url" placeholder="https://github.com/... or demo link" /></label>
+                <label>Proof file (optional, max 10 MB)<input name="file" type="file" /></label>
+                <Button type="submit">Add proof of work</Button>
               </form>
             </Card>
           )}
@@ -90,6 +103,7 @@ export default async function TaskPage({
           {isAssignee && (
             <Card>
               <h2 className="font-black">Your task</h2>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">Move this forward, attach proof, then submit it when a teammate can review it.</p>
               <div className="mt-4 grid gap-2">
                 {["todo", "needs_changes", "rejected"].includes(task.status) && <form action={markInProgress}><input type="hidden" name="task_id" value={id} /><Button className="w-full" variant="secondary">Mark in progress</Button></form>}
                 {["in_progress", "needs_changes"].includes(task.status) && <form action={submitTask}><input type="hidden" name="task_id" value={id} /><Button className="w-full">Submit for review</Button></form>}
@@ -99,12 +113,18 @@ export default async function TaskPage({
           {canReview && (
             <Card>
               <h2 className="font-black">Peer review</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Compare the evidence with every acceptance criterion.</p>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">Compare the evidence with every acceptance criterion. Your decision controls whether this task counts toward project progress.</p>
+              <HelpCard title="Reviewer guide" tone="amber" className="mt-3">
+                Approve if the proof clearly matches the task. Request changes if the work is started but not fully proven. Reject only if the evidence does not support the task.
+              </HelpCard>
               <form action={reviewTask} className="mt-4 grid gap-3">
                 <input type="hidden" name="task_id" value={id} />
-                <label>Decision<select name="status"><option value="approved">Approve</option><option value="needs_changes">Needs changes</option><option value="rejected">Reject</option></select></label>
-                <label>Comment<textarea name="comment" placeholder="Required for changes or rejection" /></label>
-                <Button type="submit">Submit review</Button>
+                <label><span className="inline-flex items-center gap-2"><MessageSquare size={16} /> Review reason</span><small className="font-normal text-muted-foreground">Required when requesting changes or rejecting. Helpful for approvals too.</small><textarea name="comment" placeholder="Example: The demo works, but it does not show the mobile success state yet." /></label>
+                <div className="grid gap-2">
+                  <Button name="status" value="approved" type="submit" className="w-full"><Check size={17} /> Approve work</Button>
+                  <Button name="status" value="needs_changes" type="submit" variant="amber" className="w-full">Request changes</Button>
+                  <Button name="status" value="rejected" type="submit" variant="danger" className="w-full"><X size={17} /> Reject proof</Button>
+                </div>
               </form>
             </Card>
           )}
@@ -114,7 +134,7 @@ export default async function TaskPage({
               <div>
                 <h2 className="font-black">AI reviewer notes</h2>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  AI recommendations appear when a dispute or final report is generated. They explain evidence gaps and confidence, but peer and owner decisions remain human.
+                  AI can structure disputes and final reports. It gives a recommendation only, explains evidence gaps and confidence, and humans still confirm the final decision.
                 </p>
               </div>
             </div>
@@ -122,11 +142,12 @@ export default async function TaskPage({
           {isAssignee && task.status === "rejected" && !disputes?.some((item) => item.status === "open") && (
             <Card className="border-red-400/30 bg-red-500/10">
               <div className="flex gap-2"><ShieldAlert className="text-red-300" /><h2 className="font-black">Open a dispute</h2></div>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">Disputes are not a fight button. AI helps structure the disagreement, then a human owner confirms the resolution.</p>
               <form action={openDispute} className="mt-4 grid gap-3">
                 <input type="hidden" name="task_id" value={id} />
                 <label>Reason<input name="reason" required placeholder="Why should this be reconsidered?" /></label>
-                <label>Your explanation<textarea name="performer_explanation" required /></label>
-                <Button type="submit" variant="danger">Request AI recommendation</Button>
+                <label>Your explanation<textarea name="performer_explanation" required placeholder="Point to the proof and the criteria you believe it satisfies." /></label>
+                <Button type="submit" variant="danger">Ask AI to structure the dispute</Button>
               </form>
             </Card>
           )}

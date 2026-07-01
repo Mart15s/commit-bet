@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, Brain, CalendarDays, Check, Minus, Plus, ShieldCheck, Users } from "lucide-react";
 import { createProject } from "@/app/(protected)/app/projects/actions";
-import { Button, Card, ErrorMessage, Progress, StatusBadge } from "@/components/ui";
+import { Button, Card, ErrorMessage, EvidenceExamples, HelpCard, NextActionCard, Progress, StatusBadge } from "@/components/ui";
 
 type Member = { id: string; name: string; email: string };
 type Team = { id: string; name: string; members: Member[] };
@@ -69,7 +69,15 @@ export function ProjectWizard({
     if (duration === "custom") return customEndDate;
     return addDays(startDate, Number(duration) - 1);
   }, [customEndDate, duration, startDate]);
-  const steps = ["Basics", "Success", "Sprint", "Team", "Pledge", "AI plan", "Review"];
+  const steps = [
+    "What are you trying to finish?",
+    "How will you know it worked?",
+    "When is the finish line?",
+    "Who is committing with you?",
+    "What is everyone putting at stake?",
+    "Let AI create your action plan",
+    "Review everything before starting",
+  ];
   const progress = Math.round(((step + 1) / steps.length) * 100);
 
   return (
@@ -84,6 +92,7 @@ export function ProjectWizard({
           <div>
             <p className="text-xs font-black uppercase tracking-[.16em] text-primary">Step {step + 1} of {steps.length}</p>
             <h2 className="mt-1 text-2xl font-black tracking-[-.03em]">{steps[step]}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">We will only ask for what AI and your teammates need at this step.</p>
           </div>
           <span className="text-sm font-black text-muted-foreground">{progress}%</span>
         </div>
@@ -96,35 +105,42 @@ export function ProjectWizard({
         <div hidden={step !== 0}>
           <div className="grid gap-4">
             <div>
-              <p className="text-xs font-black uppercase tracking-wider text-primary">Project basics</p>
-              <h2 className="mt-1 text-2xl font-black">What promise is this team making?</h2>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">CommitBet works best when the project has a sharp goal, a deadline, and an owner group.</p>
+              <p className="text-xs font-black uppercase tracking-wider text-primary">Step 1</p>
+              <h2 className="mt-1 text-2xl font-black">What are you trying to finish?</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">Describe the real-world outcome, not every task. AI will help break it down later.</p>
             </div>
-            <label>Team<select value={teamId} onChange={(event) => {
+            <label>Team<small className="font-normal text-muted-foreground">Choose the small group that will commit and review proof together.</small><select value={teamId} onChange={(event) => {
               const nextTeamId = event.target.value;
               setTeamId(nextTeamId);
               setSelectedMemberIds(teams.find((team) => team.id === nextTeamId)?.members.map((member) => member.id) ?? []);
             }}>{teams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}</select></label>
-            <label>Project name<input name="title" required placeholder="Launch the first CommitBet waitlist" /></label>
-            <label>Description<textarea name="description" required placeholder="What are you building and why is now the right time?" /></label>
-            <label>Main goal<textarea name="goal" required placeholder="Ship a reviewable MVP that turns team promises into evidence-based commitments." /></label>
+            <label>Project name<small className="font-normal text-muted-foreground">Short and concrete, like the name you would put on a sprint board.</small><input name="title" required placeholder="Launch the first CommitBet waitlist" /></label>
+            <label>Description<small className="font-normal text-muted-foreground">One or two sentences about what you are building and why it matters now.</small><textarea name="description" required placeholder="We want to validate whether small teams will use proof-based commitments to finish a launch." /></label>
+            <label>Main goal<small className="font-normal text-muted-foreground">Write the outcome a teammate could check at the deadline.</small><textarea name="goal" required placeholder="Launch a landing page, collect 20 waitlist emails, and record a 2-minute demo video within 14 days." /></label>
+            <HelpCard title="Good goals are visible at the finish line.">
+              Instead of &quot;build a startup&quot;, use &quot;launch a landing page, collect 20 waitlist emails, and record a 2-minute demo video within 14 days.&quot;
+            </HelpCard>
           </div>
         </div>
 
         <div hidden={step !== 1}>
           <div className="grid gap-4">
             <div>
-              <p className="text-xs font-black uppercase tracking-wider text-primary">Success criteria</p>
-              <h2 className="mt-1 text-2xl font-black">Make success measurable.</h2>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">One criterion should be independently reviewable from evidence.</p>
+              <p className="text-xs font-black uppercase tracking-wider text-primary">Step 2</p>
+              <h2 className="mt-1 text-2xl font-black">How will you know it worked?</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">Success criteria are the rules your team will use later. Make each one specific enough to prove.</p>
             </div>
+            <HelpCard title="Success criteria example" tone="amber">
+              Bad: &quot;Build a startup.&quot; Good: &quot;Launch a landing page, collect 20 waitlist emails, and record a 2-minute demo video within 14 days.&quot;
+            </HelpCard>
             <div className="grid gap-3">
               {criteria.map((criterion, index) => (
                 <div key={index} className="grid grid-cols-[1fr_auto] gap-2">
                   <input
+                    aria-label={`Success criterion ${index + 1}`}
                     value={criterion}
                     onChange={(event) => setCriteria((items) => items.map((item, itemIndex) => itemIndex === index ? event.target.value : item))}
-                    placeholder="Example: Final demo can be opened by a reviewer"
+                    placeholder="Example: Final demo can be opened by a reviewer and shows the core flow end to end"
                   />
                   <Button
                     type="button"
@@ -147,10 +163,11 @@ export function ProjectWizard({
         <div hidden={step !== 2}>
           <div className="grid gap-5">
             <div>
-              <p className="text-xs font-black uppercase tracking-wider text-amber-300">Duration and sprint</p>
-              <h2 className="mt-1 text-2xl font-black">Choose the commitment window.</h2>
+              <p className="text-xs font-black uppercase tracking-wider text-amber-300">Step 3</p>
+              <h2 className="mt-1 text-2xl font-black">When is the finish line?</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">Pick a window short enough to create urgency and long enough to gather real proof.</p>
             </div>
-            <label>Start date<input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} /></label>
+            <label>Start date<small className="font-normal text-muted-foreground">The day your team starts logging proof.</small><input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} /></label>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {["7", "14", "30", "custom"].map((days) => (
                 <button
@@ -163,7 +180,7 @@ export function ProjectWizard({
                 </button>
               ))}
             </div>
-            {duration === "custom" && <label>Custom end date<input type="date" value={customEndDate} onChange={(event) => setCustomEndDate(event.target.value)} /></label>}
+            {duration === "custom" && <label>Custom end date<small className="font-normal text-muted-foreground">Keep the deadline close enough that reviews stay fresh.</small><input type="date" value={customEndDate} onChange={(event) => setCustomEndDate(event.target.value)} /></label>}
             <div className="flex items-center gap-3 rounded-xl border border-amber-300/25 bg-amber-400/10 p-4 text-sm">
               <CalendarDays className="text-amber-300" size={20} />
               <span><strong>{startDate}</strong> to <strong>{endDate}</strong></span>
@@ -174,9 +191,9 @@ export function ProjectWizard({
         <div hidden={step !== 3}>
           <div className="grid gap-4">
             <div>
-              <p className="text-xs font-black uppercase tracking-wider text-primary">Team members</p>
-              <h2 className="mt-1 text-2xl font-black">Assign people before AI plans work.</h2>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">Roles and strengths help the plan assign realistic ownership.</p>
+              <p className="text-xs font-black uppercase tracking-wider text-primary">Step 4</p>
+              <h2 className="mt-1 text-2xl font-black">Who is committing with you?</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">Select the teammates who will do the work, submit proof, and review each other fairly.</p>
             </div>
             {currentTeam?.members.map((member) => (
               <fieldset key={member.id} className="grid gap-3 rounded-2xl border border-border p-4">
@@ -197,12 +214,12 @@ export function ProjectWizard({
                 </label>
                 {selectedMemberIds.includes(member.id) && (
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <label>Role <input name={`role_${member.id}`} placeholder="Frontend, design, QA, outreach" /></label>
-                    <label>Strengths <input name={`strengths_${member.id}`} required placeholder="Next.js, customer interviews, QA" /></label>
-                    <label>Weaknesses <input name={`weaknesses_${member.id}`} placeholder="Visual polish, backend, copywriting" /></label>
-                    <label>Availability per day <input name={`availability_${member.id}`} type="number" min={15} max={1440} defaultValue={120} required /></label>
-                    <label className="sm:col-span-2">Preferred work <input name={`work_types_${member.id}`} placeholder="development, testing, writing" /></label>
-                    <label className="sm:col-span-2">Notes <textarea name={`notes_${member.id}`} className="min-h-20" placeholder="Anything AI should know when assigning work?" /></label>
+                    <label>Role <small className="font-normal text-muted-foreground">Optional shorthand for how this person helps.</small><input name={`role_${member.id}`} placeholder="Frontend, design, QA, outreach" /></label>
+                    <label>Strengths <small className="font-normal text-muted-foreground">AI uses this to assign realistic work.</small><input name={`strengths_${member.id}`} required placeholder="Next.js, customer interviews, QA" /></label>
+                    <label>Growth edges <small className="font-normal text-muted-foreground">This helps avoid unfair assignments.</small><input name={`weaknesses_${member.id}`} placeholder="Visual polish, backend, copywriting" /></label>
+                    <label>Availability per day <small className="font-normal text-muted-foreground">Minutes available for this commitment.</small><input name={`availability_${member.id}`} type="number" min={15} max={1440} defaultValue={120} required /></label>
+                    <label className="sm:col-span-2">Preferred work <small className="font-normal text-muted-foreground">Examples: development, testing, writing, outreach, design.</small><input name={`work_types_${member.id}`} placeholder="development, testing, writing" /></label>
+                    <label className="sm:col-span-2">Notes <small className="font-normal text-muted-foreground">Anything AI should know before drafting assignments.</small><textarea name={`notes_${member.id}`} className="min-h-20" placeholder="I can review after 5pm. Avoid backend tasks unless paired." /></label>
                   </div>
                 )}
               </fieldset>
@@ -214,18 +231,18 @@ export function ProjectWizard({
         <div hidden={step !== 4}>
           <div className="grid gap-5">
             <div>
-              <p className="text-xs font-black uppercase tracking-wider text-amber-300">Commitment</p>
-              <h2 className="mt-1 text-2xl font-black">Declare virtual pledge points.</h2>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">This MVP records commitment pressure only. It does not collect, escrow, or transfer money.</p>
+              <p className="text-xs font-black uppercase tracking-wider text-amber-300">Step 5</p>
+              <h2 className="mt-1 text-2xl font-black">What is everyone putting at stake?</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">This is a declared commitment, not a payment flow. Use virtual points unless your team wants a label for discussion.</p>
             </div>
             <div className="rounded-xl border border-amber-300/30 bg-amber-400/12 p-4 text-sm font-bold text-amber-200">
-              Use points for the cleanest team ritual. Declared amounts are labels only, not payment instructions.
+              Beginner tip: 30 points is enough to feel real without making the project stressful. No money is collected, escrowed, or distributed.
             </div>
             {selectedMembers.map((member) => (
               <fieldset key={member.id} className="grid gap-3 rounded-2xl border border-border p-4 sm:grid-cols-[1fr_1.1fr]">
                 <legend className="px-2 font-black">{member.name}</legend>
-                <label>Amount<input name={`pledge_${member.id}`} type="number" min={0} defaultValue={30} required /></label>
-                <label>Unit<select name={`currency_${member.id}`} defaultValue="POINTS"><option value="POINTS">Virtual points</option><option value="EUR_DECLARED">EUR declared label</option></select></label>
+                <label>Pledge amount<small className="font-normal text-muted-foreground">Example: 30 virtual points.</small><input name={`pledge_${member.id}`} type="number" min={0} defaultValue={30} required /></label>
+                <label>Unit<small className="font-normal text-muted-foreground">Use points for the simplest MVP experience.</small><select name={`currency_${member.id}`} defaultValue="POINTS"><option value="POINTS">Virtual points</option><option value="EUR_DECLARED">EUR declared label</option></select></label>
               </fieldset>
             ))}
           </div>
@@ -234,10 +251,13 @@ export function ProjectWizard({
         <div hidden={step !== 5}>
           <div className="grid gap-5">
             <div>
-              <p className="text-xs font-black uppercase tracking-wider text-cyan-300">AI-generated plan preview</p>
-              <h2 className="mt-1 text-2xl font-black">Preview the shape of the execution plan.</h2>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">After creating the draft, the project page can generate and edit the real AI plan from your inputs.</p>
+              <p className="text-xs font-black uppercase tracking-wider text-cyan-300">Step 6</p>
+              <h2 className="mt-1 text-2xl font-black">Let AI create your action plan</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">The AI plan is a draft. You can edit task names, owners, deadlines, and evidence requirements before starting.</p>
             </div>
+            <HelpCard title="Proof of work examples" tone="cyan">
+              <EvidenceExamples />
+            </HelpCard>
             <div className="grid gap-3">
               {expectedPlan.map((task, index) => {
                 const owner = selectedMembers[index % Math.max(1, selectedMembers.length)];
@@ -245,8 +265,9 @@ export function ProjectWizard({
                   <Card key={task.title} className="p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
+                        <p className="text-xs font-black uppercase tracking-[.12em] text-cyan-300">Phase {index + 1}</p>
                         <h3 className="font-black">{task.title}</h3>
-                        <p className="mt-1 text-sm text-muted-foreground">Owner: {owner?.name || "Selected teammate"} · Due {addDays(startDate, task.daysFromStart)}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">Owner: {owner?.name || "Selected teammate"} - Due {addDays(startDate, task.daysFromStart)} - assigned from strengths and availability</p>
                       </div>
                       <StatusBadge status="todo" />
                     </div>
@@ -264,9 +285,9 @@ export function ProjectWizard({
         <div hidden={step !== 6}>
           <div className="grid gap-5">
             <div>
-              <p className="text-xs font-black uppercase tracking-wider text-primary">Review and start</p>
-              <h2 className="mt-1 text-2xl font-black">Create the draft commitment.</h2>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">You will review and start the AI-generated plan from the project overview before it becomes active.</p>
+              <p className="text-xs font-black uppercase tracking-wider text-primary">Step 7</p>
+              <h2 className="mt-1 text-2xl font-black">Review everything before starting</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">This creates a draft project. Nothing starts until you generate and approve the AI plan on the project page.</p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
               <Card className="p-4"><Users className="text-primary" /><p className="mt-3 text-2xl font-black">{selectedMembers.length}</p><p className="text-sm text-muted-foreground">Members</p></Card>
@@ -277,6 +298,10 @@ export function ProjectWizard({
               <h3 className="font-black">Accountability flow</h3>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">Project {"->"} Commitment {"->"} AI Plan {"->"} Daily Evidence {"->"} Peer Approval {"->"} AI Final Report {"->"} Human Confirmation</p>
             </div>
+            <NextActionCard
+              title="Ready to create the draft"
+              copy="Next, generate the AI plan, edit anything that feels off, then start the project when the team is aligned."
+            />
           </div>
         </div>
       </Card>
@@ -293,7 +318,7 @@ export function ProjectWizard({
             Continue <ArrowRight size={18} />
           </Button>
         ) : (
-          <Button className="flex-1" type="submit" disabled={!selectedMembers.length}>Create draft <Check size={18} /></Button>
+          <Button className="flex-1" type="submit" disabled={!selectedMembers.length}>Create draft commitment <Check size={18} /></Button>
         )}
       </div>
     </form>

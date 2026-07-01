@@ -41,7 +41,15 @@ export default async function TeamsPage({ searchParams }: { searchParams: Promis
               <ButtonLink href={`/app/teams/${team.id}`} className="mt-5 w-full" variant="secondary">Open team</ButtonLink>
             </Card>
           );
-        }) : <div className="sm:col-span-2 lg:col-span-3"><EmptyState title="No team yet" copy="Create your first team or join a teammate with their invite code." /></div>}
+        }) : (
+          <div className="sm:col-span-2 lg:col-span-3">
+            <EmptyState
+              title="No team yet"
+              copy="Create your first team or join a teammate with their invite code. After that, you can create a commitment sprint together."
+              tip="Small teams of 2-5 people are easiest to keep accountable."
+            />
+          </div>
+        )}
       </div>
     </>
   );

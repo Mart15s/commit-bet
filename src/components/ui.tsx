@@ -160,13 +160,119 @@ export function SectionHeader({ title, description, action }: { title: string; d
   );
 }
 
-export function EmptyState({ title, copy, action }: { title: string; copy: string; action?: ReactNode }) {
+export function EmptyState({
+  title,
+  copy,
+  action,
+  tip,
+  icon,
+  className,
+}: {
+  title: string;
+  copy: string;
+  action?: ReactNode;
+  tip?: string;
+  icon?: ReactNode;
+  className?: string;
+}) {
   return (
-    <Card className="py-10 text-center">
+    <Card className={cn("py-10 text-center", className)}>
+      {icon && <div className="mx-auto mb-4 grid size-12 place-items-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">{icon}</div>}
       <h2 className="text-xl font-black">{title}</h2>
       <p className="mx-auto mt-2 max-w-md text-muted-foreground">{copy}</p>
+      {tip && <p className="mx-auto mt-4 max-w-md rounded-xl border border-amber-300/25 bg-amber-400/10 p-3 text-sm font-bold text-amber-100">{tip}</p>}
       {action && <div className="mt-5">{action}</div>}
     </Card>
+  );
+}
+
+export function HelpCard({
+  title,
+  children,
+  tone = "primary",
+  className,
+}: {
+  title: string;
+  children: ReactNode;
+  tone?: "primary" | "cyan" | "amber" | "emerald" | "danger";
+  className?: string;
+}) {
+  const tones = {
+    primary: "border-primary/25 bg-primary/10 text-violet-100",
+    cyan: "border-cyan-300/25 bg-cyan-400/10 text-cyan-100",
+    amber: "border-amber-300/30 bg-amber-400/10 text-amber-100",
+    emerald: "border-emerald-400/30 bg-emerald-400/10 text-emerald-100",
+    danger: "border-red-400/30 bg-red-500/10 text-red-100",
+  };
+  return (
+    <div className={cn("rounded-xl border p-4 text-sm leading-6", tones[tone], className)}>
+      <p className="font-black text-foreground">{title}</p>
+      <div className="mt-1 text-muted-foreground">{children}</div>
+    </div>
+  );
+}
+
+export function NextActionCard({
+  title,
+  copy,
+  action,
+  className,
+}: {
+  title: string;
+  copy: string;
+  action?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <Card className={cn("border-amber-300/30 bg-amber-400/10", className)}>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[.14em] text-amber-200">What happens next</p>
+          <h2 className="mt-1 font-black">{title}</h2>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">{copy}</p>
+        </div>
+        {action}
+      </div>
+    </Card>
+  );
+}
+
+export function SuccessState({
+  title,
+  copy,
+  details,
+  action,
+}: {
+  title: string;
+  copy: string;
+  details?: ReactNode;
+  action?: ReactNode;
+}) {
+  return (
+    <Card className="border-emerald-400/30 bg-emerald-400/10">
+      <div className="flex gap-3">
+        <div className="grid size-11 shrink-0 place-items-center rounded-full border border-emerald-300/35 bg-emerald-400/15 text-xs font-black text-emerald-200">OK</div>
+        <div className="min-w-0">
+          <h2 className="text-xl font-black">{title}</h2>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">{copy}</p>
+          {details && <div className="mt-4 rounded-xl border border-emerald-300/25 bg-background/45 p-3 text-sm">{details}</div>}
+          {action && <div className="mt-4">{action}</div>}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+export function EvidenceExamples({ compact = false }: { compact?: boolean }) {
+  const examples = ["GitHub commit", "screenshot", "demo link", "Figma link", "document", "short video"];
+  return (
+    <div className={cn("flex flex-wrap gap-2", compact ? "text-xs" : "text-sm")}>
+      {examples.map((example) => (
+        <span key={example} className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-3 py-1 font-black text-cyan-100">
+          {example}
+        </span>
+      ))}
+    </div>
   );
 }
 

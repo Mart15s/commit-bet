@@ -1,6 +1,6 @@
 import { AlertTriangle, Check, FileCheck2, MessageSquare, X } from "lucide-react";
 import { reviewTask } from "@/app/(protected)/app/tasks/actions";
-import { Button, ButtonLink, Card, EmptyState, PageHeader, StatusBadge } from "@/components/ui";
+import { Button, ButtonLink, Card, EmptyState, EvidenceExamples, HelpCard, PageHeader, StatusBadge } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { singleRelation } from "@/lib/utils";
 
@@ -39,6 +39,9 @@ export default async function ApprovalsPage({
         title="Review submitted evidence"
         description="Compare each claim against acceptance criteria. AI can advise later, but teammates approve the work first."
       />
+      <HelpCard title="What reviewers are checking" tone="amber" className="mb-4">
+        Approve if the proof clearly matches the task. Request changes if the work is started but not fully proven. Reject only if the evidence does not support the task.
+      </HelpCard>
       <div className="grid gap-4">
         {reviewable.map((task) => {
           const assignment = singleRelation(task.task_assignments);
@@ -79,23 +82,31 @@ export default async function ApprovalsPage({
                   <div className="mt-4 flex flex-wrap gap-2">
                     {(task.expected_evidence_types ?? []).map((item) => <span key={item} className="rounded-full border border-border bg-card px-3 py-1 text-xs font-black text-muted-foreground">{item}</span>)}
                   </div>
+                  {!(task.expected_evidence_types ?? []).length && <div className="mt-4"><EvidenceExamples compact /></div>}
                 </div>
               </div>
 
               <form action={reviewTask} className="mt-5 grid gap-3">
                 <input type="hidden" name="task_id" value={task.id} />
-                <label><span className="inline-flex items-center gap-2"><MessageSquare size={16} /> Reviewer note</span><textarea name="comment" className="min-h-20" placeholder="Short explanation. Required for changes, rejection, or dispute." /></label>
+                <label><span className="inline-flex items-center gap-2"><MessageSquare size={16} /> Reviewer note</span><small className="font-normal text-muted-foreground">Required for changes or rejection. A short note helps the teammate know what happens next.</small><textarea name="comment" className="min-h-20" placeholder="Example: The screenshot is useful, but the demo link still needs to show the completed flow." /></label>
                 <div className="grid gap-2 sm:grid-cols-4">
-                  <Button name="status" value="approved" type="submit"><Check size={17} /> Approve</Button>
-                  <Button name="status" value="needs_changes" type="submit" variant="amber">Needs changes</Button>
-                  <Button name="status" value="rejected" type="submit" variant="danger"><X size={17} /> Reject</Button>
-                  <ButtonLink href={`/app/tasks/${task.id}`} variant="secondary"><AlertTriangle size={17} /> Dispute path</ButtonLink>
+                  <Button name="status" value="approved" type="submit"><Check size={17} /> Approve work</Button>
+                  <Button name="status" value="needs_changes" type="submit" variant="amber">Request changes</Button>
+                  <Button name="status" value="rejected" type="submit" variant="danger"><X size={17} /> Reject proof</Button>
+                  <ButtonLink href={`/app/tasks/${task.id}`} variant="secondary"><AlertTriangle size={17} /> View dispute path</ButtonLink>
                 </div>
               </form>
             </Card>
           );
         })}
-        {!reviewable.length && <EmptyState title="Inbox cleared" copy="No teammate submissions are waiting for your review." />}
+        {!reviewable.length && (
+          <EmptyState
+            title="Nothing to review yet"
+            copy="Great. No teammate submissions are waiting right now."
+            tip="When proof arrives, compare it to the acceptance criteria before approving."
+            action={<ButtonLink href="/app" variant="secondary">Back to dashboard</ButtonLink>}
+          />
+        )}
       </div>
     </>
   );

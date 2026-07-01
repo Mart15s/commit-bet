@@ -28,6 +28,17 @@ export async function saveDailyLog(formData: FormData) {
 
   await supabase.from("daily_log_tasks").delete().eq("daily_log_id", log.id);
   const taskIds = [...new Set(formData.getAll("task_id").map(String))];
+  const evidenceLink = String(formData.get("evidence_link") ?? "").trim();
+  if (evidenceLink) {
+    try {
+      new URL(evidenceLink);
+    } catch {
+      redirect(`/app/logs/new?project=${projectId}&error=Use a full proof link starting with https://`);
+    }
+    if (!taskIds.length) {
+      redirect(`/app/logs/new?project=${projectId}&error=Choose at least one task before adding a proof link.`);
+    }
+  }
   if (taskIds.length) {
     const { data: projectTasks } = await supabase
       .from("tasks")
@@ -39,6 +50,18 @@ export async function saveDailyLog(formData: FormData) {
     }
   }
   if (taskIds.length) await supabase.from("daily_log_tasks").insert(taskIds.map((taskId) => ({ daily_log_id: log.id, task_id: taskId })));
+  if (evidenceLink && taskIds.length) {
+    const type = evidenceLink.includes("github.com") ? "github" : evidenceLink.includes("figma.com") ? "link" : evidenceLink.includes("youtu") || evidenceLink.includes("loom.com") ? "video" : "link";
+    const { error: evidenceError } = await supabase.from("evidence").insert(taskIds.map((taskId) => ({
+      task_id: taskId,
+      user_id: user.id,
+      type,
+      url: evidenceLink,
+      description: `Daily proof from ${logDate}: ${String(formData.get("summary") ?? "").slice(0, 220)}`,
+      metadata: { daily_log_id: log.id },
+    })));
+    if (evidenceError) redirect(`/app/logs/new?project=${projectId}&error=${encodeURIComponent(evidenceError.message)}`);
+  }
 
   await supabase.from("audit_logs").insert({
     project_id: projectId,
@@ -47,5 +70,5 @@ export async function saveDailyLog(formData: FormData) {
     details: { log_date: logDate, task_count: taskIds.length },
   });
   revalidatePath(`/app/projects/${projectId}`);
-  redirect(`/app/projects/${projectId}`);
+  redirect(`/app/logs/new?project=${projectId}&saved=1&summary=${encodeURIComponent(String(formData.get("summary") ?? ""))}&tasks=${taskIds.length}`);
 }
