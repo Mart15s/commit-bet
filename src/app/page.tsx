@@ -22,6 +22,26 @@ export default function Home() {
   const { t } = useI18n();
   const approved = sampleProject.tasks.filter((task) => task.status === "approved").length;
   const submitted = sampleProject.tasks.filter((task) => task.status === "submitted").length;
+  const demoTasks = [
+    {
+      ...sampleProject.tasks[0],
+      title: t("landing.taskLanding"),
+      description: t("landing.taskLandingDescription"),
+      expectedEvidenceTypes: [t("ui.evidence.demoLink"), t("ui.evidence.screenshot"), t("status.link")],
+    },
+    {
+      ...sampleProject.tasks[1],
+      title: t("landing.taskEvidence"),
+      description: t("landing.taskEvidenceDescription"),
+      expectedEvidenceTypes: [t("ui.evidence.screenshot"), t("status.link"), t("ui.evidence.document")],
+    },
+    {
+      ...sampleProject.tasks[2],
+      title: t("landing.taskReport"),
+      description: t("landing.taskReportDescription"),
+      expectedEvidenceTypes: [t("ui.evidence.document"), t("status.link")],
+    },
+  ];
   const flow = [
     [t("landing.flowProject"), t("landing.flowProjectCopy")],
     [t("landing.flowCommitment"), t("landing.flowCommitmentCopy")],
@@ -40,10 +60,10 @@ export default function Home() {
     <main className="min-h-screen overflow-hidden">
       <header className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
         <Link href="/" className="text-xl font-black tracking-[-.03em] text-foreground">{t("app.brand")}</Link>
-        <nav className="flex items-center gap-2">
+        <nav className="flex shrink-0 items-center gap-2">
           <LanguageSwitcher compact />
-          <ButtonLink href="/login" variant="ghost" size="sm">{t("landing.login")}</ButtonLink>
-          <ButtonLink href="/register" size="sm" className="hidden sm:inline-flex">{t("landing.startSprint")}</ButtonLink>
+          <ButtonLink href="/login" variant="ghost" size="sm" className="min-w-24">{t("landing.login")}</ButtonLink>
+          <ButtonLink href="/register" size="sm" className="hidden min-w-36 sm:inline-flex">{t("landing.startSprint")}</ButtonLink>
         </nav>
       </header>
 
@@ -74,8 +94,8 @@ export default function Home() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-black uppercase tracking-[.14em] text-primary">{t("landing.activeSprint")}</p>
-                <h2 className="mt-1 text-2xl font-black tracking-[-.03em]">{sampleProject.title}</h2>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">{sampleProject.goal}</p>
+                <h2 className="mt-1 text-2xl font-black tracking-[-.03em]">{t("landing.demoTitle")}</h2>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{t("landing.demoGoal")}</p>
               </div>
               <StatusBadge status="active" />
             </div>
@@ -89,12 +109,12 @@ export default function Home() {
               <Progress value={sampleProject.successScore} />
             </div>
             <div className="mt-5 space-y-2">
-              {sampleProject.tasks.slice(0, 3).map((task) => (
+              {demoTasks.map((task) => (
                 <div key={task.id} className="rounded-xl border border-border bg-surface p-3">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-black">{task.title}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">{task.ownerName} · expects {task.expectedEvidenceTypes.join(", ")}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{task.ownerName} · {t("landing.expects")} {task.expectedEvidenceTypes.join(", ")}</p>
                     </div>
                     <StatusBadge status={task.status} />
                   </div>
@@ -167,8 +187,8 @@ export default function Home() {
         <Card className="p-6">
           <Gauge className="text-cyan-300" />
           <h3 className="mt-5 text-xl font-black">{t("landing.aiRisk")}</h3>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">{sampleProject.aiRiskInsight.summary}</p>
-          <p className="mt-4 rounded-xl border border-cyan-300/25 bg-cyan-400/10 p-3 text-sm font-bold text-cyan-100">{t("landing.why")} {sampleProject.aiRiskInsight.why}</p>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">{t("landing.riskSummary")}</p>
+          <p className="mt-4 rounded-xl border border-cyan-300/25 bg-cyan-400/10 p-3 text-sm font-bold text-cyan-100">{t("landing.why")} {t("landing.riskWhy")}</p>
         </Card>
       </section>
 

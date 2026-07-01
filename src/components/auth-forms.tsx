@@ -18,7 +18,7 @@ export function LoginForm({ error, notice }: { error?: string; notice?: string }
       <p className="mt-2 leading-6 text-muted-foreground">{t("auth.loginCopy")}</p>
       <form action={login} className="mt-7 grid gap-4">
         <ErrorMessage message={error} />
-        {notice && <div className="rounded-xl border border-emerald-400/30 bg-emerald-400/12 p-3 text-sm font-bold text-emerald-200">{notice}</div>}
+        {notice && <div className="rounded-xl border border-emerald-400/30 bg-emerald-400/12 p-3 text-sm font-bold text-emerald-200">{t(notice)}</div>}
         <label>{t("auth.email")}<input name="email" type="email" required autoComplete="email" /></label>
         <label>{t("auth.password")}<input name="password" type="password" minLength={6} required autoComplete="current-password" /></label>
         <Button size="lg" type="submit">{t("auth.loginButton")} <ArrowRight size={18} /></Button>

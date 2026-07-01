@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { T } from "@/components/i18n-text";
 import { cn } from "@/lib/utils";
 
 const variants = {
@@ -77,9 +78,9 @@ export function PageHeader({
   description,
   action,
 }: {
-  eyebrow?: string;
-  title: string;
-  description?: string;
+  eyebrow?: ReactNode;
+  title: ReactNode;
+  description?: ReactNode;
   action?: ReactNode;
 }) {
   return (
@@ -110,7 +111,7 @@ export function StatusBadge({ status }: { status: string }) {
               : normalized === "rejected" || normalized === "critical" || normalized === "high" || normalized === "missed"
                 ? "border-red-300/35 bg-red-500/16 text-red-200"
                 : "border-slate-500/40 bg-slate-700/40 text-slate-300";
-  return <span className={cn("inline-flex whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-black capitalize", tone)}>{status.replaceAll("_", " ")}</span>;
+  return <span className={cn("inline-flex whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-black", tone)}><T k={`status.${normalized}` as never} /></span>;
 }
 
 export function Progress({ value, className }: { value: number; className?: string }) {
@@ -128,9 +129,9 @@ export function MetricCard({
   icon,
   className,
 }: {
-  label: string;
+  label: ReactNode;
   value: ReactNode;
-  detail?: string;
+  detail?: ReactNode;
   icon?: ReactNode;
   className?: string;
 }) {
@@ -148,7 +149,7 @@ export function MetricCard({
   );
 }
 
-export function SectionHeader({ title, description, action }: { title: string; description?: string; action?: ReactNode }) {
+export function SectionHeader({ title, description, action }: { title: ReactNode; description?: ReactNode; action?: ReactNode }) {
   return (
     <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
       <div>
@@ -168,10 +169,10 @@ export function EmptyState({
   icon,
   className,
 }: {
-  title: string;
-  copy: string;
+  title: ReactNode;
+  copy: ReactNode;
   action?: ReactNode;
-  tip?: string;
+  tip?: ReactNode;
   icon?: ReactNode;
   className?: string;
 }) {
@@ -192,7 +193,7 @@ export function HelpCard({
   tone = "primary",
   className,
 }: {
-  title: string;
+  title: ReactNode;
   children: ReactNode;
   tone?: "primary" | "cyan" | "amber" | "emerald" | "danger";
   className?: string;
@@ -218,8 +219,8 @@ export function NextActionCard({
   action,
   className,
 }: {
-  title: string;
-  copy: string;
+  title: ReactNode;
+  copy: ReactNode;
   action?: ReactNode;
   className?: string;
 }) {
@@ -227,7 +228,7 @@ export function NextActionCard({
     <Card className={cn("border-amber-300/30 bg-amber-400/10", className)}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-black uppercase tracking-[.14em] text-amber-200">What happens next</p>
+          <p className="text-xs font-black uppercase tracking-[.14em] text-amber-200"><T k="ui.whatHappensNext" /></p>
           <h2 className="mt-1 font-black">{title}</h2>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">{copy}</p>
         </div>
@@ -243,15 +244,15 @@ export function SuccessState({
   details,
   action,
 }: {
-  title: string;
-  copy: string;
+  title: ReactNode;
+  copy: ReactNode;
   details?: ReactNode;
   action?: ReactNode;
 }) {
   return (
     <Card className="border-emerald-400/30 bg-emerald-400/10">
       <div className="flex gap-3">
-        <div className="grid size-11 shrink-0 place-items-center rounded-full border border-emerald-300/35 bg-emerald-400/15 text-xs font-black text-emerald-200">OK</div>
+        <div className="grid size-11 shrink-0 place-items-center rounded-full border border-emerald-300/35 bg-emerald-400/15 text-xs font-black text-emerald-200"><T k="ui.ok" /></div>
         <div className="min-w-0">
           <h2 className="text-xl font-black">{title}</h2>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">{copy}</p>
@@ -264,12 +265,19 @@ export function SuccessState({
 }
 
 export function EvidenceExamples({ compact = false }: { compact?: boolean }) {
-  const examples = ["GitHub commit", "screenshot", "demo link", "Figma link", "document", "short video"];
+  const examples = [
+    "ui.evidence.githubCommit",
+    "ui.evidence.screenshot",
+    "ui.evidence.demoLink",
+    "ui.evidence.figmaLink",
+    "ui.evidence.document",
+    "ui.evidence.shortVideo",
+  ] as const;
   return (
     <div className={cn("flex flex-wrap gap-2", compact ? "text-xs" : "text-sm")}>
       {examples.map((example) => (
         <span key={example} className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-3 py-1 font-black text-cyan-100">
-          {example}
+          <T k={example} />
         </span>
       ))}
     </div>
