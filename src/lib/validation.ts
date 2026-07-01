@@ -1,85 +1,17 @@
 import { z } from "zod";
-
-export const projectPlanSchema = z.object({
-  phases: z.array(z.object({ name: z.string(), description: z.string() })),
-  deliverables: z.array(z.string()),
-  tasks: z.array(
-    z.object({
-      title: z.string(),
-      description: z.string(),
-      assigned_user_id: z.string().uuid(),
-      assigned_reason: z.string(),
-      priority: z.enum(["low", "medium", "high", "critical"]),
-      due_date: z.string(),
-      acceptance_criteria: z.array(z.string()).min(1),
-      expected_evidence_types: z.array(z.string()).min(1),
-    }),
-  ),
-  risks: z.array(z.string()),
-  minimum_success_version: z.string(),
-  ambitious_success_version: z.string(),
-});
-
-export const disputeRecommendationSchema = z.object({
-  neutral_summary: z.string(),
-  arguments_for_approval: z.array(z.string()),
-  arguments_for_rejection: z.array(z.string()),
-  missing_information: z.array(z.string()),
-  recommended_resolution: z.enum([
-    "approve",
-    "reject",
-    "partial_credit",
-    "needs_changes",
-    "extend_deadline",
-    "manual_review",
-  ]),
-  confidence_score: z.number().min(0).max(100),
-  suggested_next_action: z.string(),
-});
-
-export const finalReportSchema = z.object({
-  project_summary: z.string(),
-  success_criteria_evaluation: z.array(
-    z.object({
-      criterion: z.string(),
-      status: z.enum(["met", "partially_met", "not_met", "unclear"]),
-      comment: z.string(),
-    }),
-  ),
-  task_statistics: z.object({
-    planned: z.number(),
-    approved: z.number(),
-    rejected: z.number(),
-    disputed: z.number(),
-    late: z.number(),
-  }),
-  member_contributions: z.array(
-    z.object({
-      user_id: z.string().uuid(),
-      contribution_score: z.number().min(0).max(100),
-      summary: z.string(),
-      strongest_evidence: z.array(z.string()),
-      issues: z.array(z.string()),
-    }),
-  ),
-  evidence_quality_score: z.number().min(0).max(100),
-  delay_analysis: z.string(),
-  dispute_summary: z.string(),
-  pledge_recommendation: z.array(
-    z.object({
-      user_id: z.string().uuid(),
-      pledge_return_percentage: z.number().min(0).max(100),
-      reason: z.string(),
-    }),
-  ),
-  reasoning: z.string(),
-  confidence_score: z.number().min(0).max(100),
-  human_confirmation_required: z.literal(true),
-});
-
-export type ProjectPlan = z.infer<typeof projectPlanSchema>;
-export type DisputeRecommendation = z.infer<typeof disputeRecommendationSchema>;
-export type FinalReport = z.infer<typeof finalReportSchema>;
+export {
+  disputeRecommendationSchema,
+  enhancedTextSchema,
+  enhanceTextInputSchema,
+  evidenceReviewSchema,
+  finalReportSchema,
+  projectPlanSchema,
+  type DisputeRecommendation,
+  type EnhancedText,
+  type EvidenceReview,
+  type FinalReport,
+  type ProjectPlan,
+} from "@/lib/ai/schemas";
 
 export const evidenceSchema = z.object({
   taskId: z.string().uuid(),

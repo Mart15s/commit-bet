@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { normalizeAIError } from "@/lib/ai/gemini";
 import { generateFinalReport } from "@/lib/ai/service";
 import { requireProjectOwner } from "@/lib/auth";
 import { validateReturnPercentage } from "@/lib/progress";
@@ -12,10 +13,13 @@ export async function generateFinal(formData: FormData) {
   if (project.status !== "active") {
     redirect(`/app/projects/${projectId}/final?error=Only active projects can generate a final report.`);
   }
-  const [{ data: tasks }, { data: members }, { count: disputeCount }] = await Promise.all([
-    supabase.from("tasks").select("id, status, due_date").eq("project_id", projectId),
-    supabase.from("project_member_profiles").select("user_id, profiles(name)").eq("project_id", projectId),
-    supabase.from("disputes").select("*, tasks!inner(project_id)", { count: "exact", head: true }).eq("tasks.project_id", projectId),
+  const [{ data: tasks }, { data: members }, { data: logs }, { data: evidence }, { data: reviews }, { data: disputes }] = await Promise.all([
+    supabase.from("tasks").select("id, title, description, acceptance_criteria, expected_evidence_types, priority, status, due_date, ai_generated, task_assignments(user_id, assigned_reason)").eq("project_id", projectId),
+    supabase.from("project_member_profiles").select("user_id, strengths, weaknesses, preferred_work_types, availability_minutes_per_day, notes, profiles(name)").eq("project_id", projectId),
+    supabase.from("daily_logs").select("id, user_id, log_date, summary, blockers, next_steps, time_spent_minutes").eq("project_id", projectId),
+    supabase.from("evidence").select("id, task_id, user_id, type, url, description, metadata, created_at, tasks!inner(project_id)").eq("tasks.project_id", projectId),
+    supabase.from("reviews").select("id, task_id, reviewer_id, status, comment, created_at, tasks!inner(project_id)").eq("tasks.project_id", projectId),
+    supabase.from("disputes").select("id, task_id, opened_by, reason, performer_explanation, reviewer_rejection_reason, ai_recommendation, final_resolution, status, created_at, tasks!inner(project_id)").eq("tasks.project_id", projectId),
   ]);
   const contributions = [];
   for (const member of members ?? []) {
@@ -34,28 +38,35 @@ export async function generateFinal(formData: FormData) {
 
   const input = {
     title: project.title,
+    goal: project.goal,
     successCriteria: (project.success_criteria as Array<{ criterion: string }>).map((item) => item.criterion),
+    projectPeriod: { startDate: project.start_date, endDate: project.end_date },
     tasks: tasks ?? [],
+    dailyLogs: logs ?? [],
+    evidence: evidence ?? [],
+    reviews: reviews ?? [],
+    disputes: disputes ?? [],
+    memberProfiles: members ?? [],
     members: contributions,
-    disputeCount: disputeCount || 0,
   };
   try {
-    const report = await generateFinalReport(input);
+    const { output: report, model } = await generateFinalReport(input);
     await supabase.from("ai_reports").insert({
       project_id: projectId,
       type: "final",
       input_snapshot: input,
       output: report,
-      model: process.env.OPENAI_API_KEY && process.env.AI_PROVIDER === "openai" ? process.env.OPENAI_MODEL || "gpt-5.5" : "mock-v1",
+      model,
+      created_by: user.id,
     });
     await supabase.from("audit_logs").insert({
       project_id: projectId,
       user_id: user.id,
       action: "final_report_generated",
-      details: { confidence_score: report.confidence_score },
+      details: { confidence: report.confidence },
     });
   } catch (error) {
-    redirect(`/app/projects/${projectId}/final?error=${encodeURIComponent(error instanceof Error ? error.message : "Report generation failed")}`);
+    redirect(`/app/projects/${projectId}/final?error=${encodeURIComponent(normalizeAIError(error))}`);
   }
   revalidatePath(`/app/projects/${projectId}/final`);
 }

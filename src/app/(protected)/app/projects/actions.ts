@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { normalizeAIError } from "@/lib/ai/gemini";
 import { generateProjectPlan } from "@/lib/ai/service";
 import { requireProjectOwner, requireUser } from "@/lib/auth";
 import { splitList } from "@/lib/utils";
@@ -115,25 +116,39 @@ export async function generatePlan(formData: FormData) {
 
   const { data: memberProfiles } = await supabase
     .from("project_member_profiles")
-    .select("user_id, strengths, availability_minutes_per_day, profiles(name)")
+    .select("user_id, strengths, weaknesses, preferred_work_types, availability_minutes_per_day, notes, profiles(name)")
     .eq("project_id", projectId);
+
+  const missingProfiles = (memberProfiles ?? []).filter((member) =>
+    !member.strengths?.length
+    || !member.preferred_work_types?.length
+    || !member.availability_minutes_per_day
+  );
+  if (!memberProfiles?.length || missingProfiles.length) {
+    redirect(`/app/projects/${projectId}?error=Complete every member skill profile before generating the AI plan.`);
+  }
 
   const planInput = {
     title: project.title,
+    description: project.description,
     goal: project.goal,
     successCriteria: (project.success_criteria as Array<{ criterion: string }>).map((item) => item.criterion),
     startDate: project.start_date,
     endDate: project.end_date,
+    durationDays: Math.max(1, Math.ceil((new Date(`${project.end_date}T00:00:00Z`).getTime() - new Date(`${project.start_date}T00:00:00Z`).getTime()) / 86_400_000) + 1),
     members: (memberProfiles ?? []).map((member) => ({
       user_id: member.user_id,
       name: (member.profiles as unknown as { name: string }).name,
       strengths: member.strengths,
+      weaknesses: member.weaknesses,
+      preferred_work_types: member.preferred_work_types,
       availability_minutes_per_day: member.availability_minutes_per_day,
+      notes: member.notes,
     })),
   };
 
   try {
-    const plan = await generateProjectPlan(planInput);
+    const { output: plan, model } = await generateProjectPlan(planInput);
     const { data: oldTasks } = await supabase.from("tasks").select("id").eq("project_id", projectId).eq("ai_generated", true);
     if (oldTasks?.length) await supabase.from("tasks").delete().in("id", oldTasks.map((task) => task.id));
 
@@ -142,9 +157,8 @@ export async function generatePlan(formData: FormData) {
       type: "plan",
       input_snapshot: planInput,
       output: plan,
-      model: process.env.OPENAI_API_KEY && process.env.AI_PROVIDER === "openai"
-        ? process.env.OPENAI_MODEL || "gpt-5.5"
-        : "mock-v1",
+      model,
+      created_by: user.id,
     });
 
     for (const task of plan.tasks) {
@@ -152,17 +166,17 @@ export async function generatePlan(formData: FormData) {
         project_id: projectId,
         title: task.title,
         description: task.description,
-        acceptance_criteria: task.acceptance_criteria,
-        expected_evidence_types: task.expected_evidence_types,
+        acceptance_criteria: task.acceptanceCriteria,
+        expected_evidence_types: task.expectedEvidenceTypes,
         priority: task.priority,
-        due_date: task.due_date,
+        due_date: task.dueDate,
         ai_generated: true,
       }).select("id").single();
       if (error || !inserted) throw error || new Error("Task insert failed");
       await supabase.from("task_assignments").insert({
         task_id: inserted.id,
-        user_id: task.assigned_user_id,
-        assigned_reason: task.assigned_reason,
+        user_id: task.assignedUserId,
+        assigned_reason: task.assignmentReason,
       });
     }
     await supabase.from("audit_logs").insert({
@@ -172,7 +186,7 @@ export async function generatePlan(formData: FormData) {
       details: { task_count: plan.tasks.length },
     });
   } catch (error) {
-    redirect(`/app/projects/${projectId}?error=${encodeURIComponent(error instanceof Error ? error.message : "Plan generation failed")}`);
+    redirect(`/app/projects/${projectId}?error=${encodeURIComponent(normalizeAIError(error))}`);
   }
   revalidatePath(`/app/projects/${projectId}`);
 }
@@ -184,6 +198,7 @@ export async function updateDraftTask(formData: FormData) {
   if (project.status !== "draft") return;
   await supabase.from("tasks").update({
     title: String(formData.get("title") ?? ""),
+    description: String(formData.get("description") ?? ""),
     due_date: String(formData.get("due_date") ?? ""),
     priority: String(formData.get("priority") ?? "medium"),
   }).eq("id", taskId).eq("project_id", projectId);

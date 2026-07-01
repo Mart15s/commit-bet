@@ -1,74 +1,68 @@
 import "server-only";
 
-import OpenAI from "openai";
-import { zodTextFormat } from "openai/helpers/zod";
+import { generateJson } from "@/lib/ai/gemini";
+import {
+  disputePrompt,
+  enhanceTextPrompt,
+  evidenceReviewPrompt,
+  finalReportPrompt,
+  projectPlanPrompt,
+} from "@/lib/ai/prompts";
 import {
   disputeRecommendationSchema,
+  enhancedTextSchema,
+  evidenceReviewSchema,
   finalReportSchema,
   projectPlanSchema,
   type DisputeRecommendation,
+  type EnhancedText,
+  type EvidenceReview,
   type FinalReport,
   type ProjectPlan,
-} from "@/lib/validation";
-import {
-  mockDisputeRecommendation,
-  mockFinalReport,
-  mockProjectPlan,
-} from "@/lib/ai/mock";
+} from "@/lib/ai/schemas";
 
-const useMock = !process.env.OPENAI_API_KEY || process.env.AI_PROVIDER !== "openai";
-
-async function structured<T>(
-  schema: typeof projectPlanSchema | typeof disputeRecommendationSchema | typeof finalReportSchema,
-  name: string,
-  instructions: string,
-  input: unknown,
-) {
-  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  const response = await client.responses.parse({
-    model: process.env.OPENAI_MODEL || "gpt-5.5",
-    store: false,
-    instructions,
-    input: JSON.stringify(input),
-    text: { format: zodTextFormat(schema, name) },
+export async function enhanceText(input: unknown): Promise<{ output: EnhancedText; model: string }> {
+  return generateJson({
+    schema: enhancedTextSchema,
+    systemInstruction: enhanceTextPrompt,
+    input,
+    temperature: 0.35,
+    maxOutputTokens: 2048,
   });
-  if (!response.output_parsed) throw new Error("AI returned no structured output.");
-  return response.output_parsed as T;
 }
 
-export async function generateProjectPlan(
-  input: Parameters<typeof mockProjectPlan>[0],
-): Promise<ProjectPlan> {
-  if (useMock) return mockProjectPlan(input);
-  return structured<ProjectPlan>(
-    projectPlanSchema,
-    "project_plan",
-    "You are an accountability project planner. Create fewer meaningful tasks, assign by strengths and availability, and require clear acceptance criteria and evidence.",
+export async function generateProjectPlan(input: unknown): Promise<{ output: ProjectPlan; model: string }> {
+  return generateJson({
+    schema: projectPlanSchema,
+    systemInstruction: projectPlanPrompt,
     input,
-  );
+    maxOutputTokens: 16_384,
+  });
 }
 
-export async function generateDisputeRecommendation(
-  input: Parameters<typeof mockDisputeRecommendation>[0],
-): Promise<DisputeRecommendation> {
-  if (useMock) return mockDisputeRecommendation(input);
-  return structured<DisputeRecommendation>(
-    disputeRecommendationSchema,
-    "dispute_recommendation",
-    "Act as a neutral mediator. Give a recommendation only. Never make a financial decision and explain uncertainty.",
+export async function reviewEvidence(input: unknown): Promise<{ output: EvidenceReview; model: string }> {
+  return generateJson({
+    schema: evidenceReviewSchema,
+    systemInstruction: evidenceReviewPrompt,
     input,
-  );
+    maxOutputTokens: 8192,
+  });
 }
 
-export async function generateFinalReport(
-  input: Parameters<typeof mockFinalReport>[0],
-): Promise<FinalReport> {
-  if (useMock) return mockFinalReport(input);
-  return structured<FinalReport>(
-    finalReportSchema,
-    "final_report",
-    "Audit the project evidence neutrally. Give pledge recommendations only, require human confirmation, and do not claim legal authority.",
+export async function generateDisputeRecommendation(input: unknown): Promise<{ output: DisputeRecommendation; model: string }> {
+  return generateJson({
+    schema: disputeRecommendationSchema,
+    systemInstruction: disputePrompt,
     input,
-  );
+    maxOutputTokens: 8192,
+  });
 }
 
+export async function generateFinalReport(input: unknown): Promise<{ output: FinalReport; model: string }> {
+  return generateJson({
+    schema: finalReportSchema,
+    systemInstruction: finalReportPrompt,
+    input,
+    maxOutputTokens: 16_384,
+  });
+}

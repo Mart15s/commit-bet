@@ -1,5 +1,6 @@
 import { Brain, CalendarDays, Coins, FileCheck2, Gauge, ShieldCheck, Users } from "lucide-react";
 import { generatePlan, startProject, updateDraftTask } from "@/app/(protected)/app/projects/actions";
+import { AIEnhanceButton, AISubmitButton } from "@/components/ai-controls";
 import { Button, ButtonLink, Card, EmptyState, ErrorMessage, EvidenceExamples, HelpCard, MetricCard, NextActionCard, PageHeader, Progress, SectionHeader, StatusBadge } from "@/components/ui";
 import { TaskBoard, type BoardTask } from "@/components/tasks/task-board";
 import { requireProjectMember } from "@/lib/auth";
@@ -41,11 +42,12 @@ export default async function ProjectPage({
   const remaining = daysUntil(project.end_date);
   const pledgePool = (pledges ?? []).reduce((total, pledge) => total + Number(pledge.amount ?? 0), 0);
   const plan = reports?.[0]?.output as {
-    phases?: Array<{ name: string; description: string }>;
-    deliverables?: string[];
-    risks?: string[];
-    minimum_success_version?: string;
-    ambitious_success_version?: string;
+    planSummary?: string;
+    phases?: Array<{ title: string; description: string; startDate: string; endDate: string }>;
+    dailyGoals?: Array<{ date: string; goal: string; focus: string }>;
+    risks?: Array<{ risk: string; mitigation: string; severity: string }>;
+    minimumSuccessVersion?: string;
+    ambitiousSuccessVersion?: string;
     reasoning?: string;
   } | undefined;
   const projectDisputes = (disputes ?? []).filter((dispute) => (dispute.tasks as unknown as { project_id?: string } | null)?.project_id === id);
@@ -113,7 +115,7 @@ export default async function ProjectPage({
             </HelpCard>
           )}
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-            <form action={generatePlan}><input type="hidden" name="project_id" value={id} /><Button className="w-full" type="submit">{taskRows.length ? "Regenerate AI plan" : "Generate AI plan"}</Button></form>
+            <form action={generatePlan}><input type="hidden" name="project_id" value={id} /><AISubmitButton className="w-full" labelKey={taskRows.length ? "ai.regeneratePlan" : "ai.generatePlan"} pendingKey="ai.generatingPlan" /></form>
             {taskRows.length ? <ButtonLink href="#edit-plan" variant="secondary">Edit plan first</ButtonLink> : null}
             {taskRows.length ? <form action={startProject}><input type="hidden" name="project_id" value={id} /><Button className="w-full" variant="secondary" type="submit">Start project with this plan</Button></form> : null}
           </div>
@@ -124,24 +126,39 @@ export default async function ProjectPage({
         <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_.85fr]">
           <Card>
             <SectionHeader title="AI plan draft" description="The draft should be useful, but your team should still tune it before starting." />
+            {plan?.planSummary ? <p className="mb-4 text-sm leading-6 text-muted-foreground">{plan.planSummary}</p> : null}
             <div className="grid gap-3 sm:grid-cols-2">
               {(plan?.phases ?? []).map((phase) => (
-                <div key={phase.name} className="rounded-xl border border-border bg-secondary p-4">
+                <div key={phase.title} className="rounded-xl border border-border bg-secondary p-4">
                   <p className="text-xs font-black uppercase tracking-[.12em] text-cyan-300">Phase</p>
-                  <h3 className="mt-1 font-black">{phase.name}</h3>
+                  <h3 className="mt-1 font-black">{phase.title}</h3>
+                  <p className="mt-1 text-xs font-bold text-muted-foreground">{phase.startDate} - {phase.endDate}</p>
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">{phase.description}</p>
                 </div>
               ))}
-              {(plan?.deliverables ?? []).slice(0, 4).map((deliverable) => (
-                <div key={deliverable} className="rounded-xl border border-primary/20 bg-primary/10 p-4">
-                  <p className="text-xs font-black uppercase tracking-[.12em] text-primary">Deliverable</p>
-                  <p className="mt-1 text-sm font-bold leading-6">{deliverable}</p>
+              {(plan?.dailyGoals ?? []).slice(0, 4).map((goal) => (
+                <div key={`${goal.date}-${goal.goal}`} className="rounded-xl border border-primary/20 bg-primary/10 p-4">
+                  <p className="text-xs font-black uppercase tracking-[.12em] text-primary">{goal.date}</p>
+                  <p className="mt-1 text-sm font-bold leading-6">{goal.goal}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{goal.focus}</p>
                 </div>
               ))}
             </div>
-            {!plan?.phases?.length && !plan?.deliverables?.length && (
+            {!plan?.phases?.length && !plan?.dailyGoals?.length && (
               <p className="text-sm leading-6 text-muted-foreground">Generate or regenerate the AI plan to see phases and deliverables here.</p>
             )}
+            {plan?.minimumSuccessVersion || plan?.ambitiousSuccessVersion ? (
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-xl border border-emerald-300/25 bg-emerald-400/10 p-4 text-sm">
+                  <p className="font-black">Minimum success version</p>
+                  <p className="mt-1 text-muted-foreground">{plan.minimumSuccessVersion}</p>
+                </div>
+                <div className="rounded-xl border border-cyan-300/25 bg-cyan-400/10 p-4 text-sm">
+                  <p className="font-black">Ambitious success version</p>
+                  <p className="mt-1 text-muted-foreground">{plan.ambitiousSuccessVersion}</p>
+                </div>
+              </div>
+            ) : null}
           </Card>
           <Card className={planLooksLarge ? "border-amber-300/30 bg-amber-400/10" : "border-cyan-300/25 bg-cyan-400/10"}>
             <SectionHeader title={planLooksLarge ? "Plan may be too large" : "Proof expectations"} />
@@ -154,7 +171,8 @@ export default async function ProjectPage({
             {plan?.risks?.length ? (
               <div className="mt-4 rounded-xl border border-border bg-background/45 p-3 text-sm">
                 <p className="font-black">AI risk note</p>
-                <p className="mt-1 text-muted-foreground">{plan.risks[0]}</p>
+                <p className="mt-1 text-muted-foreground">{plan.risks[0].risk}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{plan.risks[0].mitigation}</p>
               </div>
             ) : null}
           </Card>
@@ -180,10 +198,10 @@ export default async function ProjectPage({
             <div>
               <h2 className="font-black">AI risk insight</h2>
               <p className="mt-2 text-sm leading-6 text-cyan-100">
-                {plan?.risks?.[0] || (remaining <= 2 && progress < 80 ? "Deadline is close and approved evidence is below target." : "No generated risk note yet. Generate the AI plan to get a specific review.")}
+                {plan?.risks?.[0]?.risk || (remaining <= 2 && progress < 80 ? "Deadline is close and approved evidence is below target." : "No generated risk note yet. Generate the AI plan to get a specific review.")}
               </p>
               <p className="mt-3 rounded-xl border border-cyan-300/20 bg-background/50 p-3 text-xs font-bold text-cyan-100">
-                Why: {plan?.minimum_success_version || plan?.reasoning || `${submitted} submitted tasks and ${projectDisputes.length} open dispute signals are included in the score.`}
+                Why: {plan?.minimumSuccessVersion || plan?.reasoning || `${submitted} submitted tasks and ${projectDisputes.length} open dispute signals are included in the score.`}
               </p>
             </div>
           </div>
@@ -200,7 +218,7 @@ export default async function ProjectPage({
           <EmptyState
             title="No tasks yet"
             copy="Tasks will appear after the owner generates an AI plan. The plan is editable before the project starts."
-            action={project.status === "draft" && isOwner ? <form action={generatePlan}><input type="hidden" name="project_id" value={id} /><Button type="submit">Generate AI plan</Button></form> : null}
+            action={project.status === "draft" && isOwner ? <form action={generatePlan}><input type="hidden" name="project_id" value={id} /><AISubmitButton labelKey="ai.generatePlan" pendingKey="ai.generatingPlan" /></form> : null}
           />
         </section>
       )}
@@ -218,6 +236,8 @@ export default async function ProjectPage({
                     <label>Task<input name="title" defaultValue={task.title} required /></label>
                     <label>Due<input name="due_date" type="date" defaultValue={task.due_date} required /></label>
                     <label>Priority<select name="priority" defaultValue={task.priority}><option>low</option><option>medium</option><option>high</option><option>critical</option></select></label>
+                    <label className="sm:col-span-3">Description<textarea id={`task-description-${task.id}`} name="description" className="min-h-24" defaultValue={task.description} required /></label>
+                    <div className="sm:col-span-3"><AIEnhanceButton targetSelector={`#task-description-${task.id}`} context="task_description" /></div>
                     <label className="sm:col-span-2">Assignee<select name="assigned_user_id" defaultValue={assignment?.user_id}>{profiles?.map((profile) => <option key={profile.user_id} value={profile.user_id}>{(profile.profiles as unknown as { name: string }).name}</option>)}</select></label>
                     <Button className="self-end" type="submit" variant="secondary">Save task</Button>
                     <div className="sm:col-span-3 grid gap-2 text-sm sm:grid-cols-2">

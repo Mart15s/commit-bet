@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, Brain, CalendarDays, Check, Minus, Plus, ShieldCheck, Users } from "lucide-react";
 import { createProject } from "@/app/(protected)/app/projects/actions";
+import { AIEnhanceButton } from "@/components/ai-controls";
 import { Button, Card, ErrorMessage, EvidenceExamples, HelpCard, NextActionCard, Progress, StatusBadge } from "@/components/ui";
 
 type Member = { id: string; name: string; email: string };
@@ -79,6 +80,13 @@ export function ProjectWizard({
     "Review everything before starting",
   ];
   const progress = Math.round(((step + 1) / steps.length) * 100);
+  const enhanceCriteria = (text: string) => {
+    const nextCriteria = text
+      .split("\n")
+      .map((item) => item.replace(/^[-*•]\s*/, "").trim())
+      .filter(Boolean);
+    if (nextCriteria.length) setCriteria(nextCriteria);
+  };
 
   return (
     <form action={createProject} noValidate>
@@ -116,7 +124,9 @@ export function ProjectWizard({
             }}>{teams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}</select></label>
             <label>Project name<small className="font-normal text-muted-foreground">Short and concrete, like the name you would put on a sprint board.</small><input name="title" required placeholder="Launch the first CommitBet waitlist" /></label>
             <label>Description<small className="font-normal text-muted-foreground">One or two sentences about what you are building and why it matters now.</small><textarea name="description" required placeholder="We want to validate whether small teams will use proof-based commitments to finish a launch." /></label>
+            <AIEnhanceButton targetName="description" context="project_description" />
             <label>Main goal<small className="font-normal text-muted-foreground">Write the outcome a teammate could check at the deadline.</small><textarea name="goal" required placeholder="Launch a landing page, collect 20 waitlist emails, and record a 2-minute demo video within 14 days." /></label>
+            <AIEnhanceButton targetName="goal" context="project_goal" />
             <HelpCard title="Good goals are visible at the finish line.">
               Instead of &quot;build a startup&quot;, use &quot;launch a landing page, collect 20 waitlist emails, and record a 2-minute demo video within 14 days.&quot;
             </HelpCard>
@@ -154,6 +164,11 @@ export function ProjectWizard({
                 </div>
               ))}
             </div>
+            <AIEnhanceButton
+              context="success_criteria"
+              value={criteria.filter(Boolean).join("\n")}
+              onEnhanced={enhanceCriteria}
+            />
             <Button type="button" variant="secondary" onClick={() => setCriteria((items) => [...items, ""])}>
               <Plus size={16} /> Add criterion
             </Button>
