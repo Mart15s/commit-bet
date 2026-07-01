@@ -50,9 +50,53 @@ export function normalizeAIError(error: unknown) {
     return "AI returned JSON that did not match the expected schema.";
   }
   if (error instanceof Error) {
+    try {
+      const parsed = JSON.parse(error.message) as { error?: { message?: string; status?: string } };
+      if (parsed.error?.status === "INVALID_ARGUMENT") {
+        return "Gemini rejected the structured request. Please try again.";
+      }
+      return parsed.error?.message || error.message || "Gemini request failed.";
+    } catch {
+      // Fall through to the original message.
+    }
     return error.message || "Gemini request failed.";
   }
   return "Gemini request failed.";
+}
+
+function toGeminiJsonSchema(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(toGeminiJsonSchema);
+  if (!value || typeof value !== "object") return value;
+
+  const source = value as Record<string, unknown>;
+  const result: Record<string, unknown> = {};
+  for (const [key, child] of Object.entries(source)) {
+    if (
+      key === "$schema"
+      || key === "pattern"
+      || key === "minLength"
+      || key === "maxLength"
+      || key === "default"
+      || key === "examples"
+    ) {
+      continue;
+    }
+    if (key === "format" && !["date", "date-time", "time"].includes(String(child))) {
+      continue;
+    }
+    result[key] = toGeminiJsonSchema(child);
+  }
+  return result;
+}
+
+function isInvalidArgumentError(error: unknown) {
+  if (!(error instanceof Error)) return false;
+  try {
+    const parsed = JSON.parse(error.message) as { error?: { status?: string; code?: number } };
+    return parsed.error?.status === "INVALID_ARGUMENT" || parsed.error?.code === 400;
+  } catch {
+    return /INVALID_ARGUMENT|invalid argument/i.test(error.message);
+  }
 }
 
 export async function generateJson<T>({
@@ -69,17 +113,37 @@ export async function generateJson<T>({
   maxOutputTokens?: number;
 }): Promise<{ output: T; model: string }> {
   const model = getGeminiModel();
-  const response = await getGeminiClient().models.generateContent({
+  const jsonSchema = toGeminiJsonSchema(z.toJSONSchema(schema));
+  const contents = [
+    "Input JSON:",
+    JSON.stringify(input),
+    "Return only JSON matching this JSON schema:",
+    JSON.stringify(jsonSchema),
+  ].join("\n\n");
+  const request = {
     model,
-    contents: JSON.stringify(input),
+    contents,
     config: {
       systemInstruction,
       temperature,
       maxOutputTokens,
       responseMimeType: "application/json",
-      responseJsonSchema: z.toJSONSchema(schema),
+      responseJsonSchema: jsonSchema,
     },
-  });
+  };
+  let response;
+  try {
+    response = await getGeminiClient().models.generateContent(request);
+  } catch (error) {
+    if (!isInvalidArgumentError(error)) throw error;
+    response = await getGeminiClient().models.generateContent({
+      ...request,
+      config: {
+        ...request.config,
+        responseJsonSchema: undefined,
+      },
+    });
+  }
   const text = response.text;
   if (!text) throw new AIResponseError("Gemini returned no text output.");
   const output = schema.parse(parseJson(text));
