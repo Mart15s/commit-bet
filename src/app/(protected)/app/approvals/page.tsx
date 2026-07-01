@@ -1,5 +1,6 @@
 import { AlertTriangle, Check, FileCheck2, MessageSquare, X } from "lucide-react";
 import { reviewTask } from "@/app/(protected)/app/tasks/actions";
+import { AiManualReviewNote } from "@/components/ai-status";
 import { Button, ButtonLink, Card, EmptyState, EvidenceExamples, HelpCard, PageHeader, StatusBadge } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { singleRelation } from "@/lib/utils";
@@ -42,6 +43,7 @@ export default async function ApprovalsPage({
       <HelpCard title="What reviewers are checking" tone="amber" className="mb-4">
         Approve if the proof clearly matches the task. Request changes if the work is started but not fully proven. Reject only if the evidence does not support the task.
       </HelpCard>
+      <AiManualReviewNote />
       <div className="grid gap-4">
         {reviewable.map((task) => {
           const assignment = singleRelation(task.task_assignments);

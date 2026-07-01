@@ -1,5 +1,6 @@
 import { Brain, CalendarDays, Coins, FileCheck2, Gauge, ShieldCheck, Users } from "lucide-react";
 import { generatePlan, startProject, updateDraftTask } from "@/app/(protected)/app/projects/actions";
+import { AiFallbackBadge, AiFallbackNotice, AiSubmitButton } from "@/components/ai-status";
 import { Button, ButtonLink, Card, EmptyState, ErrorMessage, EvidenceExamples, HelpCard, MetricCard, NextActionCard, PageHeader, Progress, SectionHeader, StatusBadge } from "@/components/ui";
 import { TaskBoard, type BoardTask } from "@/components/tasks/task-board";
 import { requireProjectMember } from "@/lib/auth";
@@ -18,7 +19,7 @@ export default async function ProjectPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; ai_fallback?: string; ai_error?: string }>;
 }) {
   const { id } = await params;
   const query = await searchParams;
@@ -29,7 +30,7 @@ export default async function ProjectPage({
     supabase.from("pledges").select("*, profiles(name)").eq("project_id", id),
     supabase.from("tasks").select("*, task_assignments(user_id, assigned_reason, profiles(name))").eq("project_id", id).order("due_date"),
     supabase.from("daily_logs").select("*, profiles(name)").eq("project_id", id).order("created_at", { ascending: false }).limit(5),
-    supabase.from("ai_reports").select("output").eq("project_id", id).eq("type", "plan").order("created_at", { ascending: false }).limit(1),
+    supabase.from("ai_reports").select("output, model").eq("project_id", id).eq("type", "plan").order("created_at", { ascending: false }).limit(1),
     supabase.from("disputes").select("id, status, reason, tasks(title, project_id)").order("created_at", { ascending: false }),
   ]);
 
@@ -47,7 +48,9 @@ export default async function ProjectPage({
     minimum_success_version?: string;
     ambitious_success_version?: string;
     reasoning?: string;
+    fallback_used?: boolean;
   } | undefined;
+  const planFallback = Boolean(plan?.fallback_used || reports?.[0]?.model === "deterministic-fallback");
   const projectDisputes = (disputes ?? []).filter((dispute) => (dispute.tasks as unknown as { project_id?: string } | null)?.project_id === id);
   const pendingReviews = taskRows.filter((task) => task.status === "submitted");
   const statusCounts = ["todo", "in_progress", "submitted", "approved", "needs_changes", "rejected", "disputed"].map((status) => ({
@@ -81,6 +84,19 @@ export default async function ProjectPage({
         action={<div className="flex flex-wrap gap-2"><StatusBadge status={project.status} /><ButtonLink href={`/app/projects/${id}/tasks`} variant="secondary" size="sm">Task board</ButtonLink></div>}
       />
       <ErrorMessage message={query.error} />
+      {query.ai_fallback === "plan" ? (
+        <AiFallbackNotice
+          type="plan"
+          errorCode={query.ai_error}
+          manualHref={taskRows.length ? "#edit-plan" : undefined}
+          retryAction={(
+            <form action={generatePlan}>
+              <input type="hidden" name="project_id" value={id} />
+              <AiSubmitButton labelKey="ai.retryPlan" pendingKey="ai.generatingPlan" fallback type="submit" size="sm" />
+            </form>
+          )}
+        />
+      ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard label="Success score" value={`${evidenceAdjustedScore}%`} detail={`${approved}/${taskRows.length || 0} approved`} icon={<Gauge size={20} />} />
@@ -99,7 +115,10 @@ export default async function ProjectPage({
           <div className="flex gap-3">
             <Brain className="mt-1 text-cyan-300" />
             <div>
-              <h2 className="text-xl font-black">{taskRows.length ? "Review the draft AI plan" : "Generate your execution plan"}</h2>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-xl font-black">{taskRows.length ? "Review the draft AI plan" : "Generate your execution plan"}</h2>
+                {planFallback ? <AiFallbackBadge type="plan" /> : null}
+              </div>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">AI turns the commitment into editable tasks with owners, deadlines, acceptance criteria, expected evidence, and risk notes.</p>
             </div>
           </div>
@@ -113,7 +132,7 @@ export default async function ProjectPage({
             </HelpCard>
           )}
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-            <form action={generatePlan}><input type="hidden" name="project_id" value={id} /><Button className="w-full" type="submit">{taskRows.length ? "Regenerate AI plan" : "Generate AI plan"}</Button></form>
+            <form action={generatePlan}><input type="hidden" name="project_id" value={id} /><AiSubmitButton className="w-full" labelKey={taskRows.length ? "ai.regeneratePlan" : "ai.generatePlan"} pendingKey="ai.generatingPlan" type="submit" /></form>
             {taskRows.length ? <ButtonLink href="#edit-plan" variant="secondary">Edit plan first</ButtonLink> : null}
             {taskRows.length ? <form action={startProject}><input type="hidden" name="project_id" value={id} /><Button className="w-full" variant="secondary" type="submit">Start project with this plan</Button></form> : null}
           </div>
@@ -200,7 +219,7 @@ export default async function ProjectPage({
           <EmptyState
             title="No tasks yet"
             copy="Tasks will appear after the owner generates an AI plan. The plan is editable before the project starts."
-            action={project.status === "draft" && isOwner ? <form action={generatePlan}><input type="hidden" name="project_id" value={id} /><Button type="submit">Generate AI plan</Button></form> : null}
+            action={project.status === "draft" && isOwner ? <form action={generatePlan}><input type="hidden" name="project_id" value={id} /><AiSubmitButton labelKey="ai.generatePlan" pendingKey="ai.generatingPlan" type="submit" /></form> : null}
           />
         </section>
       )}

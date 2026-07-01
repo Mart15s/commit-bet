@@ -1,7 +1,9 @@
 import "server-only";
 
-import OpenAI from "openai";
-import { zodTextFormat } from "openai/helpers/zod";
+import type { z } from "zod";
+import { normalizeAiError, type NormalizedAiError } from "@/lib/ai/errors";
+import { generateGeminiStructured, logAiFailure } from "@/lib/ai/gemini";
+import { disputeRecommendationPrompt, finalReportPrompt, projectPlanPrompt } from "@/lib/ai/prompts";
 import {
   disputeRecommendationSchema,
   finalReportSchema,
@@ -9,66 +11,124 @@ import {
   type DisputeRecommendation,
   type FinalReport,
   type ProjectPlan,
-} from "@/lib/validation";
+} from "@/lib/ai/schemas";
 import {
   mockDisputeRecommendation,
   mockFinalReport,
   mockProjectPlan,
 } from "@/lib/ai/mock";
 
-const useMock = !process.env.OPENAI_API_KEY || process.env.AI_PROVIDER !== "openai";
+export type AiGeneration<T> = {
+  output: T;
+  model: string;
+  fallbackUsed: boolean;
+  error?: NormalizedAiError;
+};
 
-async function structured<T>(
-  schema: typeof projectPlanSchema | typeof disputeRecommendationSchema | typeof finalReportSchema,
-  name: string,
-  instructions: string,
-  input: unknown,
-) {
-  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  const response = await client.responses.parse({
-    model: process.env.OPENAI_MODEL || "gpt-5.5",
-    store: false,
-    instructions,
-    input: JSON.stringify(input),
-    text: { format: zodTextFormat(schema, name) },
-  });
-  if (!response.output_parsed) throw new Error("AI returned no structured output.");
-  return response.output_parsed as T;
+type FallbackMetadata = {
+  fallback_used: true;
+  fallback_label: string;
+  ai_error: NormalizedAiError;
+};
+
+function withFallbackMetadata<T extends object>(
+  output: T,
+  fallbackLabel: string,
+  error: NormalizedAiError,
+): T & FallbackMetadata {
+  return {
+    ...output,
+    fallback_used: true,
+    fallback_label: fallbackLabel,
+    ai_error: error,
+  };
+}
+
+async function generateOrFallback<T extends object>({
+  schema,
+  schemaName,
+  prompt,
+  input,
+  fallbackLabel,
+  fallback,
+}: {
+  schema: z.ZodType<T>;
+  schemaName: string;
+  prompt: string;
+  input: unknown;
+  fallbackLabel: string;
+  fallback: () => T;
+}): Promise<AiGeneration<T>> {
+  try {
+    const result = await generateGeminiStructured<T>({
+      schema,
+      schemaName,
+      prompt,
+      input,
+    });
+    return {
+      output: result.output,
+      model: result.model,
+      fallbackUsed: result.fallbackUsed,
+    };
+  } catch (error) {
+    const normalized = normalizeAiError(error);
+    logAiFailure({ schemaName }, normalized);
+    return {
+      output: withFallbackMetadata(fallback(), fallbackLabel, normalized),
+      model: "deterministic-fallback",
+      fallbackUsed: true,
+      error: normalized,
+    };
+  }
 }
 
 export async function generateProjectPlan(
   input: Parameters<typeof mockProjectPlan>[0],
-): Promise<ProjectPlan> {
-  if (useMock) return mockProjectPlan(input);
-  return structured<ProjectPlan>(
-    projectPlanSchema,
-    "project_plan",
-    "You are an accountability project planner. Create fewer meaningful tasks, assign by strengths and availability, and require clear acceptance criteria and evidence.",
+): Promise<AiGeneration<ProjectPlan>> {
+  return generateOrFallback<ProjectPlan>({
+    schema: projectPlanSchema,
+    schemaName: "project_plan",
+    prompt: projectPlanPrompt,
     input,
-  );
+    fallbackLabel: "Fallback draft - AI was unavailable",
+    fallback: () => mockProjectPlan(input),
+  });
 }
 
 export async function generateDisputeRecommendation(
   input: Parameters<typeof mockDisputeRecommendation>[0],
-): Promise<DisputeRecommendation> {
-  if (useMock) return mockDisputeRecommendation(input);
-  return structured<DisputeRecommendation>(
-    disputeRecommendationSchema,
-    "dispute_recommendation",
-    "Act as a neutral mediator. Give a recommendation only. Never make a financial decision and explain uncertainty.",
+): Promise<AiGeneration<DisputeRecommendation>> {
+  return generateOrFallback<DisputeRecommendation>({
+    schema: disputeRecommendationSchema,
+    schemaName: "dispute_recommendation",
+    prompt: disputeRecommendationPrompt,
     input,
-  );
+    fallbackLabel: "Manual dispute review - AI unavailable",
+    fallback: () => ({
+      ...mockDisputeRecommendation(input),
+      suggested_next_action: "Resolve manually after comparing the performer explanation, reviewer reason, and submitted evidence.",
+      missing_information: [
+        ...mockDisputeRecommendation(input).missing_information,
+        "AI recommendation is unavailable; use human review options.",
+      ],
+    }),
+  });
 }
 
 export async function generateFinalReport(
   input: Parameters<typeof mockFinalReport>[0],
-): Promise<FinalReport> {
-  if (useMock) return mockFinalReport(input);
-  return structured<FinalReport>(
-    finalReportSchema,
-    "final_report",
-    "Audit the project evidence neutrally. Give pledge recommendations only, require human confirmation, and do not claim legal authority.",
+): Promise<AiGeneration<FinalReport>> {
+  return generateOrFallback<FinalReport>({
+    schema: finalReportSchema,
+    schemaName: "final_report",
+    prompt: finalReportPrompt,
     input,
-  );
+    fallbackLabel: "Basic report - AI analysis unavailable",
+    fallback: () => ({
+      ...mockFinalReport(input),
+      project_summary: `Basic report - AI analysis unavailable. ${mockFinalReport(input).project_summary}`,
+      reasoning: "This basic report is generated from task counts, evidence counts, dispute counts, member contribution signals, and virtual pledge totals. Human confirmation is required.",
+    }),
+  });
 }
-

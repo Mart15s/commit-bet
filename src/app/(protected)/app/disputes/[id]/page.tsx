@@ -1,4 +1,5 @@
 import { resolveDispute } from "@/app/(protected)/app/tasks/actions";
+import { AiFallbackBadge, AiFallbackNotice } from "@/components/ai-status";
 import { Button, ButtonLink, Card, ErrorMessage, HelpCard, PageHeader, StatusBadge } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { notFound } from "next/navigation";
@@ -25,6 +26,8 @@ export default async function DisputePage({
     confidence_score: number;
     suggested_next_action: string;
   } | null;
+  const { data: evidence } = await supabase.from("evidence").select("id, type, description, url").eq("task_id", dispute.task_id).order("created_at", { ascending: false });
+  const fallbackUsed = Boolean((recommendation as { fallback_used?: boolean } | null)?.fallback_used);
   const isOwner = task.projects.created_by === user.id;
 
   return (
@@ -32,17 +35,43 @@ export default async function DisputePage({
       <ButtonLink href={`/app/tasks/${dispute.task_id}`} variant="ghost" size="sm" className="mb-3">Back to task</ButtonLink>
       <PageHeader title={`Dispute: ${task.title}`} description="AI structures the disagreement and recommends a next step. A human owner confirms the resolution." action={<StatusBadge status={dispute.status} />} />
       <ErrorMessage message={query.error} />
+      {fallbackUsed ? <AiFallbackNotice type="dispute" /> : null}
       <HelpCard title="How disputes work" tone="cyan" className="mt-4">
         AI helps organize the disagreement, identify missing proof, and suggest a resolution. It does not make the final decision and it never moves money.
       </HelpCard>
       <div className="mt-5 grid gap-4 md:grid-cols-2">
         <Card><h2 className="font-black">Performer explanation</h2><p className="mt-3 text-sm leading-6 text-muted-foreground">{dispute.performer_explanation}</p><h3 className="mt-5 text-sm font-black">Reviewer reason</h3><p className="mt-2 text-sm leading-6 text-muted-foreground">{dispute.reviewer_rejection_reason}</p></Card>
         <Card className="border-cyan-300/25 bg-cyan-400/10">
-          <div className="flex justify-between gap-3"><h2 className="font-black">AI recommendation</h2>{recommendation && <strong>{recommendation.confidence_score}% confidence</strong>}</div>
+          <div className="flex justify-between gap-3"><h2 className="font-black">AI recommendation {fallbackUsed ? <AiFallbackBadge type="dispute" /> : null}</h2>{recommendation && <strong>{recommendation.confidence_score}% confidence</strong>}</div>
           {recommendation ? <><p className="mt-3 text-sm leading-6">{recommendation.neutral_summary}</p><div className="mt-4 rounded-xl border border-border bg-card p-3"><StatusBadge status={recommendation.recommended_resolution} /><p className="mt-2 text-sm">{recommendation.suggested_next_action}</p></div></> : <p className="mt-3 text-sm text-muted-foreground">Recommendation unavailable.</p>}
           <p className="mt-4 text-xs font-bold text-muted-foreground">Recommendation only. Humans still confirm the task outcome and no financial or pledge action is automatic.</p>
         </Card>
       </div>
+      {fallbackUsed ? (
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <Card>
+            <h2 className="font-black">Submitted evidence</h2>
+            <div className="mt-3 space-y-3">
+              {evidence?.map((item) => (
+                <div key={item.id} className="rounded-xl border border-border bg-secondary p-3">
+                  <StatusBadge status={item.type} />
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.description}</p>
+                  {item.url ? <a href={item.url} target="_blank" rel="noreferrer" className="mt-2 inline-block text-sm font-black text-cyan-300">Open evidence</a> : null}
+                </div>
+              ))}
+              {!evidence?.length ? <p className="text-sm text-muted-foreground">No submitted evidence was found for this dispute.</p> : null}
+            </div>
+          </Card>
+          <Card className="border-amber-300/30 bg-amber-400/10">
+            <h2 className="font-black">Manual resolution options</h2>
+            <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
+              <li>Approve if the evidence clearly satisfies the acceptance criteria.</li>
+              <li>Request changes if the work is close but proof or scope is incomplete.</li>
+              <li>Reject if the submitted proof does not support the task.</li>
+            </ul>
+          </Card>
+        </div>
+      ) : null}
       {recommendation && <div className="mt-4 grid gap-4 md:grid-cols-2"><Card><h2 className="font-black text-emerald-300">Arguments for approval</h2><ul className="mt-3 list-disc space-y-2 pl-5 text-sm">{recommendation.arguments_for_approval.map((item) => <li key={item}>{item}</li>)}</ul></Card><Card><h2 className="font-black text-red-300">Arguments for rejection</h2><ul className="mt-3 list-disc space-y-2 pl-5 text-sm">{recommendation.arguments_for_rejection.map((item) => <li key={item}>{item}</li>)}</ul></Card></div>}
       {isOwner && dispute.status === "open" && <Card className="sticky bottom-16 mt-5 border-amber-300/30 bg-amber-400/10 md:bottom-3"><h2 className="font-black">Human confirmation required</h2><p className="mt-1 text-sm text-muted-foreground">Choose the final task status after reading the proof, reviewer reason, and AI recommendation.</p><form action={resolveDispute} className="mt-3 flex flex-col gap-3 sm:flex-row"><input type="hidden" name="dispute_id" value={id} /><select name="resolution" aria-label="Dispute resolution"><option value="approve">Approve task</option><option value="needs_changes">Request changes</option><option value="reject">Reject proof</option></select><Button className="shrink-0" type="submit">Confirm human resolution</Button></form></Card>}
     </>

@@ -1,5 +1,6 @@
 import { Brain, CheckCircle2, FileCheck2, Gauge, Scale, ShieldCheck, TriangleAlert, Users } from "lucide-react";
 import { confirmFinalDecision, generateFinal } from "@/app/(protected)/app/projects/[id]/final/actions";
+import { AiFallbackBadge, AiFallbackNotice, AiSubmitButton } from "@/components/ai-status";
 import { Button, ButtonLink, Card, ErrorMessage, HelpCard, MetricCard, PageHeader, Progress, SectionHeader, StatusBadge } from "@/components/ui";
 import { requireProjectOwner } from "@/lib/auth";
 
@@ -8,7 +9,7 @@ export default async function FinalReportPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; ai_fallback?: string; ai_error?: string }>;
 }) {
   const { id } = await params;
   const query = await searchParams;
@@ -29,7 +30,9 @@ export default async function FinalReportPage({
     pledge_recommendation: Array<{ user_id: string; pledge_return_percentage: number; reason: string }>;
     reasoning: string;
     confidence_score: number;
+    fallback_used?: boolean;
   } | undefined;
+  const reportFallback = Boolean(report?.fallback_used || reportRows?.[0]?.model === "deterministic-fallback");
   const finalActions = decision?.final_action as Record<string, { name: string; return_percentage: number }> | undefined;
   const metCount = report?.success_criteria_evaluation.filter((item) => item.status === "met").length ?? 0;
   const totalCriteria = report?.success_criteria_evaluation.length ?? 0;
@@ -55,6 +58,18 @@ export default async function FinalReportPage({
         action={decision ? <StatusBadge status="completed" /> : <StatusBadge status="human confirmation required" />}
       />
       <ErrorMessage message={query.error} />
+      {query.ai_fallback === "final" ? (
+        <AiFallbackNotice
+          type="final"
+          errorCode={query.ai_error}
+          retryAction={(
+            <form action={generateFinal}>
+              <input type="hidden" name="project_id" value={id} />
+              <AiSubmitButton labelKey="ai.retryReport" pendingKey="ai.generatingFinalReport" fallback type="submit" size="sm" />
+            </form>
+          )}
+        />
+      ) : null}
 
       {!report && (
         <Card className="mt-5 border-cyan-300/25 bg-cyan-400/10 text-center">
@@ -68,7 +83,7 @@ export default async function FinalReportPage({
           </p>
           <form action={generateFinal} className="mt-6">
             <input type="hidden" name="project_id" value={id} />
-            <Button type="submit" size="lg"><Brain size={18} /> Generate final report</Button>
+            <AiSubmitButton labelKey="ai.generateFinalReport" pendingKey="ai.generatingFinalReport" type="submit" size="lg" />
           </form>
         </Card>
       )}
@@ -78,7 +93,7 @@ export default async function FinalReportPage({
           <Card className="border-cyan-300/25 bg-cyan-400/10">
             <div className="grid gap-5 lg:grid-cols-[1fr_18rem] lg:items-center">
               <div>
-                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[.16em] text-cyan-300"><Brain size={16} /> AI recommendation</div>
+                <div className="flex flex-wrap items-center gap-2 text-xs font-black uppercase tracking-[.16em] text-cyan-300"><Brain size={16} /> AI recommendation {reportFallback ? <AiFallbackBadge type="final" /> : null}</div>
                 <h2 className="mt-3 text-3xl font-black tracking-[-.035em]">{outcome}</h2>
                 <p className="mt-3 leading-7">{report.project_summary}</p>
                 <p className="mt-4 rounded-xl border border-cyan-300/20 bg-background/55 p-3 text-sm font-bold text-cyan-100"><span className="text-foreground">Why AI thinks this:</span> {report.reasoning}</p>
@@ -94,6 +109,12 @@ export default async function FinalReportPage({
           <HelpCard title="Evidence considered" tone="cyan">
             AI considered approved, rejected, disputed, and late tasks; attached proof; member contribution signals; delay analysis; and recorded disputes. It recommends only. Your team confirms the final outcome manually.
           </HelpCard>
+          {reportFallback ? (
+            <form action={generateFinal}>
+              <input type="hidden" name="project_id" value={id} />
+              <AiSubmitButton labelKey="ai.retryReport" pendingKey="ai.generatingFinalReport" fallback type="submit" variant="secondary" />
+            </form>
+          ) : null}
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <MetricCard label="Planned tasks" value={report.task_statistics.planned} icon={<FileCheck2 size={20} />} />

@@ -102,6 +102,8 @@ export function mockFinalReport(input: {
   tasks: Array<{ status: string; due_date: string }>;
   members: Array<{ user_id: string; name: string; approved: number; evidence: number }>;
   disputeCount: number;
+  evidenceCount?: number;
+  pledgePool?: number;
 }): FinalReport {
   const approved = input.tasks.filter((task) => task.status === "approved").length;
   const rejected = input.tasks.filter((task) => task.status === "rejected").length;
@@ -137,9 +139,8 @@ export function mockFinalReport(input: {
       pledge_return_percentage: member.approved > 0 ? 100 : member.evidence > 0 ? 70 : 0,
       reason: "Recommendation is based on approved work and recorded evidence only.",
     })),
-    reasoning: "This mocked report uses transparent task and evidence counts. It is a recommendation, not a financial or legal decision.",
+    reasoning: `This report uses transparent task and evidence counts: ${input.evidenceCount ?? input.members.reduce((total, member) => total + member.evidence, 0)} evidence item(s), ${input.disputeCount} dispute(s), and ${input.pledgePool ?? 0} virtual pledge point(s). It is a recommendation, not a financial or legal decision.`,
     confidence_score: input.tasks.length ? 75 : 35,
     human_confirmation_required: true,
   };
 }
-

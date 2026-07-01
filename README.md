@@ -9,8 +9,8 @@ AI is advisory only. The MVP does not collect, hold, transfer, or distribute rea
 - Next.js 16 App Router with TypeScript
 - Tailwind CSS
 - Supabase Auth, Postgres, Row Level Security, and Storage
-- OpenAI Responses API behind a server-only service layer
-- Mock AI mode by default
+- Gemini API behind a server-only service layer
+- Deterministic fallback drafts/reports when AI is unavailable
 - Vitest and Playwright for focused verification
 
 ## Setup
@@ -47,9 +47,9 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<PUBLISHABLE_KEY>
 # NEXT_PUBLIC_SUPABASE_ANON_KEY=<LEGACY_ANON_KEY>
 NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000
 SUPABASE_SERVICE_ROLE_KEY=<SERVICE_ROLE_KEY>
-OPENAI_API_KEY=
-OPENAI_MODEL=gpt-5.5
-AI_PROVIDER=mock
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-2.5-flash
+GEMINI_FALLBACK_MODEL=gemini-2.5-flash-lite
 ```
 
 For the production Vercel environment, set `NEXT_PUBLIC_SITE_URL` to the
@@ -88,35 +88,28 @@ Main schema:
 
 RLS is enabled on all public tables. Server Actions also verify the authenticated user and team/project relationship before mutating data.
 
-## Mocked AI Mode
+## AI Reliability
 
-Mocked AI is the default and works without an OpenAI key:
+AI calls are server-only and use Gemini structured JSON plus Zod validation.
+The default model is `gemini-2.5-flash`; the fallback model is
+`gemini-2.5-flash-lite`. If the provider is missing, overloaded, rate-limited,
+unavailable, or returns invalid JSON, CommitBet stores a deterministic fallback
+draft/report and keeps the user in the workflow.
 
-```bash
-AI_PROVIDER=mock
-OPENAI_API_KEY=
-```
-
-The mock planner returns deterministic phases, tasks, risks, evidence requirements, dispute recommendations, and final reports based on project inputs.
-
-## Optional OpenAI Mode
-
-Set:
+For production Vercel, set:
 
 ```bash
-AI_PROVIDER=openai
-OPENAI_API_KEY=<your-key>
-OPENAI_MODEL=gpt-5.5
+GEMINI_API_KEY=<your-key>
+GEMINI_MODEL=gemini-2.5-flash
+GEMINI_FALLBACK_MODEL=gemini-2.5-flash-lite
 ```
-
-OpenAI calls are server-only and use structured Zod output validation. If no API key is present, the app falls back to mock mode.
 
 ## MVP Flow
 
 1. Register or log in.
 2. Create a team.
 3. Create a project with success criteria, selected members, profiles, and virtual pledges.
-4. Generate a mock AI plan.
+4. Generate an AI plan or use the fallback draft if AI is unavailable.
 5. Review/edit generated task basics and start the project.
 6. Assignee adds evidence and submits the task.
 7. Another team member approves, requests changes, or rejects.

@@ -112,6 +112,7 @@ export async function generatePlan(formData: FormData) {
   const projectId = String(formData.get("project_id"));
   const { supabase, user, project } = await requireProjectOwner(projectId);
   if (project.status !== "draft") redirect(`/app/projects/${projectId}?error=Only draft projects can generate a plan.`);
+  let fallbackCode: string | undefined;
 
   const { data: memberProfiles } = await supabase
     .from("project_member_profiles")
@@ -133,18 +134,23 @@ export async function generatePlan(formData: FormData) {
   };
 
   try {
-    const plan = await generateProjectPlan(planInput);
+    const result = await generateProjectPlan(planInput);
+    const plan = result.output;
     const { data: oldTasks } = await supabase.from("tasks").select("id").eq("project_id", projectId).eq("ai_generated", true);
     if (oldTasks?.length) await supabase.from("tasks").delete().in("id", oldTasks.map((task) => task.id));
 
     await supabase.from("ai_reports").insert({
       project_id: projectId,
       type: "plan",
-      input_snapshot: planInput,
+      input_snapshot: {
+        ...planInput,
+        ai: {
+          fallback_used: result.fallbackUsed,
+          error: result.error,
+        },
+      },
       output: plan,
-      model: process.env.OPENAI_API_KEY && process.env.AI_PROVIDER === "openai"
-        ? process.env.OPENAI_MODEL || "gpt-5.5"
-        : "mock-v1",
+      model: result.model,
     });
 
     for (const task of plan.tasks) {
@@ -168,13 +174,16 @@ export async function generatePlan(formData: FormData) {
     await supabase.from("audit_logs").insert({
       project_id: projectId,
       user_id: user.id,
-      action: "ai_plan_generated",
-      details: { task_count: plan.tasks.length },
+      action: result.fallbackUsed ? "fallback_plan_generated" : "ai_plan_generated",
+      details: { task_count: plan.tasks.length, model: result.model, fallback_used: result.fallbackUsed, ai_error: result.error },
     });
+    fallbackCode = result.fallbackUsed ? result.error?.code ?? "provider_unavailable" : undefined;
   } catch (error) {
     redirect(`/app/projects/${projectId}?error=${encodeURIComponent(error instanceof Error ? error.message : "Plan generation failed")}`);
   }
   revalidatePath(`/app/projects/${projectId}`);
+  if (fallbackCode) redirect(`/app/projects/${projectId}?ai_fallback=plan&ai_error=${fallbackCode}`);
+  redirect(`/app/projects/${projectId}`);
 }
 
 export async function updateDraftTask(formData: FormData) {
