@@ -81,6 +81,17 @@ export type ProjectPlan = z.infer<typeof projectPlanSchema>;
 export type DisputeRecommendation = z.infer<typeof disputeRecommendationSchema>;
 export type FinalReport = z.infer<typeof finalReportSchema>;
 
+const trimmedList = z
+  .array(z.string())
+  .transform((items) => [
+    ...new Map(
+      items
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .map((item) => [item.toLocaleLowerCase(), item] as const),
+    ).values(),
+  ]);
+
 export const evidenceSchema = z.object({
   taskId: z.string().uuid(),
   type: z.enum(["screenshot", "document", "github", "video", "link", "demo", "other"]),
@@ -103,13 +114,18 @@ export const reviewSchema = z
 export const projectBasicsSchema = z
   .object({
     teamId: z.string().uuid(),
+    projectType: z.string().trim().min(2).max(120),
     title: z.string().trim().min(2).max(120),
     description: z.string().trim().min(2).max(2000),
     goal: z.string().trim().min(2).max(1000),
     startDate: z.iso.date(),
     endDate: z.iso.date(),
-    criteria: z.array(z.string().trim().min(2).max(500)).min(1).max(20),
+    selectedSuccessCriteria: trimmedList,
+    customSuccessCriteria: trimmedList,
+    criteria: z.array(z.string().trim().min(2).max(500)).min(1, "Choose at least one success criterion.").max(20),
     memberIds: z.array(z.string().uuid()).min(1).max(5),
+    pledgeAmount: z.number().finite().min(0).max(1_000_000),
+    pledgeAmountIsCustom: z.boolean(),
   })
   .refine((value) => value.endDate >= value.startDate, {
     path: ["endDate"],
@@ -118,11 +134,19 @@ export const projectBasicsSchema = z
 
 export const projectMemberSetupSchema = z.object({
   memberId: z.string().uuid(),
-  strengths: z.array(z.string().min(1)).min(1),
-  weaknesses: z.array(z.string().min(1)),
+  roles: trimmedList,
+  strengths: trimmedList,
+  weaknesses: trimmedList,
   availabilityMinutesPerDay: z.number().int().min(15).max(1440),
-  preferredWorkTypes: z.array(z.string().min(1)),
+  preferredWorkTypes: trimmedList,
+  evidenceTypes: trimmedList,
+  experienceLevel: z.string().trim().min(2).max(80),
+  bestWorkTime: z.string().trim().min(2).max(80),
   notes: z.string().max(1000),
+  customNotes: z.string().max(1000),
   pledgeAmount: z.number().finite().min(0).max(1_000_000),
   pledgeCurrency: z.enum(["POINTS", "EUR_DECLARED"]),
+}).refine((value) => value.roles.length > 0 || value.strengths.length > 0, {
+  path: ["roles"],
+  message: "Choose at least one role or strength for every member.",
 });

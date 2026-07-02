@@ -7,12 +7,20 @@ import type {
 type Member = {
   user_id: string;
   name: string;
+  roles?: string[];
   strengths: string[];
+  weaknesses?: string[];
+  preferred_work_types?: string[];
+  evidence_types?: string[];
   availability_minutes_per_day: number;
+  experience_level?: string;
+  best_work_time?: string;
+  custom_notes?: string;
 };
 
 type PlanInput = {
   title: string;
+  projectType?: string;
   goal: string;
   successCriteria: string[];
   startDate: string;
@@ -30,6 +38,10 @@ export function mockProjectPlan(input: PlanInput): ProjectPlan {
   const members = input.members;
   const first = members[0];
   const second = members[1] ?? first;
+  const firstEvidence = first.evidence_types?.length ? first.evidence_types : ["demo", "github", "screenshot"];
+  const secondEvidence = second.evidence_types?.length ? second.evidence_types : ["document", "link"];
+  const firstFit = [...(first.roles ?? []), ...first.strengths, ...(first.preferred_work_types ?? [])].filter(Boolean).join(", ") || "delivery";
+  const secondFit = [...(second.roles ?? []), ...second.strengths, ...(second.preferred_work_types ?? [])].filter(Boolean).join(", ") || "team availability";
 
   return {
     phases: [
@@ -43,21 +55,21 @@ export function mockProjectPlan(input: PlanInput): ProjectPlan {
         title: "Define the delivery checklist",
         description: `Turn the goal "${input.goal}" into a shared delivery checklist and working outline.`,
         assigned_user_id: second.user_id,
-        assigned_reason: `${second.name} is assigned based on ${second.strengths.join(", ") || "team availability"}.`,
+        assigned_reason: `${second.name} is assigned based on ${secondFit}, ${second.availability_minutes_per_day} minutes per day, and ${second.experience_level ?? "available"} experience.`,
         priority: "high",
         due_date: dateAt(input.startDate, input.endDate, 0.2),
         acceptance_criteria: ["Checklist covers every success criterion", "The team can review one shared artifact"],
-        expected_evidence_types: ["document", "link"],
+        expected_evidence_types: secondEvidence.slice(0, 3),
       },
       {
         title: "Build the core working result",
         description: `Create the minimum functional version of ${input.title}.`,
         assigned_user_id: first.user_id,
-        assigned_reason: `${first.name} has ${first.availability_minutes_per_day} minutes per day and relevant strengths: ${first.strengths.join(", ") || "delivery"}.`,
+        assigned_reason: `${first.name} has ${first.availability_minutes_per_day} minutes per day and a strong fit across ${firstFit}. Avoided areas considered: ${first.weaknesses?.join(", ") || "none listed"}.`,
         priority: "critical",
         due_date: dateAt(input.startDate, input.endDate, 0.65),
         acceptance_criteria: ["Core result is usable end to end", "All critical paths are demonstrated"],
-        expected_evidence_types: ["demo", "github", "screenshot"],
+        expected_evidence_types: firstEvidence.slice(0, 3),
       },
       {
         title: "Validate criteria and prepare final demo",
@@ -67,7 +79,7 @@ export function mockProjectPlan(input: PlanInput): ProjectPlan {
         priority: "high",
         due_date: input.endDate,
         acceptance_criteria: input.successCriteria.map((criterion) => `Show evidence for: ${criterion}`),
-        expected_evidence_types: ["video", "demo", "document"],
+        expected_evidence_types: [...new Set([...secondEvidence, ...firstEvidence])].slice(0, 3),
       },
     ],
     risks: [
@@ -142,4 +154,3 @@ export function mockFinalReport(input: {
     human_confirmation_required: true,
   };
 }
-

@@ -43,7 +43,7 @@ export async function generateProjectPlan(
   return structured<ProjectPlan>(
     projectPlanSchema,
     "project_plan",
-    "You are an accountability project planner. Create fewer meaningful tasks, assign by strengths and availability, and require clear acceptance criteria and evidence.",
+    "You are an accountability project planner. Create fewer meaningful tasks. Assign work by member roles, strengths, avoided areas, preferred work types, availability, experience level, and realistic evidence types. Technical members with GitHub/deployment evidence should receive technical tasks; marketing/content members with low availability should receive smaller content, outreach, or analytics tasks with screenshot, link, draft, or summary evidence. Require clear acceptance criteria and evidence for every task.",
     input,
   );
 }
@@ -71,4 +71,3 @@ export async function generateFinalReport(
     input,
   );
 }
-
