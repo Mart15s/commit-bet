@@ -99,16 +99,18 @@ export const disputeResolutionSchema = z.object({
   resolution: z.enum(["approve", "needs_changes", "reject"]),
 });
 
-const trimmedList = z
-  .array(z.string())
-  .transform((items) => [
-    ...new Map(
-      items
-        .map((item) => item.trim())
-        .filter(Boolean)
-        .map((item) => [item.toLocaleLowerCase(), item] as const),
-    ).values(),
-  ]);
+const trimmedList = (maximumItems: number, maximumValueLength: number) =>
+  z
+    .array(z.string().max(maximumValueLength))
+    .max(maximumItems)
+    .transform((items) => [
+      ...new Map(
+        items
+          .map((item) => item.trim())
+          .filter(Boolean)
+          .map((item) => [item.toLocaleLowerCase(), item] as const),
+      ).values(),
+    ]);
 
 export const evidenceSchema = z.object({
   taskId: z.string().uuid(),
@@ -129,8 +131,28 @@ export const reviewSchema = z
     }
   });
 
-export const projectBasicsSchema = z
+export const projectMemberSetupSchema = z.object({
+  memberId: z.string().uuid(),
+  roles: trimmedList(20, 120),
+  strengths: trimmedList(20, 120),
+  weaknesses: trimmedList(20, 120),
+  availabilityMinutesPerDay: z.number().int().min(15).max(1440),
+  preferredWorkTypes: trimmedList(20, 120),
+  evidenceTypes: trimmedList(20, 120),
+  experienceLevel: z.string().trim().min(2).max(80),
+  bestWorkTime: z.string().trim().min(2).max(80),
+  notes: z.string().max(1000),
+  customNotes: z.string().max(1000),
+  pledgeAmount: z.number().finite().min(0).max(1_000_000).multipleOf(0.01),
+  pledgeCurrency: z.literal("POINTS"),
+}).refine((value) => value.roles.length > 0 || value.strengths.length > 0, {
+  path: ["roles"],
+  message: "Choose at least one role or strength for every member.",
+});
+
+export const projectCreationSchema = z
   .object({
+    requestId: z.string().uuid(),
     teamId: z.string().uuid(),
     projectType: z.string().trim().min(2).max(120),
     title: z.string().trim().min(2).max(120),
@@ -138,33 +160,60 @@ export const projectBasicsSchema = z
     goal: z.string().trim().min(2).max(1000),
     startDate: z.iso.date(),
     endDate: z.iso.date(),
-    selectedSuccessCriteria: trimmedList,
-    customSuccessCriteria: trimmedList,
-    criteria: z.array(z.string().trim().min(2).max(500)).min(1, "Choose at least one success criterion.").max(20),
-    memberIds: z.array(z.string().uuid()).min(1).max(5),
-    pledgeAmount: z.number().finite().min(0).max(1_000_000),
+    selectedSuccessCriteria: trimmedList(20, 500),
+    customSuccessCriteria: trimmedList(20, 500),
+    memberSetups: z.array(projectMemberSetupSchema).min(1).max(5),
+    pledgeAmount: z.number().finite().min(0).max(1_000_000).multipleOf(0.01),
     pledgeAmountIsCustom: z.boolean(),
   })
-  .refine((value) => value.endDate >= value.startDate, {
-    path: ["endDate"],
-    message: "End date must be on or after the start date.",
+  .superRefine((value, ctx) => {
+    if (value.endDate < value.startDate) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["endDate"],
+        message: "End date must be on or after the start date.",
+      });
+    }
+
+    const criteria = [
+      ...value.selectedSuccessCriteria,
+      ...value.customSuccessCriteria,
+    ];
+    if (criteria.length < 1 || criteria.length > 20) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["selectedSuccessCriteria"],
+        message: "Choose between 1 and 20 success criteria.",
+      });
+    }
+    if (
+      new Set(criteria.map((criterion) => criterion.toLocaleLowerCase())).size
+      !== criteria.length
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["customSuccessCriteria"],
+        message: "Success criteria must be unique.",
+      });
+    }
+
+    const memberIds = value.memberSetups.map((member) => member.memberId);
+    if (new Set(memberIds).size !== memberIds.length) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["memberSetups"],
+        message: "Project members must be unique.",
+      });
+    }
+    for (const [index, member] of value.memberSetups.entries()) {
+      if (member.pledgeAmount !== value.pledgeAmount) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["memberSetups", index, "pledgeAmount"],
+          message: "Every member pledge must match the project pledge.",
+        });
+      }
+    }
   });
 
-export const projectMemberSetupSchema = z.object({
-  memberId: z.string().uuid(),
-  roles: trimmedList,
-  strengths: trimmedList,
-  weaknesses: trimmedList,
-  availabilityMinutesPerDay: z.number().int().min(15).max(1440),
-  preferredWorkTypes: trimmedList,
-  evidenceTypes: trimmedList,
-  experienceLevel: z.string().trim().min(2).max(80),
-  bestWorkTime: z.string().trim().min(2).max(80),
-  notes: z.string().max(1000),
-  customNotes: z.string().max(1000),
-  pledgeAmount: z.number().finite().min(0).max(1_000_000),
-  pledgeCurrency: z.enum(["POINTS", "EUR_DECLARED"]),
-}).refine((value) => value.roles.length > 0 || value.strengths.length > 0, {
-  path: ["roles"],
-  message: "Choose at least one role or strength for every member.",
-});
+export type ProjectCreationInput = z.infer<typeof projectCreationSchema>;
