@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { generateDisputeRecommendation } from "@/lib/ai/service";
 import { requireUser } from "@/lib/auth";
-import { evidenceSchema, reviewSchema } from "@/lib/validation";
+import { disputeResolutionSchema, evidenceSchema, reviewSchema, taskTransitionSchema } from "@/lib/validation";
 
 async function assignedTask(taskId: string) {
   const { supabase, user } = await requireUser();
@@ -19,11 +19,23 @@ async function assignedTask(taskId: string) {
 }
 
 export async function markInProgress(formData: FormData) {
-  const taskId = String(formData.get("task_id"));
-  const { supabase, task } = await assignedTask(taskId);
-  if (!["todo", "needs_changes", "rejected"].includes(task.status)) return;
-  await supabase.from("tasks").update({ status: "in_progress" }).eq("id", taskId);
-  revalidatePath(`/app/tasks/${taskId}`);
+  const parsed = taskTransitionSchema.safeParse({ taskId: String(formData.get("task_id") ?? "") });
+  if (!parsed.success) redirect("/app?error=Invalid task.");
+
+  const { supabase } = await requireUser();
+  const { data: task, error: taskError } = await supabase
+    .from("tasks")
+    .select("status")
+    .eq("id", parsed.data.taskId)
+    .single();
+  if (taskError || !task) redirect(`/app/tasks/${parsed.data.taskId}?error=Task not found.`);
+
+  const rpcName = ["needs_changes", "rejected"].includes(task.status)
+    ? "reopen_task_after_changes"
+    : "start_task";
+  const { error } = await supabase.rpc(rpcName, { target_task_id: parsed.data.taskId });
+  if (error) redirect(`/app/tasks/${parsed.data.taskId}?error=${encodeURIComponent(error.message)}`);
+  revalidatePath(`/app/tasks/${parsed.data.taskId}`);
 }
 
 export async function addEvidence(formData: FormData) {
@@ -65,42 +77,30 @@ export async function addEvidence(formData: FormData) {
 }
 
 export async function submitTask(formData: FormData) {
-  const taskId = String(formData.get("task_id"));
-  const { supabase, user, task } = await assignedTask(taskId);
-  const { count } = await supabase.from("evidence").select("*", { count: "exact", head: true }).eq("task_id", taskId);
-  if (!count) redirect(`/app/tasks/${taskId}?error=Add at least one evidence item before submitting.`);
-  await supabase.from("tasks").update({ status: "submitted", submitted_at: new Date().toISOString() }).eq("id", taskId);
-  await supabase.from("audit_logs").insert({
-    project_id: task.project_id,
-    user_id: user.id,
-    action: "task_submitted",
-    details: { task_id: taskId },
-  });
-  revalidatePath(`/app/tasks/${taskId}`);
-  redirect(`/app/tasks/${taskId}`);
+  const parsed = taskTransitionSchema.safeParse({ taskId: String(formData.get("task_id") ?? "") });
+  if (!parsed.success) redirect("/app?error=Invalid task.");
+
+  const { supabase } = await requireUser();
+  const { error } = await supabase.rpc("submit_task", { target_task_id: parsed.data.taskId });
+  if (error) redirect(`/app/tasks/${parsed.data.taskId}?error=${encodeURIComponent(error.message)}`);
+  revalidatePath(`/app/tasks/${parsed.data.taskId}`);
+  redirect(`/app/tasks/${parsed.data.taskId}`);
 }
 
 export async function reviewTask(formData: FormData) {
-  const { supabase, user } = await requireUser();
+  const { supabase } = await requireUser();
   const parsed = reviewSchema.safeParse({
     taskId: String(formData.get("task_id")),
     status: String(formData.get("status")),
     comment: String(formData.get("comment") ?? ""),
   });
-  if (!parsed.success) redirect(`/app/tasks/${formData.get("task_id")}?error=${encodeURIComponent(parsed.error.issues[0].message)}`);
-  const { data: task } = await supabase.from("tasks").select("project_id").eq("id", parsed.data.taskId).single();
+  if (!parsed.success) redirect(`/app?error=${encodeURIComponent(parsed.error.issues[0].message)}`);
   const { error } = await supabase.rpc("review_submitted_task", {
     reviewed_task_id: parsed.data.taskId,
     review_status: parsed.data.status,
     review_comment: parsed.data.comment,
   });
   if (error) redirect(`/app/tasks/${parsed.data.taskId}?error=${encodeURIComponent(error.message)}`);
-  await supabase.from("audit_logs").insert({
-    project_id: task?.project_id,
-    user_id: user.id,
-    action: `task_${parsed.data.status}`,
-    details: { task_id: parsed.data.taskId, comment: parsed.data.comment },
-  });
   revalidatePath(`/app/tasks/${parsed.data.taskId}`);
 }
 
@@ -127,8 +127,13 @@ export async function openDispute(formData: FormData) {
     rejectionReason: review?.comment || "",
     evidenceCount: count || 0,
   });
-  await supabase.rpc("attach_dispute_recommendation", { dispute_id: dispute.id, recommendation });
-  await supabase.from("tasks").update({ status: "disputed" }).eq("id", taskId);
+  const { error: recommendationError } = await supabase.rpc("attach_dispute_recommendation", {
+    dispute_id: dispute.id,
+    recommendation,
+  });
+  if (recommendationError) {
+    redirect(`/app/tasks/${taskId}?error=${encodeURIComponent(recommendationError.message)}`);
+  }
   await supabase.from("ai_reports").insert({
     project_id: task.project_id,
     type: "dispute",
@@ -147,24 +152,20 @@ export async function openDispute(formData: FormData) {
 }
 
 export async function resolveDispute(formData: FormData) {
-  const { supabase, user } = await requireUser();
-  const disputeId = String(formData.get("dispute_id"));
-  const resolution = String(formData.get("resolution"));
-  const { data: dispute } = await supabase.from("disputes").select("*, tasks(project_id)").eq("id", disputeId).single();
-  if (!dispute) redirect("/app");
-  const projectId = (dispute.tasks as unknown as { project_id: string }).project_id;
-  const { data: project } = await supabase.from("projects").select("created_by").eq("id", projectId).single();
-  if (project?.created_by !== user.id) redirect(`/app/disputes/${disputeId}?error=Only the project owner can resolve this dispute.`);
-  const taskStatus = resolution === "approve" ? "approved" : resolution === "reject" ? "rejected" : "needs_changes";
-  await supabase.from("disputes").update({ status: "resolved", final_resolution: resolution }).eq("id", disputeId);
-  await supabase.from("tasks").update({ status: taskStatus, approved_at: taskStatus === "approved" ? new Date().toISOString() : null }).eq("id", dispute.task_id);
-  await supabase.from("audit_logs").insert({
-    project_id: projectId,
-    user_id: user.id,
-    action: "dispute_resolved",
-    details: { dispute_id: disputeId, resolution },
+  const parsed = disputeResolutionSchema.safeParse({
+    disputeId: String(formData.get("dispute_id") ?? ""),
+    resolution: String(formData.get("resolution") ?? ""),
   });
-  revalidatePath(`/app/tasks/${dispute.task_id}`);
-  redirect(`/app/tasks/${dispute.task_id}`);
-}
+  if (!parsed.success) redirect("/app?error=Invalid dispute resolution.");
 
+  const { supabase } = await requireUser();
+  const { data: taskId, error } = await supabase.rpc("resolve_project_dispute", {
+    dispute_id: parsed.data.disputeId,
+    resolution: parsed.data.resolution,
+  });
+  if (error || !taskId) {
+    redirect(`/app/disputes/${parsed.data.disputeId}?error=${encodeURIComponent(error?.message || "Could not resolve dispute")}`);
+  }
+  revalidatePath(`/app/tasks/${taskId}`);
+  redirect(`/app/tasks/${taskId}`);
+}

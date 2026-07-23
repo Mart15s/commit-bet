@@ -81,6 +81,24 @@ export type ProjectPlan = z.infer<typeof projectPlanSchema>;
 export type DisputeRecommendation = z.infer<typeof disputeRecommendationSchema>;
 export type FinalReport = z.infer<typeof finalReportSchema>;
 
+export const taskTransitionSchema = z.object({
+  taskId: z.string().uuid(),
+});
+
+export const draftTaskUpdateSchema = z.object({
+  projectId: z.string().uuid(),
+  taskId: z.string().uuid(),
+  title: z.string().trim().min(2).max(120),
+  dueDate: z.iso.date(),
+  priority: z.enum(["low", "medium", "high", "critical"]),
+  assignedUserId: z.string().uuid(),
+});
+
+export const disputeResolutionSchema = z.object({
+  disputeId: z.string().uuid(),
+  resolution: z.enum(["approve", "needs_changes", "reject"]),
+});
+
 const trimmedList = z
   .array(z.string())
   .transform((items) => [

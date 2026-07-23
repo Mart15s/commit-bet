@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { generateProjectPlan } from "@/lib/ai/service";
 import { requireProjectOwner, requireUser } from "@/lib/auth";
-import { projectBasicsSchema, projectMemberSetupSchema } from "@/lib/validation";
+import { draftTaskUpdateSchema, projectBasicsSchema, projectMemberSetupSchema } from "@/lib/validation";
 
 function parseList(value: FormDataEntryValue | null) {
   if (typeof value !== "string") return [];
@@ -217,19 +217,31 @@ export async function generatePlan(formData: FormData) {
 }
 
 export async function updateDraftTask(formData: FormData) {
-  const projectId = String(formData.get("project_id"));
-  const taskId = String(formData.get("task_id"));
-  const { supabase, project } = await requireProjectOwner(projectId);
-  if (project.status !== "draft") return;
-  await supabase.from("tasks").update({
+  const parsed = draftTaskUpdateSchema.safeParse({
+    projectId: String(formData.get("project_id") ?? ""),
+    taskId: String(formData.get("task_id") ?? ""),
     title: String(formData.get("title") ?? ""),
-    due_date: String(formData.get("due_date") ?? ""),
-    priority: String(formData.get("priority") ?? "medium"),
-  }).eq("id", taskId).eq("project_id", projectId);
-  await supabase.from("task_assignments").update({
-    user_id: String(formData.get("assigned_user_id") ?? ""),
-  }).eq("task_id", taskId);
-  revalidatePath(`/app/projects/${projectId}`);
+    dueDate: String(formData.get("due_date") ?? ""),
+    priority: String(formData.get("priority") ?? ""),
+    assignedUserId: String(formData.get("assigned_user_id") ?? ""),
+  });
+  if (!parsed.success) {
+    redirect(`/app?error=${encodeURIComponent(parsed.error.issues[0].message)}`);
+  }
+
+  const { supabase } = await requireProjectOwner(parsed.data.projectId);
+  const { error } = await supabase.rpc("update_draft_task", {
+    draft_project_id: parsed.data.projectId,
+    draft_task_id: parsed.data.taskId,
+    draft_title: parsed.data.title,
+    draft_due_date: parsed.data.dueDate,
+    draft_priority: parsed.data.priority,
+    draft_assigned_user_id: parsed.data.assignedUserId,
+  });
+  if (error) {
+    redirect(`/app/projects/${parsed.data.projectId}?error=${encodeURIComponent(error.message)}`);
+  }
+  revalidatePath(`/app/projects/${parsed.data.projectId}`);
 }
 
 export async function startProject(formData: FormData) {
