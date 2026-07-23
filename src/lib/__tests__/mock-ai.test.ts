@@ -24,11 +24,43 @@ describe("mock AI", () => {
 
   it("generates a final report that requires human confirmation", () => {
     const report = mockFinalReport({
-      title: "Build a landing page",
-      successCriteria: ["Landing page online"],
-      tasks: [{ status: "approved", due_date: "2026-06-18" }],
-      members: [{ user_id: members[0].user_id, name: "Martynas", approved: 1, evidence: 2 }],
-      disputeCount: 0,
+      project: {
+        id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        title: "Build a landing page",
+        description: "A landing page",
+        goal: "Collect signups",
+        project_type: "Software",
+        success_criteria: ["Landing page online"],
+        start_date: "2026-06-12",
+        end_date: "2026-06-18",
+      },
+      generated_at: "2026-06-18T12:00:00.000Z",
+      task_statistics: {
+        planned: 0,
+        completed: 0,
+        approved: 0,
+        rejected: 0,
+        disputed: 0,
+        late: 0,
+      },
+      evidence_statistics: { total: 0, tasks_with_evidence: 0 },
+      review_statistics: {
+        total: 0,
+        approved: 0,
+        needs_changes: 0,
+        rejected: 0,
+      },
+      dispute_statistics: { total: 0, open: 0, resolved: 0, escalated: 0 },
+      daily_log_statistics: { total: 0, total_time_spent_minutes: 0 },
+      members: [],
+      tasks: [],
+      assignments: [],
+      evidence: [],
+      reviews: [],
+      disputes: [],
+      daily_logs: [],
+      daily_log_tasks: [],
+      pledges: [],
     });
     expect(() => finalReportSchema.parse(report)).not.toThrow();
     expect(report.human_confirmation_required).toBe(true);

@@ -92,7 +92,7 @@ export default async function FinalReportPage({
           </Card>
 
           <HelpCard title="Evidence considered" tone="cyan">
-            AI considered approved, rejected, disputed, and late tasks; attached proof; member contribution signals; delay analysis; and recorded disputes. It recommends only. Your team confirms the final outcome manually.
+            AI considered approved, rejected, disputed, and late tasks; recorded evidence descriptions and metadata; member contribution signals; daily logs; reviews; and disputes. It does not inspect attached file contents. It recommends only, and your team confirms the final outcome manually.
           </HelpCard>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

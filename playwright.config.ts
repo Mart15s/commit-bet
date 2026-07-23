@@ -1,5 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const browserExecutable = process.env.PLAYWRIGHT_BROWSER_EXECUTABLE_PATH;
+
 export default defineConfig({
   testDir: "./tests/e2e",
   timeout: 60_000,
@@ -7,10 +9,10 @@ export default defineConfig({
   use: {
     baseURL: "http://127.0.0.1:3000",
     trace: "on-first-retry",
-    launchOptions: {
-      executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-    },
     ...devices["Pixel 5"],
+    launchOptions: browserExecutable
+      ? { executablePath: browserExecutable }
+      : undefined,
   },
   webServer: {
     command: "npm run dev",

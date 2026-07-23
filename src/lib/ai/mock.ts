@@ -3,6 +3,7 @@ import type {
   FinalReport,
   ProjectPlan,
 } from "@/lib/validation";
+import type { FinalAuditInput } from "@/lib/final-audit";
 
 type Member = {
   user_id: string;
@@ -108,49 +109,42 @@ export function mockDisputeRecommendation(input: {
   };
 }
 
-export function mockFinalReport(input: {
-  title: string;
-  successCriteria: string[];
-  tasks: Array<{ status: string; due_date: string }>;
-  members: Array<{ user_id: string; name: string; approved: number; evidence: number }>;
-  disputeCount: number;
-}): FinalReport {
-  const approved = input.tasks.filter((task) => task.status === "approved").length;
-  const rejected = input.tasks.filter((task) => task.status === "rejected").length;
-  const disputed = input.tasks.filter((task) => task.status === "disputed").length;
-  const ratio = input.tasks.length ? approved / input.tasks.length : 0;
+export function mockFinalReport(input: FinalAuditInput): FinalReport {
+  const ratio = input.task_statistics.planned
+    ? input.task_statistics.approved / input.task_statistics.planned
+    : 0;
 
   return {
-    project_summary: `${input.title} finished with ${approved} of ${input.tasks.length} planned tasks approved.`,
-    success_criteria_evaluation: input.successCriteria.map((criterion) => ({
+    project_summary: `${input.project.title} finished with ${input.task_statistics.approved} of ${input.task_statistics.planned} planned tasks approved.`,
+    success_criteria_evaluation: input.project.success_criteria.map((criterion) => ({
       criterion,
       status: ratio >= 0.8 ? "met" : ratio >= 0.4 ? "partially_met" : "unclear",
       comment: "Evaluation is inferred from task approvals and submitted evidence; the team must confirm the outcome.",
     })),
     task_statistics: {
-      planned: input.tasks.length,
-      approved,
-      rejected,
-      disputed,
-      late: input.tasks.filter((task) => task.status !== "approved" && new Date(task.due_date) < new Date()).length,
+      planned: input.task_statistics.planned,
+      approved: input.task_statistics.approved,
+      rejected: input.task_statistics.rejected,
+      disputed: input.task_statistics.disputed,
+      late: input.task_statistics.late,
     },
     member_contributions: input.members.map((member) => ({
       user_id: member.user_id,
-      contribution_score: Math.min(100, member.approved * 25 + member.evidence * 10),
+      contribution_score: member.contribution_score,
       summary: `${member.name} supplied ${member.evidence} evidence item(s) and completed ${member.approved} approved task(s).`,
       strongest_evidence: member.evidence ? [`${member.evidence} recorded evidence item(s)`] : [],
       issues: member.approved ? [] : ["No approved assigned task was recorded."],
     })),
     evidence_quality_score: Math.round(Math.min(100, ratio * 70 + 20)),
     delay_analysis: "Late counts compare task due dates with the report generation date.",
-    dispute_summary: `${input.disputeCount} dispute(s) were recorded. Human resolutions take precedence over AI recommendations.`,
+    dispute_summary: `${input.disputes.length} dispute(s) were recorded. Human resolutions take precedence over AI recommendations.`,
     pledge_recommendation: input.members.map((member) => ({
       user_id: member.user_id,
       pledge_return_percentage: member.approved > 0 ? 100 : member.evidence > 0 ? 70 : 0,
       reason: "Recommendation is based on approved work and recorded evidence only.",
     })),
     reasoning: "This mocked report uses transparent task and evidence counts. It is a recommendation, not a financial or legal decision.",
-    confidence_score: input.tasks.length ? 75 : 35,
+    confidence_score: input.task_statistics.planned ? 75 : 35,
     human_confirmation_required: true,
   };
 }
