@@ -145,10 +145,14 @@ npm run lint
 npm run typecheck
 npm run test
 npm run build
+npx supabase db reset
+npx supabase test db
 npm run test:e2e
 ```
 
-`test:e2e` starts the Next.js dev server and verifies the mobile landing page.
+The Supabase commands apply every migration from zero and run the pgTAP database
+authorization tests. `test:e2e` starts the Next.js dev server and verifies the
+browser flows.
 
 ## MVP Limitations
 

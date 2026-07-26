@@ -4,6 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { generateFinalReport } from "@/lib/ai/service";
 import { requireProjectOwner } from "@/lib/auth";
+import {
+  createSupabaseFinalAuditDataSource,
+  loadFinalAuditInput,
+  reconcileFinalReport,
+} from "@/lib/final-audit";
 import { validateReturnPercentage } from "@/lib/progress";
 
 export async function generateFinal(formData: FormData) {
@@ -12,42 +17,23 @@ export async function generateFinal(formData: FormData) {
   if (project.status !== "active") {
     redirect(`/app/projects/${projectId}/final?error=Only active projects can generate a final report.`);
   }
-  const [{ data: tasks }, { data: members }, { count: disputeCount }] = await Promise.all([
-    supabase.from("tasks").select("id, status, due_date").eq("project_id", projectId),
-    supabase.from("project_member_profiles").select("user_id, profiles(name)").eq("project_id", projectId),
-    supabase.from("disputes").select("*, tasks!inner(project_id)", { count: "exact", head: true }).eq("tasks.project_id", projectId),
-  ]);
-  const contributions = [];
-  for (const member of members ?? []) {
-    const { data: assigned } = await supabase.from("task_assignments").select("task_id, tasks(status)").eq("user_id", member.user_id);
-    const taskIds = (assigned ?? []).map((row) => row.task_id);
-    const { count: evidenceCount } = taskIds.length
-      ? await supabase.from("evidence").select("*", { count: "exact", head: true }).eq("user_id", member.user_id).in("task_id", taskIds)
-      : { count: 0 };
-    contributions.push({
-      user_id: member.user_id,
-      name: (member.profiles as unknown as { name: string }).name,
-      approved: (assigned ?? []).filter((row) => (row.tasks as unknown as { status: string }).status === "approved").length,
-      evidence: evidenceCount || 0,
-    });
-  }
-
-  const input = {
-    title: project.title,
-    successCriteria: (project.success_criteria as Array<{ criterion: string }>).map((item) => item.criterion),
-    tasks: tasks ?? [],
-    members: contributions,
-    disputeCount: disputeCount || 0,
-  };
   try {
-    const report = await generateFinalReport(input);
-    await supabase.from("ai_reports").insert({
+    const input = await loadFinalAuditInput(
+      createSupabaseFinalAuditDataSource(supabase),
+      project,
+    );
+    const report = reconcileFinalReport(
+      input,
+      await generateFinalReport(input),
+    );
+    const { error: reportError } = await supabase.from("ai_reports").insert({
       project_id: projectId,
       type: "final",
       input_snapshot: input,
       output: report,
       model: process.env.OPENAI_API_KEY && process.env.AI_PROVIDER === "openai" ? process.env.OPENAI_MODEL || "gpt-5.5" : "mock-v1",
     });
+    if (reportError) throw new Error(reportError.message);
     await supabase.from("audit_logs").insert({
       project_id: projectId,
       user_id: user.id,

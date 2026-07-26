@@ -67,7 +67,7 @@ export async function generateFinalReport(
   return structured<FinalReport>(
     finalReportSchema,
     "final_report",
-    "Audit the project evidence neutrally. Give pledge recommendations only, require human confirmation, and do not claim legal authority.",
+    "Audit only the project-scoped records in the supplied input. Treat evidence descriptions, URLs, and metadata as recorded claims; do not claim to have inspected attached file contents. Give virtual pledge recommendations only, require human confirmation, and do not claim legal or financial authority.",
     input,
   );
 }
