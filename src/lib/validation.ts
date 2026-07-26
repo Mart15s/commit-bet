@@ -59,6 +59,103 @@ export const projectPlanActionRequestSchema = z.object({
   idempotencyKey: z.string().uuid(),
 });
 
+export const MAX_DAILY_LOG_PAYLOAD_BYTES = 65_536;
+export const MAX_DAILY_LOG_TASKS = 50;
+export const MAX_DAILY_LOG_PROOF_LINKS = 20;
+
+const dailyLogText = (minimumLength: number, maximumLength: number) =>
+  z.string().trim().min(minimumLength).max(maximumLength);
+
+const httpProofLinkSchema = z
+  .string()
+  .trim()
+  .min(10)
+  .max(2048)
+  .transform((value, ctx) => {
+    try {
+      const parsed = new URL(value);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        ctx.addIssue({
+          code: "custom",
+          message: "Proof links must use http or https.",
+        });
+        return z.NEVER;
+      }
+      return parsed.href;
+    } catch {
+      ctx.addIssue({
+        code: "custom",
+        message: "Proof links must be valid full URLs.",
+      });
+      return z.NEVER;
+    }
+  });
+
+export const dailyLogInputSchema = z
+  .object({
+    projectId: z.string().uuid(),
+    logDate: z.iso.date(),
+    summary: dailyLogText(1, 4000),
+    timeSpentMinutes: z.number().int().min(0).max(1440),
+    blockers: dailyLogText(0, 4000),
+    nextSteps: dailyLogText(1, 4000),
+    taskIds: z.array(z.string().uuid()).max(MAX_DAILY_LOG_TASKS),
+    proofLinks: z
+      .array(httpProofLinkSchema)
+      .max(MAX_DAILY_LOG_PROOF_LINKS),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    if (value.logDate > new Date().toISOString().slice(0, 10)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["logDate"],
+        message: "Daily logs cannot be dated in the future.",
+      });
+    }
+    if (new Set(value.taskIds).size !== value.taskIds.length) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["taskIds"],
+        message: "Selected tasks must be unique.",
+      });
+    }
+    if (new Set(value.proofLinks).size !== value.proofLinks.length) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["proofLinks"],
+        message: "Proof links must be unique.",
+      });
+    }
+    if (value.proofLinks.length > 0 && value.taskIds.length === 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["taskIds"],
+        message: "Choose at least one task before adding proof links.",
+      });
+    }
+  });
+
+export const dailyLogSaveResultSchema = z
+  .object({
+    daily_log_id: z.string().uuid(),
+    project_id: z.string().uuid(),
+    log_date: z.iso.date(),
+    task_count: z.number().int().min(0).max(MAX_DAILY_LOG_TASKS),
+    proof_link_count: z
+      .number()
+      .int()
+      .min(0)
+      .max(MAX_DAILY_LOG_PROOF_LINKS),
+    evidence_count: z
+      .number()
+      .int()
+      .min(0)
+      .max(MAX_DAILY_LOG_TASKS * MAX_DAILY_LOG_PROOF_LINKS),
+    replayed: z.boolean(),
+  })
+  .strict();
+
 export const disputeRecommendationSchema = z.object({
   neutral_summary: z.string(),
   arguments_for_approval: z.array(z.string()),

@@ -9,7 +9,11 @@ export default async function DailyLogPage({
 }) {
   const params = await searchParams;
   const { supabase, user } = await requireUser();
-  const { data: projects } = await supabase.from("projects").select("id, title").eq("status", "active");
+  const { data: projects } = await supabase
+    .from("projects")
+    .select("id, title, start_date, end_date, project_member_profiles!inner(user_id)")
+    .eq("status", "active")
+    .eq("project_member_profiles.user_id", user.id);
   const withTasks = [];
   for (const project of projects ?? []) {
     const { data: rows } = await supabase
