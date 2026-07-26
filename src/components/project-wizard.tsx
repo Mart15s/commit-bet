@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, Brain, CalendarDays, Check, ShieldCheck, Users } from "lucide-react";
 import { createProject } from "@/app/(protected)/app/projects/actions";
 import { MultiChipField, SingleChipField } from "@/components/chip-select";
@@ -105,14 +105,17 @@ function asChipOptions<T extends ReadonlyArray<{ value: string; labelKey: string
 
 export function ProjectWizard({
   teams,
+  creationRequestId,
   initialTeam,
   error,
 }: {
   teams: Team[];
+  creationRequestId: string;
   initialTeam?: string;
   error?: string;
 }) {
   const { t } = useI18n();
+  const [actionState, formAction, pending] = useActionState(createProject, {});
   const [step, setStep] = useState(0);
   const initialTeamId = initialTeam || teams[0]?.id || "";
   const initialMembers = teams.find((team) => team.id === initialTeamId)?.members ?? [];
@@ -178,7 +181,8 @@ export function ProjectWizard({
   }
 
   return (
-    <form action={createProject} noValidate>
+    <form action={formAction} aria-busy={pending} noValidate>
+      <input type="hidden" name="request_id" value={creationRequestId} />
       <input type="hidden" name="team_id" value={teamId} />
       <input type="hidden" name="project_type" value={projectType} />
       <input type="hidden" name="start_date" value={startDate} />
@@ -200,7 +204,7 @@ export function ProjectWizard({
         <Progress value={progress} className="mt-4" />
       </Card>
 
-      <ErrorMessage message={error} />
+      <ErrorMessage message={actionState.error ?? error} />
 
       <Card className="mt-4 min-h-[32rem]">
         <div hidden={step !== 0}>
@@ -585,7 +589,13 @@ export function ProjectWizard({
             {t("common.continue")} <ArrowRight size={18} />
           </Button>
         ) : (
-          <Button className="flex-1" type="submit" disabled={!selectedMembers.length || invalidSelectedMember || !allCriteria.length}>{t("onboarding.createDraft")} <Check size={18} /></Button>
+          <Button
+            className="flex-1"
+            type="submit"
+            disabled={pending || !selectedMembers.length || invalidSelectedMember || !allCriteria.length}
+          >
+            {t("onboarding.createDraft")} <Check size={18} />
+          </Button>
         )}
       </div>
     </form>

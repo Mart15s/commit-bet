@@ -4,29 +4,52 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { generateProjectPlan } from "@/lib/ai/service";
 import { requireProjectOwner, requireUser } from "@/lib/auth";
-import { draftTaskUpdateSchema, projectBasicsSchema, projectMemberSetupSchema } from "@/lib/validation";
+import {
+  draftTaskUpdateSchema,
+  projectCreationSchema,
+} from "@/lib/validation";
 
-function parseList(value: FormDataEntryValue | null) {
+export type CreateProjectActionState = {
+  error?: string;
+};
+
+function parseJsonList(value: FormDataEntryValue | null): unknown {
   if (typeof value !== "string") return [];
   try {
-    const parsed = JSON.parse(value);
-    if (Array.isArray(parsed)) return parsed.map(String);
+    return JSON.parse(value);
   } catch {
-    return value.split(",");
+    return value;
   }
-  return [];
 }
 
-export async function createProject(formData: FormData) {
+function safeProjectCreationError(message: string) {
+  if (message.includes("not allowed to create a project")) {
+    return "You are not allowed to create a project for this team.";
+  }
+  if (message.includes("Every selected member must belong")) {
+    return "Every selected member must belong to this team.";
+  }
+  if (message.includes("creator must be a selected member")) {
+    return "The project creator must be a selected member.";
+  }
+  if (
+    message.includes("creation request already used")
+    || message.includes("request ID is already in use")
+  ) {
+    return "This project creation request conflicts with an earlier submission. Refresh the page and try again.";
+  }
+  return "Could not create the project. Review the setup and try again.";
+}
+
+export async function createProject(
+  _previousState: CreateProjectActionState,
+  formData: FormData,
+): Promise<CreateProjectActionState> {
   const { supabase, user } = await requireUser();
-  const selectedSuccessCriteria = parseList(formData.get("selected_success_criteria"));
-  const customSuccessCriteria = parseList(formData.get("custom_success_criteria"));
-  const criteria = [...selectedSuccessCriteria, ...customSuccessCriteria]
-    .map((item) => item.trim())
-    .filter(Boolean);
-  const memberIds = [...new Set(formData.getAll("member_id").map(String))];
   const pledgeAmount = Number(formData.get("pledge_amount"));
-  const parsed = projectBasicsSchema.safeParse({
+  const memberIds = formData.getAll("member_id").map(String);
+  const parsed = projectCreationSchema.safeParse({
+    requestId: String(formData.get("request_id") ?? ""),
     teamId: String(formData.get("team_id") ?? ""),
     projectType: String(formData.get("project_type") ?? ""),
     title: String(formData.get("title") ?? ""),
@@ -34,109 +57,97 @@ export async function createProject(formData: FormData) {
     goal: String(formData.get("goal") ?? ""),
     startDate: String(formData.get("start_date") ?? ""),
     endDate: String(formData.get("end_date") ?? ""),
-    selectedSuccessCriteria,
-    customSuccessCriteria,
-    criteria,
-    memberIds,
+    selectedSuccessCriteria: parseJsonList(
+      formData.get("selected_success_criteria"),
+    ),
+    customSuccessCriteria: parseJsonList(
+      formData.get("custom_success_criteria"),
+    ),
+    memberSetups: memberIds.map((memberId) => ({
+      memberId,
+      roles: parseJsonList(formData.get(`roles_${memberId}`)),
+      strengths: parseJsonList(formData.get(`strengths_${memberId}`)),
+      weaknesses: parseJsonList(formData.get(`weaknesses_${memberId}`)),
+      availabilityMinutesPerDay: Number(
+        formData.get(`availability_${memberId}`),
+      ),
+      preferredWorkTypes: parseJsonList(
+        formData.get(`work_types_${memberId}`),
+      ),
+      evidenceTypes: parseJsonList(
+        formData.get(`evidence_types_${memberId}`),
+      ),
+      experienceLevel: String(
+        formData.get(`experience_level_${memberId}`) ?? "",
+      ),
+      bestWorkTime: String(
+        formData.get(`best_work_time_${memberId}`) ?? "",
+      ),
+      notes: String(formData.get(`notes_${memberId}`) ?? ""),
+      customNotes: String(formData.get(`custom_notes_${memberId}`) ?? ""),
+      pledgeAmount,
+      pledgeCurrency: "POINTS",
+    })),
     pledgeAmount,
-    pledgeAmountIsCustom: String(formData.get("pledge_amount_is_custom")) === "true",
+    pledgeAmountIsCustom:
+      String(formData.get("pledge_amount_is_custom")) === "true",
   });
   if (!parsed.success) {
-    redirect(`/app/projects/new?error=${encodeURIComponent(parsed.error.issues[0].message)}`);
+    return { error: parsed.error.issues[0].message };
   }
-
-  const { data: memberships } = await supabase
-    .from("team_members")
-    .select("user_id")
-    .eq("team_id", parsed.data.teamId)
-    .in("user_id", parsed.data.memberIds);
   if (
-    !memberships?.some((membership) => membership.user_id === user.id)
-    || memberships.length !== parsed.data.memberIds.length
+    !parsed.data.memberSetups.some((member) => member.memberId === user.id)
   ) {
-    redirect("/app/projects/new?error=Every selected member must belong to this team.");
+    return { error: "The project creator must be a selected member." };
   }
 
-  const { data: project, error } = await supabase
-    .from("projects")
-    .insert({
-      team_id: parsed.data.teamId,
-      project_type: parsed.data.projectType,
-      title: parsed.data.title,
-      description: parsed.data.description,
-      goal: parsed.data.goal,
-      success_criteria: parsed.data.criteria.map((criterion) => ({ criterion })),
-      selected_success_criteria: parsed.data.selectedSuccessCriteria,
-      custom_success_criteria: parsed.data.customSuccessCriteria,
-      pledge_amount: parsed.data.pledgeAmount,
-      pledge_amount_is_custom: parsed.data.pledgeAmountIsCustom,
-      start_date: parsed.data.startDate,
-      end_date: parsed.data.endDate,
-      created_by: user.id,
-    })
-    .select("id")
-    .single();
-  if (error || !project) redirect(`/app/projects/new?error=${encodeURIComponent(error?.message || "Could not create project")}`);
-
-  const memberSetup = parsed.data.memberIds.map((memberId) => projectMemberSetupSchema.safeParse({
-    memberId,
-    roles: parseList(formData.get(`roles_${memberId}`)),
-    strengths: parseList(formData.get(`strengths_${memberId}`)),
-    weaknesses: parseList(formData.get(`weaknesses_${memberId}`)),
-    availabilityMinutesPerDay: Number(formData.get(`availability_${memberId}`)),
-    preferredWorkTypes: parseList(formData.get(`work_types_${memberId}`)),
-    evidenceTypes: parseList(formData.get(`evidence_types_${memberId}`)),
-    experienceLevel: String(formData.get(`experience_level_${memberId}`) ?? ""),
-    bestWorkTime: String(formData.get(`best_work_time_${memberId}`) ?? ""),
-    notes: String(formData.get(`notes_${memberId}`) ?? ""),
-    customNotes: String(formData.get(`custom_notes_${memberId}`) ?? ""),
-    pledgeAmount: parsed.data.pledgeAmount,
-    pledgeCurrency: "POINTS",
-  }));
-  const invalidSetup = memberSetup.find((result) => !result.success);
-  if (invalidSetup && !invalidSetup.success) {
-    await supabase.from("projects").delete().eq("id", project.id);
-    redirect(`/app/projects/new?error=${encodeURIComponent(invalidSetup.error.issues[0].message)}`);
-  }
-  const setup = memberSetup.map((result) => {
-    if (!result.success) throw new Error("Invalid member setup");
-    return result.data;
-  });
-  const profiles = setup.map((member) => ({
-    project_id: project.id,
-    user_id: member.memberId,
-    roles: member.roles,
-    strengths: member.strengths,
-    weaknesses: member.weaknesses,
-    availability_minutes_per_day: member.availabilityMinutesPerDay,
-    preferred_work_types: member.preferredWorkTypes,
-    evidence_types: member.evidenceTypes,
-    experience_level: member.experienceLevel,
-    best_work_time: member.bestWorkTime,
-    notes: member.notes,
-    custom_notes: member.customNotes,
-  }));
-  const pledges = setup.map((member) => ({
-    project_id: project.id,
-    user_id: member.memberId,
-    amount: member.pledgeAmount,
-    currency: member.pledgeCurrency,
-  }));
-
-  const profileResult = await supabase.from("project_member_profiles").insert(profiles);
-  const pledgeResult = await supabase.from("pledges").insert(pledges);
-  if (profileResult.error || pledgeResult.error) {
-    await supabase.from("projects").delete().eq("id", project.id);
-    redirect(`/app/projects/new?error=${encodeURIComponent(profileResult.error?.message || pledgeResult.error?.message || "Could not save member setup")}`);
+  const { data: projectId, error } = await supabase.rpc(
+    "create_project_with_members",
+    {
+      p_request_id: parsed.data.requestId,
+      p_team_id: parsed.data.teamId,
+      p_project_type: parsed.data.projectType,
+      p_title: parsed.data.title,
+      p_description: parsed.data.description,
+      p_goal: parsed.data.goal,
+      p_selected_success_criteria: parsed.data.selectedSuccessCriteria,
+      p_custom_success_criteria: parsed.data.customSuccessCriteria,
+      p_start_date: parsed.data.startDate,
+      p_end_date: parsed.data.endDate,
+      p_pledge_amount: parsed.data.pledgeAmount,
+      p_pledge_amount_is_custom: parsed.data.pledgeAmountIsCustom,
+      p_members: parsed.data.memberSetups.map((member) => ({
+        member_id: member.memberId,
+        roles: member.roles,
+        strengths: member.strengths,
+        weaknesses: member.weaknesses,
+        availability_minutes_per_day: member.availabilityMinutesPerDay,
+        preferred_work_types: member.preferredWorkTypes,
+        evidence_types: member.evidenceTypes,
+        experience_level: member.experienceLevel,
+        best_work_time: member.bestWorkTime,
+        notes: member.notes,
+        custom_notes: member.customNotes,
+        pledge: {
+          amount: member.pledgeAmount,
+          currency: member.pledgeCurrency,
+        },
+      })),
+    },
+  );
+  if (error) {
+    return { error: safeProjectCreationError(error.message) };
   }
 
-  await supabase.from("audit_logs").insert({
-    project_id: project.id,
-    user_id: user.id,
-    action: "project_created",
-    details: { title: parsed.data.title },
-  });
-  redirect(`/app/projects/${project.id}`);
+  if (projectId !== parsed.data.requestId) {
+    return {
+      error: "The project could not be confirmed after creation. Please try again.",
+    };
+  }
+
+  revalidatePath("/app");
+  revalidatePath(`/app/projects/${projectId}`);
+  redirect(`/app/projects/${projectId}`);
 }
 
 export async function generatePlan(formData: FormData) {

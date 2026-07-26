@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { ProjectWizard } from "@/components/project-wizard";
 import { ButtonLink, EmptyState, PageHeader } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
@@ -33,7 +34,12 @@ export default async function NewProjectPage({
     <>
       <PageHeader title="Create a commitment sprint" description="Define the agreement first. AI will help turn it into an executable plan." />
       {teams.length ? (
-        <ProjectWizard teams={teams} initialTeam={params.team} error={params.error} />
+        <ProjectWizard
+          teams={teams}
+          creationRequestId={randomUUID()}
+          initialTeam={params.team}
+          error={params.error}
+        />
       ) : (
         <EmptyState
           title="Create a team first"
