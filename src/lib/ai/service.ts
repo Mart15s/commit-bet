@@ -18,6 +18,16 @@ import {
 
 const useMock = !process.env.OPENAI_API_KEY || process.env.AI_PROVIDER !== "openai";
 
+export function getAIProviderMetadata() {
+  if (useMock) {
+    return { provider: "mock", model: "mock-v1" } as const;
+  }
+  return {
+    provider: "openai",
+    model: process.env.OPENAI_MODEL || "gpt-5.5",
+  } as const;
+}
+
 async function structured<T>(
   schema: typeof projectPlanSchema | typeof disputeRecommendationSchema | typeof finalReportSchema,
   name: string,
