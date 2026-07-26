@@ -217,6 +217,47 @@ export type ProjectPlan = z.infer<typeof projectPlanSchema>;
 export type DisputeRecommendation = z.infer<typeof disputeRecommendationSchema>;
 export type FinalReport = z.infer<typeof finalReportSchema>;
 
+const finalDecisionMemberActionSchema = z
+  .object({
+    userId: z.string().uuid(),
+    returnPercentage: z.number().finite().min(0).max(100),
+  })
+  .strict();
+
+export const projectFinalizationInputSchema = z
+  .object({
+    projectId: z.string().uuid(),
+    finalReportId: z.string().uuid(),
+    idempotencyKey: z.string().uuid(),
+    humanConfirmation: z.literal(true),
+    confirmationNote: z.string().trim().max(2000),
+    memberActions: z.array(finalDecisionMemberActionSchema).min(1).max(5),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    const memberIds = value.memberActions.map((action) => action.userId);
+    if (new Set(memberIds).size !== memberIds.length) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["memberActions"],
+        message: "Every project member can appear only once.",
+      });
+    }
+  });
+
+export const projectFinalizationResultSchema = z
+  .object({
+    project_id: z.string().uuid(),
+    final_report_id: z.string().uuid(),
+    final_decision_id: z.string().uuid(),
+    confirmed_by: z.string().uuid(),
+    confirmed_at: z.iso.datetime({ offset: true }),
+    pledge_count: z.number().int().min(1).max(5),
+    project_status: z.literal("completed"),
+    replayed: z.boolean(),
+  })
+  .strict();
+
 export const taskTransitionSchema = z.object({
   taskId: z.string().uuid(),
 });

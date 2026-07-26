@@ -1,15 +1,60 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { generateFinalReport } from "@/lib/ai/service";
-import { requireProjectOwner } from "@/lib/auth";
+import { requireProjectOwner, requireUser } from "@/lib/auth";
 import {
   createSupabaseFinalAuditDataSource,
   loadFinalAuditInput,
   reconcileFinalReport,
 } from "@/lib/final-audit";
-import { validateReturnPercentage } from "@/lib/progress";
+import {
+  projectFinalizationInputSchema,
+  projectFinalizationResultSchema,
+} from "@/lib/validation";
+
+export type FinalDecisionActionState = {
+  status: "idle" | "error" | "success";
+  message?: string;
+};
+
+function failedFinalization(message: string): FinalDecisionActionState {
+  return {
+    status: "error",
+    message: `${message} The project was not finalized, no pledge statuses were changed, and you can retry.`,
+  };
+}
+
+function safeFinalizationError(message: string) {
+  if (message.includes("Only the project owner") || message.includes("Project not found")) {
+    return "Only this project owner can confirm the final decision.";
+  }
+  if (message.includes("Only active projects")) {
+    return "Only an active project can be finalized.";
+  }
+  if (message.includes("already finalized") || message.includes("already has a final decision")) {
+    return "This project already has a final decision. Refresh to see it.";
+  }
+  if (message.includes("saved final report") || message.includes("final report")) {
+    return "The selected saved final report is not valid for this project.";
+  }
+  if (message.includes("dispute")) {
+    return "Resolve every open or escalated dispute before finalizing.";
+  }
+  if (
+    message.includes("project member")
+    || message.includes("project pledge")
+    || message.includes("Final action")
+  ) {
+    return "The final action must cover every project member and pledge exactly once.";
+  }
+  if (message.includes("Idempotency key")) {
+    return "This retry no longer matches the original final confirmation.";
+  }
+  return "The atomic finalization transaction failed.";
+}
 
 export async function generateFinal(formData: FormData) {
   const projectId = String(formData.get("project_id"));
@@ -46,42 +91,90 @@ export async function generateFinal(formData: FormData) {
   revalidatePath(`/app/projects/${projectId}/final`);
 }
 
-export async function confirmFinalDecision(formData: FormData) {
-  const projectId = String(formData.get("project_id"));
-  const { supabase, user, project } = await requireProjectOwner(projectId);
-  if (project.status !== "active") {
-    redirect(`/app/projects/${projectId}/final?error=Only active projects can be completed.`);
+export async function confirmFinalDecision(
+  _previousState: FinalDecisionActionState,
+  formData: FormData,
+): Promise<FinalDecisionActionState> {
+  if (formData.has("pledge_status") || formData.has("status")) {
+    return failedFinalization(
+      "Pledge status is database-owned and cannot be submitted.",
+    );
   }
-  if (formData.get("human_confirmation") !== "yes") redirect(`/app/projects/${projectId}/final?error=Human confirmation is required.`);
-  const { data: report } = await supabase.from("ai_reports").select("output").eq("project_id", projectId).eq("type", "final").order("created_at", { ascending: false }).limit(1).single();
-  if (!report) redirect(`/app/projects/${projectId}/final?error=Generate a final report first.`);
-  const { data: pledges } = await supabase.from("pledges").select("user_id, profiles(name)").eq("project_id", projectId);
-  const decisions = (pledges ?? []).map((pledge) => ({
-    userId: pledge.user_id,
-    name: (pledge.profiles as unknown as { name: string }).name,
-    returnPercentage: Number(formData.get(`return_${pledge.user_id}`)),
-  }));
-  if (decisions.some((decision) => !validateReturnPercentage(decision.returnPercentage))) {
-    redirect(`/app/projects/${projectId}/final?error=Every pledge return must be between 0 and 100 percent.`);
+  const memberIds = formData.getAll("member_id").map(String);
+  const returnPercentages = formData.getAll("return_percentage");
+  if (memberIds.length !== returnPercentages.length) {
+    return failedFinalization("The member decision payload is incomplete.");
   }
-  const finalAction = Object.fromEntries(decisions.map((decision) => [
-    decision.userId,
-    { name: decision.name, return_percentage: decision.returnPercentage },
-  ]));
-  const { error } = await supabase.from("final_decisions").insert({
-    project_id: projectId,
-    ai_recommendation: report.output,
-    confirmed_by: user.id,
-    final_action: finalAction,
+
+  const suppliedIdempotencyKey = String(
+    formData.get("idempotency_key") ?? "",
+  );
+  const parsed = projectFinalizationInputSchema.safeParse({
+    projectId: String(formData.get("project_id") ?? ""),
+    finalReportId: String(formData.get("final_report_id") ?? ""),
+    idempotencyKey: suppliedIdempotencyKey || randomUUID(),
+    humanConfirmation: formData.get("human_confirmation") === "yes",
+    confirmationNote: String(formData.get("confirmation_note") ?? ""),
+    memberActions: memberIds.map((userId, index) => ({
+      userId,
+      returnPercentage: Number(returnPercentages[index]),
+    })),
   });
-  if (error) redirect(`/app/projects/${projectId}/final?error=${encodeURIComponent(error.message)}`);
-  await supabase.from("projects").update({ status: "completed" }).eq("id", projectId);
-  await supabase.from("audit_logs").insert({
-    project_id: projectId,
-    user_id: user.id,
-    action: "final_decision_confirmed",
-    details: { final_action: finalAction },
+  if (!parsed.success) {
+    return failedFinalization(parsed.error.issues[0].message);
+  }
+
+  const { supabase, user } = await requireUser();
+  const { data: project, error: projectError } = await supabase
+    .from("projects")
+    .select("id, created_by")
+    .eq("id", parsed.data.projectId)
+    .single();
+  if (
+    projectError
+    || !project
+    || project.created_by !== user.id
+  ) {
+    return failedFinalization(
+      "Only this project owner can confirm the final decision.",
+    );
+  }
+
+  const { data, error } = await supabase.rpc("finalize_project", {
+    p_project_id: parsed.data.projectId,
+    p_final_report_id: parsed.data.finalReportId,
+    p_idempotency_key: parsed.data.idempotencyKey,
+    p_final_action: parsed.data.memberActions.map((action) => ({
+      user_id: action.userId,
+      return_percentage: action.returnPercentage,
+    })),
+    p_confirmation_note: parsed.data.confirmationNote || null,
   });
+  if (error) {
+    return failedFinalization(safeFinalizationError(error.message));
+  }
+
+  const result = projectFinalizationResultSchema.safeParse(data);
+  if (
+    !result.success
+    || result.data.project_id !== parsed.data.projectId
+    || result.data.final_report_id !== parsed.data.finalReportId
+    || result.data.confirmed_by !== user.id
+    || result.data.pledge_count !== parsed.data.memberActions.length
+  ) {
+    return {
+      status: "error",
+      message: "The committed database result could not be confirmed. Refresh before retrying; the same request key prevents a duplicate decision.",
+    };
+  }
+
   revalidatePath("/app");
-  redirect(`/app/projects/${projectId}/final`);
+  revalidatePath(`/app/projects/${parsed.data.projectId}`);
+  revalidatePath(`/app/projects/${parsed.data.projectId}/final`);
+  return {
+    status: "success",
+    message: result.data.replayed
+      ? "This final decision was already committed. No duplicate was created."
+      : "Final decision confirmed. Every project pledge is now finalized.",
+  };
 }
