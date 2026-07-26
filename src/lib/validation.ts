@@ -1,23 +1,62 @@
 import { z } from "zod";
 
-export const projectPlanSchema = z.object({
-  phases: z.array(z.object({ name: z.string(), description: z.string() })),
-  deliverables: z.array(z.string()),
-  tasks: z.array(
-    z.object({
-      title: z.string(),
-      description: z.string(),
-      assigned_user_id: z.string().uuid(),
-      assigned_reason: z.string(),
-      priority: z.enum(["low", "medium", "high", "critical"]),
-      due_date: z.string(),
-      acceptance_criteria: z.array(z.string()).min(1),
-      expected_evidence_types: z.array(z.string()).min(1),
-    }),
-  ),
-  risks: z.array(z.string()),
-  minimum_success_version: z.string(),
-  ambitious_success_version: z.string(),
+const aiPlanText = (maximumLength: number) =>
+  z.string().trim().min(1).max(maximumLength);
+
+export const projectPlanSchema = z
+  .object({
+    phases: z
+      .array(
+        z.object({
+          name: aiPlanText(120),
+          description: aiPlanText(2000),
+        }).strict(),
+      )
+      .max(20),
+    deliverables: z.array(aiPlanText(500)).max(50),
+    tasks: z
+      .array(
+        z.object({
+          title: z.string().trim().min(2).max(120),
+          description: aiPlanText(4000),
+          assigned_user_id: z.string().uuid(),
+          assigned_reason: aiPlanText(2000),
+          priority: z.enum(["low", "medium", "high", "critical"]),
+          due_date: z.iso.date(),
+          acceptance_criteria: z.array(aiPlanText(500)).min(1).max(20),
+          expected_evidence_types: z.array(aiPlanText(120)).min(1).max(20),
+        }).strict(),
+      )
+      .min(1)
+      .max(50),
+    risks: z.array(aiPlanText(1000)).max(50),
+    minimum_success_version: aiPlanText(4000),
+    ambitious_success_version: aiPlanText(4000),
+  })
+  .strict()
+  .superRefine((plan, ctx) => {
+    const titles = plan.tasks.map((task) => task.title.toLocaleLowerCase());
+    if (new Set(titles).size !== titles.length) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["tasks"],
+        message: "AI task titles must be unique.",
+      });
+    }
+  });
+
+export const aiPlanReplacementResultSchema = z.object({
+  project_id: z.string().uuid(),
+  idempotency_key: z.string().uuid(),
+  ai_report_id: z.string().uuid(),
+  task_ids: z.array(z.string().uuid()).min(1).max(50),
+  task_count: z.number().int().min(1).max(50),
+  replayed: z.boolean(),
+}).strict();
+
+export const projectPlanActionRequestSchema = z.object({
+  projectId: z.string().uuid(),
+  idempotencyKey: z.string().uuid(),
 });
 
 export const disputeRecommendationSchema = z.object({

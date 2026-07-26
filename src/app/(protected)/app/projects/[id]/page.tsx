@@ -1,5 +1,7 @@
+import { randomUUID } from "node:crypto";
 import { Brain, CalendarDays, Coins, FileCheck2, Gauge, ShieldCheck, Users } from "lucide-react";
-import { generatePlan, startProject, updateDraftTask } from "@/app/(protected)/app/projects/actions";
+import { startProject, updateDraftTask } from "@/app/(protected)/app/projects/actions";
+import { AIPlanGenerationForm } from "@/components/ai-plan-generation-form";
 import { Button, ButtonLink, Card, EmptyState, ErrorMessage, EvidenceExamples, HelpCard, MetricCard, NextActionCard, PageHeader, Progress, SectionHeader, StatusBadge } from "@/components/ui";
 import { TaskBoard, type BoardTask } from "@/components/tasks/task-board";
 import { requireProjectMember } from "@/lib/auth";
@@ -56,6 +58,7 @@ export default async function ProjectPage({
   }));
   const durationDays = Math.max(1, Math.ceil((new Date(`${project.end_date}T00:00:00`).getTime() - new Date(`${project.start_date}T00:00:00`).getTime()) / 86_400_000) + 1);
   const planLooksLarge = taskRows.length > Math.max(4, Math.ceil(durationDays / 2));
+  const planRequestId = randomUUID();
 
   const boardTasks: BoardTask[] = taskRows.map((task) => {
     const assignment = singleRelation(task.task_assignments as unknown as Assignment | Assignment[]);
@@ -113,7 +116,12 @@ export default async function ProjectPage({
             </HelpCard>
           )}
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-            <form action={generatePlan}><input type="hidden" name="project_id" value={id} /><Button className="w-full" type="submit">{taskRows.length ? "Regenerate AI plan" : "Generate AI plan"}</Button></form>
+            <AIPlanGenerationForm
+              className="flex-1"
+              idempotencyKey={planRequestId}
+              label={taskRows.length ? "Regenerate AI plan" : "Generate AI plan"}
+              projectId={id}
+            />
             {taskRows.length ? <ButtonLink href="#edit-plan" variant="secondary">Edit plan first</ButtonLink> : null}
             {taskRows.length ? <form action={startProject}><input type="hidden" name="project_id" value={id} /><Button className="w-full" variant="secondary" type="submit">Start project with this plan</Button></form> : null}
           </div>
@@ -200,7 +208,13 @@ export default async function ProjectPage({
           <EmptyState
             title="No tasks yet"
             copy="Tasks will appear after the owner generates an AI plan. The plan is editable before the project starts."
-            action={project.status === "draft" && isOwner ? <form action={generatePlan}><input type="hidden" name="project_id" value={id} /><Button type="submit">Generate AI plan</Button></form> : null}
+            action={project.status === "draft" && isOwner ? (
+              <AIPlanGenerationForm
+                idempotencyKey={planRequestId}
+                label="Generate AI plan"
+                projectId={id}
+              />
+            ) : null}
           />
         </section>
       )}

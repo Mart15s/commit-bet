@@ -1,16 +1,28 @@
 "use server";
 
+import { createHash, randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { generateProjectPlan } from "@/lib/ai/service";
+import {
+  generateProjectPlan,
+  getAIProviderMetadata,
+} from "@/lib/ai/service";
 import { requireProjectOwner, requireUser } from "@/lib/auth";
 import {
+  aiPlanReplacementResultSchema,
   draftTaskUpdateSchema,
+  projectPlanActionRequestSchema,
+  projectPlanSchema,
   projectCreationSchema,
 } from "@/lib/validation";
 
 export type CreateProjectActionState = {
   error?: string;
+};
+
+export type GeneratePlanActionState = {
+  status: "idle" | "success" | "error";
+  message?: string;
 };
 
 function parseJsonList(value: FormDataEntryValue | null): unknown {
@@ -21,6 +33,8 @@ function parseJsonList(value: FormDataEntryValue | null): unknown {
     return value;
   }
 }
+
+const projectPlanRequestSchema = projectPlanActionRequestSchema;
 
 function safeProjectCreationError(message: string) {
   if (message.includes("not allowed to create a project")) {
@@ -39,6 +53,51 @@ function safeProjectCreationError(message: string) {
     return "This project creation request conflicts with an earlier submission. Refresh the page and try again.";
   }
   return "Could not create the project. Review the setup and try again.";
+}
+
+function failedPlan(message: string): GeneratePlanActionState {
+  return {
+    status: "error",
+    message: `${message} The previous plan is unchanged. You can retry.`,
+  };
+}
+
+function safePlanPersistenceError(message: string) {
+  if (message.includes("Only draft projects")) {
+    return "Only draft projects can replace an AI plan.";
+  }
+  if (message.includes("after generated task activity exists")) {
+    return "This plan has project activity and can no longer be regenerated safely.";
+  }
+  if (message.includes("Idempotency key was already used")) {
+    return "This retry no longer matches the original plan request. Refresh the project before trying again.";
+  }
+  if (
+    message.includes("project owner")
+    || message.includes("caller team")
+    || message.includes("Project owner is not a project member")
+  ) {
+    return "You are not allowed to replace this project plan.";
+  }
+  return "The AI plan could not be saved.";
+}
+
+function canonicalJson(value: unknown): string {
+  if (value === null || typeof value !== "object") {
+    return JSON.stringify(value) ?? "null";
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => canonicalJson(item)).join(",")}]`;
+  }
+  return `{${Object.entries(value)
+    .filter(([, item]) => item !== undefined)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, item]) => `${JSON.stringify(key)}:${canonicalJson(item)}`)
+    .join(",")}}`;
+}
+
+function hashPlanRequest(value: unknown) {
+  return createHash("sha256").update(canonicalJson(value)).digest("hex");
 }
 
 export async function createProject(
@@ -150,81 +209,159 @@ export async function createProject(
   redirect(`/app/projects/${projectId}`);
 }
 
-export async function generatePlan(formData: FormData) {
-  const projectId = String(formData.get("project_id"));
-  const { supabase, user, project } = await requireProjectOwner(projectId);
-  if (project.status !== "draft") redirect(`/app/projects/${projectId}?error=Only draft projects can generate a plan.`);
+export async function generatePlan(
+  _previousState: GeneratePlanActionState,
+  formData: FormData,
+): Promise<GeneratePlanActionState> {
+  const projectId = String(formData.get("project_id") ?? "");
+  const suppliedIdempotencyKey = String(
+    formData.get("idempotency_key") ?? "",
+  );
+  const requestIdentity = suppliedIdempotencyKey || randomUUID();
+  const requestParsed = projectPlanRequestSchema.safeParse({
+    projectId,
+    idempotencyKey: requestIdentity,
+  });
+  if (!requestParsed.success) {
+    return failedPlan("The plan request is invalid.");
+  }
 
-  const { data: memberProfiles } = await supabase
+  const { supabase, user } = await requireUser();
+  const { data: project, error: projectError } = await supabase
+    .from("projects")
+    .select("id, team_id, created_by, status, title, project_type, goal, success_criteria, start_date, end_date")
+    .eq("id", requestParsed.data.projectId)
+    .single();
+  if (projectError || !project) {
+    return failedPlan("The project could not be loaded.");
+  }
+  if (project.created_by !== user.id) {
+    return failedPlan("Only the project owner can replace the AI plan.");
+  }
+  if (project.status !== "draft") {
+    return failedPlan("Only draft projects can replace an AI plan.");
+  }
+
+  const { data: memberProfiles, error: memberProfilesError } = await supabase
     .from("project_member_profiles")
     .select("user_id, roles, strengths, weaknesses, preferred_work_types, evidence_types, availability_minutes_per_day, experience_level, best_work_time, custom_notes, profiles(name)")
-    .eq("project_id", projectId);
+    .eq("project_id", requestParsed.data.projectId)
+    .order("user_id");
+  if (memberProfilesError || !memberProfiles?.length) {
+    return failedPlan("Project member planning data could not be loaded.");
+  }
 
   const planInput = {
     title: project.title,
     projectType: project.project_type,
     goal: project.goal,
-    successCriteria: (project.success_criteria as Array<{ criterion: string }>).map((item) => item.criterion),
+    successCriteria: Array.isArray(project.success_criteria)
+      ? project.success_criteria
+        .map((item) => (
+          typeof item === "object"
+          && item !== null
+          && "criterion" in item
+          && typeof item.criterion === "string"
+            ? item.criterion
+            : ""
+        ))
+        .filter(Boolean)
+      : [],
     startDate: project.start_date,
     endDate: project.end_date,
     members: (memberProfiles ?? []).map((member) => ({
       user_id: member.user_id,
-      name: (member.profiles as unknown as { name: string }).name,
-      roles: member.roles,
-      strengths: member.strengths,
-      weaknesses: member.weaknesses,
-      preferred_work_types: member.preferred_work_types,
-      evidence_types: member.evidence_types,
+      name: (member.profiles as unknown as { name?: string } | null)?.name
+        ?? "Project member",
+      roles: member.roles ?? [],
+      strengths: member.strengths ?? [],
+      weaknesses: member.weaknesses ?? [],
+      preferred_work_types: member.preferred_work_types ?? [],
+      evidence_types: member.evidence_types ?? [],
       availability_minutes_per_day: member.availability_minutes_per_day,
-      experience_level: member.experience_level,
-      best_work_time: member.best_work_time,
-      custom_notes: member.custom_notes,
+      experience_level: member.experience_level ?? "",
+      best_work_time: member.best_work_time ?? "",
+      custom_notes: member.custom_notes ?? "",
     })),
   };
 
+  let generatedPlan: unknown;
   try {
-    const plan = await generateProjectPlan(planInput);
-    const { data: oldTasks } = await supabase.from("tasks").select("id").eq("project_id", projectId).eq("ai_generated", true);
-    if (oldTasks?.length) await supabase.from("tasks").delete().in("id", oldTasks.map((task) => task.id));
-
-    await supabase.from("ai_reports").insert({
-      project_id: projectId,
-      type: "plan",
-      input_snapshot: planInput,
-      output: plan,
-      model: process.env.OPENAI_API_KEY && process.env.AI_PROVIDER === "openai"
-        ? process.env.OPENAI_MODEL || "gpt-5.5"
-        : "mock-v1",
-    });
-
-    for (const task of plan.tasks) {
-      const { data: inserted, error } = await supabase.from("tasks").insert({
-        project_id: projectId,
-        title: task.title,
-        description: task.description,
-        acceptance_criteria: task.acceptance_criteria,
-        expected_evidence_types: task.expected_evidence_types,
-        priority: task.priority,
-        due_date: task.due_date,
-        ai_generated: true,
-      }).select("id").single();
-      if (error || !inserted) throw error || new Error("Task insert failed");
-      await supabase.from("task_assignments").insert({
-        task_id: inserted.id,
-        user_id: task.assigned_user_id,
-        assigned_reason: task.assigned_reason,
-      });
-    }
-    await supabase.from("audit_logs").insert({
-      project_id: projectId,
-      user_id: user.id,
-      action: "ai_plan_generated",
-      details: { task_count: plan.tasks.length },
-    });
-  } catch (error) {
-    redirect(`/app/projects/${projectId}?error=${encodeURIComponent(error instanceof Error ? error.message : "Plan generation failed")}`);
+    generatedPlan = await generateProjectPlan(planInput);
+  } catch {
+    return failedPlan("The AI provider could not generate a plan.");
   }
-  revalidatePath(`/app/projects/${projectId}`);
+
+  const parsedPlan = projectPlanSchema.safeParse(generatedPlan);
+  if (!parsedPlan.success) {
+    return failedPlan("The AI provider returned an invalid plan.");
+  }
+
+  const projectMemberIds = new Set(
+    memberProfiles.map((member) => member.user_id),
+  );
+  if (
+    parsedPlan.data.tasks.some(
+      (task) => !projectMemberIds.has(task.assigned_user_id),
+    )
+  ) {
+    return failedPlan("The AI plan assigned work outside this project.");
+  }
+  if (
+    parsedPlan.data.tasks.some(
+      (task) => (
+        task.due_date < project.start_date
+        || task.due_date > project.end_date
+      ),
+    )
+  ) {
+    return failedPlan("The AI plan contains a due date outside the project.");
+  }
+
+  const metadata = getAIProviderMetadata();
+  const payloadHash = hashPlanRequest({
+    projectId: requestParsed.data.projectId,
+    plan: parsedPlan.data,
+    provider: metadata.provider,
+    model: metadata.model,
+    inputSnapshot: planInput,
+  });
+  const { data: replacement, error: replacementError } = await supabase.rpc(
+    "replace_ai_project_plan",
+    {
+      p_project_id: requestParsed.data.projectId,
+      p_idempotency_key: requestParsed.data.idempotencyKey,
+      p_plan: parsedPlan.data,
+      p_ai_provider: metadata.provider,
+      p_ai_model: metadata.model,
+      p_input_snapshot: planInput,
+      p_payload_hash: payloadHash,
+    },
+  );
+  if (replacementError) {
+    return failedPlan(safePlanPersistenceError(replacementError.message));
+  }
+
+  const parsedReplacement = aiPlanReplacementResultSchema.safeParse(
+    replacement,
+  );
+  if (
+    !parsedReplacement.success
+    || parsedReplacement.data.project_id !== requestParsed.data.projectId
+    || parsedReplacement.data.idempotency_key
+      !== requestParsed.data.idempotencyKey
+    || parsedReplacement.data.task_count !== parsedPlan.data.tasks.length
+  ) {
+    return failedPlan("The saved AI plan could not be confirmed.");
+  }
+
+  revalidatePath(`/app/projects/${requestParsed.data.projectId}`);
+  return {
+    status: "success",
+    message: parsedReplacement.data.replayed
+      ? "This plan request was already saved. No duplicate data was created."
+      : "AI plan saved.",
+  };
 }
 
 export async function updateDraftTask(formData: FormData) {
