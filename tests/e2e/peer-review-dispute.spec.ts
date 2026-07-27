@@ -74,6 +74,7 @@ test("teammate rejection can be disputed and resolved by the owner", async ({ br
     await page.getByLabel("Proof link (optional)", { exact: true }).fill("https://example.com/result");
     await page.getByRole("button", { name: /add proof of work/i }).click();
     await page.getByRole("button", { name: /submit for review/i }).click();
+    await expect(page.getByText(/submitted/i).first()).toBeVisible();
 
     await reviewerPage.goto(`${baseUrl}/app/approvals`);
     await expect(reviewerPage.getByRole("heading", { name: taskTitle })).toBeVisible();

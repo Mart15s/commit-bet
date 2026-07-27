@@ -85,15 +85,19 @@ export async function generateFinal(formData: FormData) {
       duration_ms: Date.now() - startedAt,
       status: "succeeded",
     });
-    if (reportError) throw new Error(reportError.message);
+    if (reportError?.code === "23505") {
+      revalidatePath(`/app/projects/${projectId}/final`);
+      return;
+    }
+    if (reportError) throw new Error("Final report could not be saved.");
     await supabase.from("audit_logs").insert({
       project_id: projectId,
       user_id: user.id,
       action: "final_report_generated",
       details: { confidence_score: report.confidence_score },
     });
-  } catch (error) {
-    redirect(`/app/projects/${projectId}/final?error=${encodeURIComponent(error instanceof Error ? error.message : "Report generation failed")}`);
+  } catch {
+    redirect(`/app/projects/${projectId}/final?error=${encodeURIComponent("Final report generation could not be completed. Please try again.")}`);
   }
   revalidatePath(`/app/projects/${projectId}/final`);
 }

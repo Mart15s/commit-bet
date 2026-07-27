@@ -2,7 +2,8 @@ import { randomUUID } from "node:crypto";
 import { Brain, CheckCircle2, FileCheck2, Gauge, Scale, ShieldCheck, TriangleAlert } from "lucide-react";
 import { generateFinal } from "@/app/(protected)/app/projects/[id]/final/actions";
 import { FinalDecisionForm } from "@/components/final-decision-form";
-import { Button, ButtonLink, Card, ErrorMessage, HelpCard, MetricCard, PageHeader, Progress, SectionHeader, StatusBadge } from "@/components/ui";
+import { PendingButton } from "@/components/pending-button";
+import { ButtonLink, Card, ErrorMessage, HelpCard, MetricCard, PageHeader, Progress, SectionHeader, StatusBadge } from "@/components/ui";
 import { requireProjectOwner } from "@/lib/auth";
 
 export default async function FinalReportPage({
@@ -78,7 +79,7 @@ export default async function FinalReportPage({
           </p>
           <form action={generateFinal} className="mt-6">
             <input type="hidden" name="project_id" value={id} />
-            <Button type="submit" size="lg"><Brain size={18} /> Generate final report</Button>
+            <PendingButton idleLabel="Generate final report" pendingLabel="Generating final report..." />
           </form>
         </Card>
       )}

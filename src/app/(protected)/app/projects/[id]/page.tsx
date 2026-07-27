@@ -310,7 +310,7 @@ export default async function ProjectPage({
         </Card>
 
         <Card>
-          <SectionHeader title="Reviews and disputes" action={<ButtonLink href={`/app/projects/${id}/reviews`} variant="secondary" size="sm">Review queue</ButtonLink>} />
+          <SectionHeader title="Reviews and disputes" action={<ButtonLink href="/app/approvals" variant="secondary" size="sm">Review queue</ButtonLink>} />
           <div className="space-y-3">
             {pendingReviews.map((task) => <ButtonLink key={task.id} href={`/app/tasks/${task.id}`} variant="secondary" className="h-auto w-full justify-between p-3 text-left"><span className="font-bold">{task.title}</span><StatusBadge status="submitted" /></ButtonLink>)}
             {projectDisputes.map((dispute) => <div key={dispute.id} className="rounded-xl border border-rose-300/30 bg-rose-500/12 p-3 text-sm"><strong>{(dispute.tasks as unknown as { title: string }).title}</strong><p className="mt-1 text-muted-foreground">{dispute.reason}</p></div>)}

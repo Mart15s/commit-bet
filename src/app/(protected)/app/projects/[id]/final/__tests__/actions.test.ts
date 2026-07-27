@@ -60,7 +60,7 @@ function formData() {
   return data;
 }
 
-function authorizedContext(reportInsertError: { message: string } | null = null) {
+function authorizedContext(reportInsertError: { message: string; code?: string } | null = null) {
   const reportInsert = vi.fn(async () => ({ error: reportInsertError }));
   const auditInsert = vi.fn(async () => ({ error: null }));
   const from = vi.fn(() => ({ insert: auditInsert }));
@@ -245,6 +245,30 @@ describe("generateFinal authorization and persistence order", () => {
       "REDIRECT:/app/projects/",
     );
     expect(auditInsert).not.toHaveBeenCalled();
+    expect(String(mocks.redirect.mock.calls[0]?.[0])).toContain(
+      "Final%20report%20generation%20could%20not%20be%20completed",
+    );
+    expect(String(mocks.redirect.mock.calls[0]?.[0])).not.toContain(
+      "insert%20failed",
+    );
+  });
+
+  it("treats a concurrent final-report insert as an idempotent success", async () => {
+    const { context, auditInsert } = authorizedContext({
+      code: "23505",
+      message: "duplicate key value violates unique constraint",
+    });
+    mocks.requireProjectOwner.mockResolvedValueOnce(context);
+    mocks.loadFinalAuditInput.mockResolvedValueOnce(input);
+    mocks.generateFinalReport.mockResolvedValueOnce(report);
+
+    await expect(generateFinal(formData())).resolves.toBeUndefined();
+
+    expect(auditInsert).not.toHaveBeenCalled();
+    expect(mocks.redirect).not.toHaveBeenCalled();
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(
+      `/app/projects/${projectId}/final`,
+    );
   });
 });
 
