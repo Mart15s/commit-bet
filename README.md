@@ -47,8 +47,8 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<PUBLISHABLE_KEY>
 # NEXT_PUBLIC_SUPABASE_ANON_KEY=<LEGACY_ANON_KEY>
 NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000
 SUPABASE_SERVICE_ROLE_KEY=<SERVICE_ROLE_KEY>
-OPENAI_API_KEY=
-OPENAI_MODEL=gpt-5.5
+GEMINI_API_KEY=<server-only-key>
+GEMINI_MODEL=gemini-3.6-flash
 AI_PROVIDER=mock
 ```
 
@@ -88,35 +88,33 @@ Main schema:
 
 RLS is enabled on all public tables. Server Actions also verify the authenticated user and team/project relationship before mutating data.
 
-## Mocked AI Mode
+## Deterministic AI Test Mode
 
-Mocked AI is the default and works without an OpenAI key:
+Mock mode is reserved for local automated tests:
 
 ```bash
 AI_PROVIDER=mock
-OPENAI_API_KEY=
 ```
 
 The mock planner returns deterministic phases, tasks, risks, evidence requirements, dispute recommendations, and final reports based on project inputs.
 
-## Optional OpenAI Mode
+## Gemini Mode
 
 Set:
 
 ```bash
-AI_PROVIDER=openai
-OPENAI_API_KEY=<your-key>
-OPENAI_MODEL=gpt-5.5
+GEMINI_API_KEY=<your-server-only-key>
+GEMINI_MODEL=gemini-3.6-flash
 ```
 
-OpenAI calls are server-only and use structured Zod output validation. If no API key is present, the app falls back to mock mode.
+Gemini calls are server-only, time-bounded, prompt-injection delimited, and use strict structured Zod output validation. Production never silently falls back to mock mode when the key is missing.
 
 ## MVP Flow
 
 1. Register or log in.
 2. Create a team.
 3. Create a project with success criteria, selected members, profiles, and virtual pledges.
-4. Generate a mock AI plan.
+4. Generate a Gemini AI plan (or a deterministic mock only in tests).
 5. Review/edit generated task basics and start the project.
 6. Assignee adds evidence and submits the task.
 7. Another team member approves, requests changes, or rejects.

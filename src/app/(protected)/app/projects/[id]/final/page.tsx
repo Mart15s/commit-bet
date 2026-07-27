@@ -1,6 +1,9 @@
-import { Brain, CheckCircle2, FileCheck2, Gauge, Scale, ShieldCheck, TriangleAlert, Users } from "lucide-react";
-import { confirmFinalDecision, generateFinal } from "@/app/(protected)/app/projects/[id]/final/actions";
-import { Button, ButtonLink, Card, ErrorMessage, HelpCard, MetricCard, PageHeader, Progress, SectionHeader, StatusBadge } from "@/components/ui";
+import { randomUUID } from "node:crypto";
+import { Brain, CheckCircle2, FileCheck2, Gauge, Scale, ShieldCheck, TriangleAlert } from "lucide-react";
+import { generateFinal } from "@/app/(protected)/app/projects/[id]/final/actions";
+import { FinalDecisionForm } from "@/components/final-decision-form";
+import { PendingButton } from "@/components/pending-button";
+import { ButtonLink, Card, ErrorMessage, HelpCard, MetricCard, PageHeader, Progress, SectionHeader, StatusBadge } from "@/components/ui";
 import { requireProjectOwner } from "@/lib/auth";
 
 export default async function FinalReportPage({
@@ -13,12 +16,20 @@ export default async function FinalReportPage({
   const { id } = await params;
   const query = await searchParams;
   const { supabase, project } = await requireProjectOwner(id);
-  const [{ data: reportRows }, { data: pledges }, { data: decision }] = await Promise.all([
-    supabase.from("ai_reports").select("output, model, created_at").eq("project_id", id).eq("type", "final").order("created_at", { ascending: false }).limit(1),
+  const [{ data: pledges }, { data: decision }] = await Promise.all([
     supabase.from("pledges").select("*, profiles(name)").eq("project_id", id),
     supabase.from("final_decisions").select("*").eq("project_id", id).maybeSingle(),
   ]);
-  const report = reportRows?.[0]?.output as {
+  const reportQuery = supabase
+    .from("ai_reports")
+    .select("id, output, model, created_at")
+    .eq("project_id", id)
+    .eq("type", "final");
+  const { data: reportRows } = decision?.final_report_id
+    ? await reportQuery.eq("id", decision.final_report_id).limit(1)
+    : await reportQuery.order("created_at", { ascending: false }).limit(1);
+  const selectedReport = reportRows?.[0];
+  const report = selectedReport?.output as {
     project_summary: string;
     success_criteria_evaluation: Array<{ criterion: string; status: string; comment: string }>;
     task_statistics: { planned: number; approved: number; rejected: number; disputed: number; late: number };
@@ -68,7 +79,7 @@ export default async function FinalReportPage({
           </p>
           <form action={generateFinal} className="mt-6">
             <input type="hidden" name="project_id" value={id} />
-            <Button type="submit" size="lg"><Brain size={18} /> Generate final report</Button>
+            <PendingButton idleLabel="Generate final report" pendingLabel="Generating final report..." />
           </form>
         </Card>
       )}
@@ -148,9 +159,12 @@ export default async function FinalReportPage({
           {decision ? (
             <Card className="border-emerald-400/30 bg-emerald-400/10">
               <div className="flex gap-3"><CheckCircle2 className="text-emerald-300" /><div><h2 className="font-black">Human decision confirmed</h2><p className="mt-1 text-sm text-muted-foreground">This manual action is the final recorded outcome. No funds were transferred.</p></div></div>
-              <div className="mt-4 space-y-2">{Object.entries(finalActions ?? {}).map(([userId, action]) => <div key={userId} className="flex justify-between rounded-xl border border-border bg-card p-3"><strong>{action.name}</strong><span>Return {action.return_percentage}% pledge</span></div>)}</div>
+              <div className="mt-4 space-y-2">{Object.entries(finalActions ?? {}).map(([userId, action]) => {
+                const pledge = pledges?.find((item) => item.user_id === userId);
+                return <div key={userId} className="flex flex-col justify-between gap-2 rounded-xl border border-border bg-card p-3 sm:flex-row sm:items-center"><strong>{action.name}</strong><span className="flex items-center gap-2">Return {action.return_percentage}% pledge <StatusBadge status={pledge?.status ?? "unresolved"} /></span></div>;
+              })}</div>
             </Card>
-          ) : (
+          ) : project.status === "active" && selectedReport?.id ? (
             <Card className="border-amber-300/30 bg-amber-400/10">
               <div className="flex gap-3">
                 <ShieldCheck className="text-amber-300" />
@@ -159,24 +173,28 @@ export default async function FinalReportPage({
                   <p className="text-sm leading-6 text-muted-foreground">Review the AI recommendation together, then confirm the final outcome manually. CommitBet does not collect or transfer money.</p>
                 </div>
               </div>
-              <form action={confirmFinalDecision} className="mt-5 grid gap-4">
-                <input type="hidden" name="project_id" value={id} />
-                {pledges?.map((pledge) => {
+              <FinalDecisionForm
+                projectId={id}
+                finalReportId={selectedReport.id}
+                idempotencyKey={randomUUID()}
+                members={(pledges ?? []).map((pledge) => {
                   const recommendation = report.pledge_recommendation.find((item) => item.user_id === pledge.user_id);
-                  return (
-                    <label key={pledge.user_id}>
-                      {(pledge.profiles as unknown as { name: string }).name}: virtual pledge return percentage
-                      <input name={`return_${pledge.user_id}`} type="number" min={0} max={100} defaultValue={recommendation?.pledge_return_percentage ?? 0} required />
-                      <small className="font-normal text-muted-foreground">AI suggested {recommendation?.pledge_return_percentage ?? 0}%: {recommendation?.reason}</small>
-                    </label>
-                  );
+                  return {
+                    userId: pledge.user_id,
+                    name: (pledge.profiles as unknown as { name: string }).name,
+                    recommendedReturnPercentage: recommendation?.pledge_return_percentage ?? 0,
+                    recommendationReason: recommendation?.reason ?? "No AI reason was recorded.",
+                  };
                 })}
-                <label className="flex grid-cols-none items-start gap-3 rounded-xl border border-amber-300/30 bg-background/45 p-4">
-                  <input className="mt-1 size-5 w-auto" type="checkbox" name="human_confirmation" value="yes" required />
-                  <span>I understand this is my team’s manual virtual-pledge decision. No funds are transferred.</span>
-                </label>
-                <Button type="submit" size="lg"><Users size={18} /> Confirm final outcome</Button>
-              </form>
+              />
+            </Card>
+          ) : (
+            <Card className="border-amber-300/30 bg-amber-400/10">
+              <h2 className="font-black">Final confirmation unavailable</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                This project is not active, so no new final decision can be submitted.
+                Refresh to load an existing committed decision or return to the project.
+              </p>
             </Card>
           )}
         </div>

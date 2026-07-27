@@ -59,66 +59,235 @@ export const projectPlanActionRequestSchema = z.object({
   idempotencyKey: z.string().uuid(),
 });
 
-export const disputeRecommendationSchema = z.object({
-  neutral_summary: z.string(),
-  arguments_for_approval: z.array(z.string()),
-  arguments_for_rejection: z.array(z.string()),
-  missing_information: z.array(z.string()),
-  recommended_resolution: z.enum([
-    "approve",
-    "reject",
-    "partial_credit",
-    "needs_changes",
-    "extend_deadline",
-    "manual_review",
-  ]),
-  confidence_score: z.number().min(0).max(100),
-  suggested_next_action: z.string(),
-});
+export const MAX_DAILY_LOG_PAYLOAD_BYTES = 65_536;
+export const MAX_DAILY_LOG_TASKS = 50;
+export const MAX_DAILY_LOG_PROOF_LINKS = 20;
 
-export const finalReportSchema = z.object({
-  project_summary: z.string(),
-  success_criteria_evaluation: z.array(
-    z.object({
-      criterion: z.string(),
-      status: z.enum(["met", "partially_met", "not_met", "unclear"]),
-      comment: z.string(),
-    }),
-  ),
-  task_statistics: z.object({
-    planned: z.number(),
-    approved: z.number(),
-    rejected: z.number(),
-    disputed: z.number(),
-    late: z.number(),
-  }),
-  member_contributions: z.array(
-    z.object({
-      user_id: z.string().uuid(),
-      contribution_score: z.number().min(0).max(100),
-      summary: z.string(),
-      strongest_evidence: z.array(z.string()),
-      issues: z.array(z.string()),
-    }),
-  ),
-  evidence_quality_score: z.number().min(0).max(100),
-  delay_analysis: z.string(),
-  dispute_summary: z.string(),
-  pledge_recommendation: z.array(
-    z.object({
-      user_id: z.string().uuid(),
-      pledge_return_percentage: z.number().min(0).max(100),
-      reason: z.string(),
-    }),
-  ),
-  reasoning: z.string(),
-  confidence_score: z.number().min(0).max(100),
-  human_confirmation_required: z.literal(true),
-});
+const dailyLogText = (minimumLength: number, maximumLength: number) =>
+  z.string().trim().min(minimumLength).max(maximumLength);
+
+const httpProofLinkSchema = z
+  .string()
+  .trim()
+  .min(10)
+  .max(2048)
+  .transform((value, ctx) => {
+    try {
+      const parsed = new URL(value);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        ctx.addIssue({
+          code: "custom",
+          message: "Proof links must use http or https.",
+        });
+        return z.NEVER;
+      }
+      return parsed.href;
+    } catch {
+      ctx.addIssue({
+        code: "custom",
+        message: "Proof links must be valid full URLs.",
+      });
+      return z.NEVER;
+    }
+  });
+
+export const dailyLogInputSchema = z
+  .object({
+    projectId: z.string().uuid(),
+    logDate: z.iso.date(),
+    summary: dailyLogText(1, 4000),
+    timeSpentMinutes: z.number().int().min(0).max(1440),
+    blockers: dailyLogText(0, 4000),
+    nextSteps: dailyLogText(1, 4000),
+    taskIds: z.array(z.string().uuid()).max(MAX_DAILY_LOG_TASKS),
+    proofLinks: z
+      .array(httpProofLinkSchema)
+      .max(MAX_DAILY_LOG_PROOF_LINKS),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    if (value.logDate > new Date().toISOString().slice(0, 10)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["logDate"],
+        message: "Daily logs cannot be dated in the future.",
+      });
+    }
+    if (new Set(value.taskIds).size !== value.taskIds.length) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["taskIds"],
+        message: "Selected tasks must be unique.",
+      });
+    }
+    if (new Set(value.proofLinks).size !== value.proofLinks.length) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["proofLinks"],
+        message: "Proof links must be unique.",
+      });
+    }
+    if (value.proofLinks.length > 0 && value.taskIds.length === 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["taskIds"],
+        message: "Choose at least one task before adding proof links.",
+      });
+    }
+  });
+
+export const dailyLogSaveResultSchema = z
+  .object({
+    daily_log_id: z.string().uuid(),
+    project_id: z.string().uuid(),
+    log_date: z.iso.date(),
+    task_count: z.number().int().min(0).max(MAX_DAILY_LOG_TASKS),
+    proof_link_count: z
+      .number()
+      .int()
+      .min(0)
+      .max(MAX_DAILY_LOG_PROOF_LINKS),
+    evidence_count: z
+      .number()
+      .int()
+      .min(0)
+      .max(MAX_DAILY_LOG_TASKS * MAX_DAILY_LOG_PROOF_LINKS),
+    replayed: z.boolean(),
+  })
+  .strict();
+
+export const disputeRecommendationSchema = z
+  .object({
+    neutral_summary: aiPlanText(4000),
+    arguments_for_approval: z.array(aiPlanText(1000)).max(20),
+    arguments_for_rejection: z.array(aiPlanText(1000)).max(20),
+    missing_information: z.array(aiPlanText(1000)).max(20),
+    recommended_resolution: z.enum([
+      "approve",
+      "reject",
+      "partial_credit",
+      "needs_changes",
+      "extend_deadline",
+      "manual_review",
+    ]),
+    confidence_score: z.number().min(0).max(100),
+    suggested_next_action: aiPlanText(2000),
+  })
+  .strict();
+
+export const evidenceReviewSchema = z
+  .object({
+    recommendation: z.enum(["approve", "needs_changes", "reject"]),
+    criteria_met: z.array(aiPlanText(500)).max(20),
+    criteria_not_proven: z.array(aiPlanText(500)).max(20),
+    reasoning: aiPlanText(4000),
+    confidence: z.number().min(0).max(100),
+    signals_used: z.array(aiPlanText(500)).max(20),
+    human_review_required: z.literal(true),
+  })
+  .strict();
+
+export const finalReportSchema = z
+  .object({
+    project_summary: aiPlanText(8000),
+    success_criteria_evaluation: z
+      .array(
+        z
+          .object({
+            criterion: aiPlanText(1000),
+            status: z.enum(["met", "partially_met", "not_met", "unclear"]),
+            comment: aiPlanText(4000),
+          })
+          .strict(),
+      )
+      .max(50),
+    task_statistics: z
+      .object({
+        planned: z.number().int().nonnegative().max(10_000),
+        approved: z.number().int().nonnegative().max(10_000),
+        rejected: z.number().int().nonnegative().max(10_000),
+        disputed: z.number().int().nonnegative().max(10_000),
+        late: z.number().int().nonnegative().max(10_000),
+      })
+      .strict(),
+    member_contributions: z
+      .array(
+        z
+          .object({
+            user_id: z.string().uuid(),
+            contribution_score: z.number().min(0).max(100),
+            summary: aiPlanText(4000),
+            strongest_evidence: z.array(aiPlanText(1000)).max(20),
+            issues: z.array(aiPlanText(1000)).max(20),
+          })
+          .strict(),
+      )
+      .max(5),
+    evidence_quality_score: z.number().min(0).max(100),
+    delay_analysis: aiPlanText(8000),
+    dispute_summary: aiPlanText(8000),
+    pledge_recommendation: z
+      .array(
+        z
+          .object({
+            user_id: z.string().uuid(),
+            pledge_return_percentage: z.number().min(0).max(100),
+            reason: aiPlanText(4000),
+          })
+          .strict(),
+      )
+      .max(5),
+    reasoning: aiPlanText(12_000),
+    confidence_score: z.number().min(0).max(100),
+    human_confirmation_required: z.literal(true),
+  })
+  .strict();
 
 export type ProjectPlan = z.infer<typeof projectPlanSchema>;
 export type DisputeRecommendation = z.infer<typeof disputeRecommendationSchema>;
+export type EvidenceReview = z.infer<typeof evidenceReviewSchema>;
 export type FinalReport = z.infer<typeof finalReportSchema>;
+
+const finalDecisionMemberActionSchema = z
+  .object({
+    userId: z.string().uuid(),
+    returnPercentage: z.number().finite().min(0).max(100),
+  })
+  .strict();
+
+export const projectFinalizationInputSchema = z
+  .object({
+    projectId: z.string().uuid(),
+    finalReportId: z.string().uuid(),
+    idempotencyKey: z.string().uuid(),
+    humanConfirmation: z.literal(true),
+    confirmationNote: z.string().trim().max(2000),
+    memberActions: z.array(finalDecisionMemberActionSchema).min(1).max(5),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    const memberIds = value.memberActions.map((action) => action.userId);
+    if (new Set(memberIds).size !== memberIds.length) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["memberActions"],
+        message: "Every project member can appear only once.",
+      });
+    }
+  });
+
+export const projectFinalizationResultSchema = z
+  .object({
+    project_id: z.string().uuid(),
+    final_report_id: z.string().uuid(),
+    final_decision_id: z.string().uuid(),
+    confirmed_by: z.string().uuid(),
+    confirmed_at: z.iso.datetime({ offset: true }),
+    pledge_count: z.number().int().min(1).max(5),
+    project_status: z.literal("completed"),
+    replayed: z.boolean(),
+  })
+  .strict();
 
 export const taskTransitionSchema = z.object({
   taskId: z.string().uuid(),
@@ -154,8 +323,25 @@ const trimmedList = (maximumItems: number, maximumValueLength: number) =>
 export const evidenceSchema = z.object({
   taskId: z.string().uuid(),
   type: z.enum(["screenshot", "document", "github", "video", "link", "demo", "other"]),
-  url: z.string().url().optional().or(z.literal("")),
-  description: z.string().min(2),
+  url: z
+    .string()
+    .trim()
+    .max(2048)
+    .refine((value) => {
+      if (!value) return true;
+      try {
+        const url = new URL(value);
+        return url.protocol === "https:" || url.protocol === "http:";
+      } catch {
+        return false;
+      }
+    }, "Evidence links must use http:// or https://."),
+  description: z.string().trim().min(2).max(2000),
+});
+
+export const evidenceDeleteSchema = z.object({
+  evidenceId: z.string().uuid(),
+  confirmed: z.literal(true),
 });
 
 export const reviewSchema = z

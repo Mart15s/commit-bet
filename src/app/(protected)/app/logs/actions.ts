@@ -1,74 +1,238 @@
 "use server";
 
+import { createHash } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
+import {
+  dailyLogInputSchema,
+  dailyLogSaveResultSchema,
+  MAX_DAILY_LOG_PAYLOAD_BYTES,
+} from "@/lib/validation";
 
-export async function saveDailyLog(formData: FormData) {
-  const { supabase, user } = await requireUser();
-  const projectId = String(formData.get("project_id"));
-  const { data: project } = await supabase.from("projects").select("id, status").eq("id", projectId).single();
-  if (!project || project.status !== "active") redirect("/app/logs/new?error=Choose an active project.");
+export type DailyLogActionState = {
+  status: "idle" | "error";
+  message?: string;
+};
 
-  const logDate = String(formData.get("log_date") || new Date().toISOString().slice(0, 10));
-  const { data: log, error } = await supabase
-    .from("daily_logs")
-    .upsert({
-      project_id: projectId,
-      user_id: user.id,
-      log_date: logDate,
-      summary: String(formData.get("summary") ?? ""),
-      time_spent_minutes: Number(formData.get("time_spent_minutes") || 0),
-      blockers: String(formData.get("blockers") ?? ""),
-      next_steps: String(formData.get("next_steps") ?? ""),
-    }, { onConflict: "project_id,user_id,log_date" })
-    .select("id")
-    .single();
-  if (error || !log) redirect(`/app/logs/new?project=${projectId}&error=${encodeURIComponent(error?.message || "Could not save log")}`);
+type DailyLogPayload = {
+  project_id: string;
+  log_date: string;
+  summary: string;
+  time_spent_minutes: number;
+  blockers: string;
+  next_steps: string;
+  task_ids: string[];
+  proof_links: string[];
+};
 
-  await supabase.from("daily_log_tasks").delete().eq("daily_log_id", log.id);
-  const taskIds = [...new Set(formData.getAll("task_id").map(String))];
-  const evidenceLink = String(formData.get("evidence_link") ?? "").trim();
-  if (evidenceLink) {
-    try {
-      new URL(evidenceLink);
-    } catch {
-      redirect(`/app/logs/new?project=${projectId}&error=Use a full proof link starting with https://`);
-    }
-    if (!taskIds.length) {
-      redirect(`/app/logs/new?project=${projectId}&error=Choose at least one task before adding a proof link.`);
-    }
+function failedDailyLog(message: string): DailyLogActionState {
+  return {
+    status: "error",
+    message: `${message} Nothing was saved; your form values are still here and you can retry.`,
+  };
+}
+
+function formDataSize(formData: FormData) {
+  let bytes = 0;
+  for (const [key, value] of formData.entries()) {
+    bytes += Buffer.byteLength(key);
+    bytes += typeof value === "string"
+      ? Buffer.byteLength(value)
+      : value.size;
   }
-  if (taskIds.length) {
-    const { data: projectTasks } = await supabase
-      .from("tasks")
-      .select("id")
-      .eq("project_id", projectId)
-      .in("id", taskIds);
-    if (projectTasks?.length !== taskIds.length) {
-      redirect(`/app/logs/new?project=${projectId}&error=Every selected task must belong to this project.`);
-    }
+  return bytes;
+}
+
+function canonicalJson(value: unknown): string {
+  if (value === null || typeof value !== "object") {
+    return JSON.stringify(value) ?? "null";
   }
-  if (taskIds.length) await supabase.from("daily_log_tasks").insert(taskIds.map((taskId) => ({ daily_log_id: log.id, task_id: taskId })));
-  if (evidenceLink && taskIds.length) {
-    const type = evidenceLink.includes("github.com") ? "github" : evidenceLink.includes("figma.com") ? "link" : evidenceLink.includes("youtu") || evidenceLink.includes("loom.com") ? "video" : "link";
-    const { error: evidenceError } = await supabase.from("evidence").insert(taskIds.map((taskId) => ({
-      task_id: taskId,
-      user_id: user.id,
-      type,
-      url: evidenceLink,
-      description: `Daily proof from ${logDate}: ${String(formData.get("summary") ?? "").slice(0, 220)}`,
-      metadata: { daily_log_id: log.id },
-    })));
-    if (evidenceError) redirect(`/app/logs/new?project=${projectId}&error=${encodeURIComponent(evidenceError.message)}`);
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => canonicalJson(item)).join(",")}]`;
+  }
+  return `{${Object.entries(value)
+    .filter(([, item]) => item !== undefined)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, item]) => `${JSON.stringify(key)}:${canonicalJson(item)}`)
+    .join(",")}}`;
+}
+
+function hashPayload(payload: DailyLogPayload) {
+  return createHash("sha256")
+    .update(canonicalJson(payload))
+    .digest("hex");
+}
+
+function dailyLogIdempotencyKey(userId: string, payloadHash: string) {
+  const hex = createHash("sha256")
+    .update(`daily-log:${userId}:${payloadHash}`)
+    .digest("hex")
+    .slice(0, 32)
+    .split("");
+  hex[12] = "5";
+  hex[16] = ((Number.parseInt(hex[16], 16) & 0x3) | 0x8).toString(16);
+  const value = hex.join("");
+  return [
+    value.slice(0, 8),
+    value.slice(8, 12),
+    value.slice(12, 16),
+    value.slice(16, 20),
+    value.slice(20),
+  ].join("-");
+}
+
+function safePersistenceError(message: string) {
+  if (message.includes("active projects")) {
+    return "Daily logs can only be saved for an active project.";
+  }
+  if (
+    message.includes("Not a member")
+    || message.includes("Project not found")
+  ) {
+    return "You are not allowed to save a daily log for this project.";
+  }
+  if (message.includes("Every task must belong")) {
+    return "Every selected task must be an open task in this project.";
+  }
+  if (message.includes("Log date")) {
+    return "Choose a date within this project, no later than today.";
+  }
+  if (message.includes("Idempotency key")) {
+    return "This retry no longer matches the original daily log request.";
+  }
+  return "The daily log could not be saved.";
+}
+
+export async function saveDailyLog(
+  _previousState: DailyLogActionState,
+  formData: FormData,
+): Promise<DailyLogActionState> {
+  if (formDataSize(formData) > MAX_DAILY_LOG_PAYLOAD_BYTES) {
+    return failedDailyLog("The daily log payload is too large.");
   }
 
-  await supabase.from("audit_logs").insert({
-    project_id: projectId,
-    user_id: user.id,
-    action: "daily_log_submitted",
-    details: { log_date: logDate, task_count: taskIds.length },
+  const proofLinks = [
+    ...formData.getAll("proof_link"),
+    ...formData.getAll("evidence_link"),
+  ].map(String).filter((value) => value.trim().length > 0);
+  const timeSpentValue = formData.get("time_spent_minutes");
+  const parsed = dailyLogInputSchema.safeParse({
+    projectId: String(formData.get("project_id") ?? ""),
+    logDate: String(formData.get("log_date") ?? ""),
+    summary: String(formData.get("summary") ?? ""),
+    timeSpentMinutes:
+      typeof timeSpentValue === "string" && timeSpentValue.trim().length > 0
+        ? Number(timeSpentValue)
+        : Number.NaN,
+    blockers: String(formData.get("blockers") ?? ""),
+    nextSteps: String(formData.get("next_steps") ?? ""),
+    taskIds: formData.getAll("task_id").map(String),
+    proofLinks,
   });
-  revalidatePath(`/app/projects/${projectId}`);
-  redirect(`/app/logs/new?project=${projectId}&saved=1&summary=${encodeURIComponent(String(formData.get("summary") ?? ""))}&tasks=${taskIds.length}`);
+  if (!parsed.success) {
+    return failedDailyLog(parsed.error.issues[0].message);
+  }
+
+  const payload: DailyLogPayload = {
+    project_id: parsed.data.projectId,
+    log_date: parsed.data.logDate,
+    summary: parsed.data.summary,
+    time_spent_minutes: parsed.data.timeSpentMinutes,
+    blockers: parsed.data.blockers,
+    next_steps: parsed.data.nextSteps,
+    task_ids: [...parsed.data.taskIds].sort(),
+    proof_links: [...parsed.data.proofLinks].sort(),
+  };
+  const serializedPayload = canonicalJson(payload);
+  if (Buffer.byteLength(serializedPayload) > MAX_DAILY_LOG_PAYLOAD_BYTES) {
+    return failedDailyLog("The daily log payload is too large.");
+  }
+
+  const { supabase, user } = await requireUser();
+  const [{ data: project }, { data: membership }, taskResult] = await Promise.all([
+    supabase
+      .from("projects")
+      .select("id, status, start_date, end_date")
+      .eq("id", payload.project_id)
+      .single(),
+    supabase
+      .from("project_member_profiles")
+      .select("user_id")
+      .eq("project_id", payload.project_id)
+      .eq("user_id", user.id)
+      .maybeSingle(),
+    payload.task_ids.length
+      ? supabase
+        .from("tasks")
+        .select("id, project_id, status")
+        .in("id", payload.task_ids)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+
+  if (!project || !membership) {
+    return failedDailyLog(
+      "You are not allowed to save a daily log for this project.",
+    );
+  }
+  if (project.status !== "active") {
+    return failedDailyLog(
+      "Daily logs can only be saved for an active project.",
+    );
+  }
+  if (
+    payload.log_date < project.start_date
+    || payload.log_date > project.end_date
+  ) {
+    return failedDailyLog(
+      "Choose a date within this project's allowed interval.",
+    );
+  }
+  const tasks = taskResult.data ?? [];
+  if (
+    tasks.length !== payload.task_ids.length
+    || tasks.some((task) => (
+      task.project_id !== payload.project_id
+      || task.status === "approved"
+    ))
+  ) {
+    return failedDailyLog(
+      "Every selected task must be an open task in this project.",
+    );
+  }
+
+  const payloadHash = hashPayload(payload);
+  const idempotencyKey = dailyLogIdempotencyKey(user.id, payloadHash);
+  const { data, error } = await supabase.rpc(
+    "save_daily_log_with_tasks",
+    {
+      p_idempotency_key: idempotencyKey,
+      p_payload: payload,
+      p_payload_hash: payloadHash,
+    },
+  );
+  if (error) {
+    return failedDailyLog(safePersistenceError(error.message));
+  }
+
+  const result = dailyLogSaveResultSchema.safeParse(data);
+  if (
+    !result.success
+    || result.data.project_id !== payload.project_id
+    || result.data.log_date !== payload.log_date
+    || result.data.task_count !== payload.task_ids.length
+    || result.data.proof_link_count !== payload.proof_links.length
+    || result.data.evidence_count
+      !== payload.task_ids.length * payload.proof_links.length
+  ) {
+    return {
+      status: "error",
+      message: "The database response could not be confirmed. Refresh the project before retrying.",
+    };
+  }
+
+  revalidatePath(`/app/projects/${payload.project_id}`);
+  redirect(
+    `/app/logs/new?project=${payload.project_id}&saved=1&tasks=${payload.task_ids.length}`,
+  );
 }

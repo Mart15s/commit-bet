@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "codex/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Static and unit checks
+        run: |
+          npm run typecheck
+          npm run lint
+          npm test
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.101.0
+
+      - name: Start isolated Supabase
+        run: supabase start
+
+      - name: Apply migrations from zero
+        run: supabase db reset
+
+      - name: Database integration tests
+        shell: bash
+        run: |
+          for test_file in supabase/tests/*_test.sql; do
+            supabase test db "$test_file"
+          done
+
+      - name: Production build
+        shell: bash
+        run: |
+          set -a
+          source <(supabase status -o env)
+          export NEXT_PUBLIC_SUPABASE_URL="$API_URL"
+          export NEXT_PUBLIC_SUPABASE_ANON_KEY="$ANON_KEY"
+          export NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="${PUBLISHABLE_KEY:-$ANON_KEY}"
+          export SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY"
+          export AI_PROVIDER=mock
+          npm run build
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Core mobile E2E
+        shell: bash
+        run: |
+          set -a
+          source <(supabase status -o env)
+          export NEXT_PUBLIC_SUPABASE_URL="$API_URL"
+          export NEXT_PUBLIC_SUPABASE_ANON_KEY="$ANON_KEY"
+          export NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="${PUBLISHABLE_KEY:-$ANON_KEY}"
+          export SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY"
+          export NEXT_PUBLIC_SITE_URL="http://127.0.0.1:3000"
+          export AI_PROVIDER=mock
+          npm run test:e2e
+
+      - name: Stop isolated Supabase
+        if: always()
+        run: supabase stop --no-backup

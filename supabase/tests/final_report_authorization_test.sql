@@ -138,7 +138,7 @@ select throws_ok(
     )
   $$,
   '42501',
-  'new row violates row-level security policy for table "ai_reports"',
+  'permission denied for table ai_reports',
   'a regular project member cannot generate an owner-only final report'
 );
 
@@ -158,8 +158,8 @@ select throws_ok(
     )
   $$,
   '42501',
-  'new row violates row-level security policy for table "final_decisions"',
-  'a regular project member cannot perform the owner-only final decision'
+  'permission denied for table final_decisions',
+  'a regular project member cannot bypass the owner-only finalization RPC'
 );
 
 select set_config(
@@ -216,7 +216,7 @@ select throws_ok(
     )
   $$,
   '42501',
-  'new row violates row-level security policy for table "ai_reports"',
+  'permission denied for table ai_reports',
   'a non-member cannot generate a final report'
 );
 

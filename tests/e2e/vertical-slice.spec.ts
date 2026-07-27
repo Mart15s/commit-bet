@@ -58,6 +58,18 @@ test("mobile mocked sprint setup through task submission", async ({ page }) => {
   await page.getByRole("button", { name: /generate final report/i }).click();
   await expect(page.getByText("AI recommendation", { exact: true })).toBeVisible();
   await page.locator('input[name="human_confirmation"]').check();
-  await page.getByRole("button", { name: /confirm final outcome/i }).click();
+  await page.getByRole("button", { name: /confirm final outcome/i }).evaluate(
+    (button: HTMLButtonElement) => {
+      button.click();
+      button.click();
+    },
+  );
   await expect(page.getByRole("heading", { name: /human decision confirmed/i })).toBeVisible();
+  await expect(page.getByText("confirmed", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /confirm final outcome/i })).toHaveCount(0);
+
+  await page.reload();
+  await expect(page.getByRole("heading", { name: /human decision confirmed/i })).toHaveCount(1);
+  await expect(page.getByText("confirmed", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /confirm final outcome/i })).toHaveCount(0);
 });

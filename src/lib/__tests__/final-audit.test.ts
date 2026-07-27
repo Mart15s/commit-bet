@@ -393,7 +393,7 @@ describe("final audit project isolation", () => {
     ).rejects.toThrow("Final-report task isolation failed for evidence");
   });
 
-  it("removes foreign member output and restores deterministic project statistics", async () => {
+  it("rejects foreign or incomplete member output instead of silently accepting it", async () => {
     const input = await loadFinalAuditInput(
       inMemorySource(allRows),
       alphaProject,
@@ -420,20 +420,8 @@ describe("final audit project isolation", () => {
       reason: "Foreign pledge",
     });
 
-    const report = reconcileFinalReport(input, generated);
-
-    expect(report.task_statistics).toEqual({
-      planned: 2,
-      approved: 0,
-      rejected: 1,
-      disputed: 0,
-      late: 1,
-    });
-    expect(report.member_contributions).not.toContainEqual(
-      expect.objectContaining({ summary: "Foreign member" }),
-    );
-    expect(report.pledge_recommendation).not.toContainEqual(
-      expect.objectContaining({ reason: "Foreign pledge" }),
+    expect(() => reconcileFinalReport(input, generated)).toThrow(
+      "every project member exactly once",
     );
   });
 

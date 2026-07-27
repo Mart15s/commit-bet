@@ -2,6 +2,10 @@ alter table public.ai_reports
   add column if not exists provider pg_catalog.text not null default 'legacy';
 
 alter table public.ai_reports
+  add column if not exists created_by pg_catalog.uuid
+    references public.profiles(id);
+
+alter table public.ai_reports
   add constraint ai_reports_provider_format
   check (
     pg_catalog.char_length(provider) between 1 and 64
@@ -512,7 +516,8 @@ begin
     input_snapshot,
     output,
     provider,
-    model
+    model,
+    created_by
   )
   values (
     p_project_id,
@@ -520,7 +525,8 @@ begin
     p_input_snapshot,
     p_plan,
     p_ai_provider,
-    p_ai_model
+    p_ai_model,
+    caller_id
   )
   returning id into report_id;
 

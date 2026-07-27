@@ -1,6 +1,16 @@
 import { Brain, Check, ExternalLink, FileText, MessageSquare, ShieldAlert, Upload, X } from "lucide-react";
-import { addEvidence, markInProgress, openDispute, reviewTask, submitTask } from "@/app/(protected)/app/tasks/actions";
+import {
+  addEvidence,
+  deleteEvidence,
+  markInProgress,
+  openDispute,
+  requestEvidenceAIReview,
+  reviewTask,
+  submitTask,
+} from "@/app/(protected)/app/tasks/actions";
+import { DeleteEvidenceForm } from "@/components/delete-evidence-form";
 import { Button, ButtonLink, Card, EmptyState, ErrorMessage, EvidenceExamples, HelpCard, PageHeader, StatusBadge } from "@/components/ui";
+import { EVIDENCE_FILE_ACCEPT } from "@/lib/evidence";
 import { requireUser } from "@/lib/auth";
 import { formatDate, singleRelation } from "@/lib/utils";
 import { notFound } from "next/navigation";
@@ -21,23 +31,25 @@ export default async function TaskPage({
     .eq("id", id)
     .single();
   if (!task) notFound();
-  const [{ data: evidence }, { data: reviews }, { data: disputes }] = await Promise.all([
+  const [{ data: evidence }, { data: reviews }, { data: disputes }, { data: aiReviews }] = await Promise.all([
     supabase.from("evidence").select("*, profiles(name)").eq("task_id", id).order("created_at", { ascending: false }),
     supabase.from("reviews").select("*, profiles(name)").eq("task_id", id).order("created_at", { ascending: false }),
     supabase.from("disputes").select("id, status, created_at").eq("task_id", id).order("created_at", { ascending: false }),
+    supabase.from("ai_reports").select("id, output, model, created_at").eq("task_id", id).eq("type", "evidence_review").order("created_at", { ascending: false }).limit(3),
   ]);
   const assignment = singleRelation(task.task_assignments as unknown as
     | { user_id: string; assigned_reason: string; profiles: { name: string } }
     | Array<{ user_id: string; assigned_reason: string; profiles: { name: string } }>);
   const isAssignee = assignment?.user_id === user.id;
   const canReview = !isAssignee && task.status === "submitted";
+  const project = task.projects as unknown as { id: string; title: string; created_by: string };
   const criteria = (task.acceptance_criteria ?? []) as string[];
   const expectedEvidence = (task.expected_evidence_types ?? []) as string[];
 
   return (
     <>
-      <ButtonLink href={`/app/projects/${(task.projects as unknown as { id: string }).id}`} variant="ghost" size="sm" className="mb-3">Back to project</ButtonLink>
-      <PageHeader title={task.title} description={(task.projects as unknown as { title: string }).title} action={<StatusBadge status={task.status} />} />
+      <ButtonLink href={`/app/projects/${project.id}`} variant="ghost" size="sm" className="mb-3">Back to project</ButtonLink>
+      <PageHeader title={task.title} description={project.title} action={<StatusBadge status={task.status} />} />
       <ErrorMessage message={query.error} />
       <div className="mt-5 grid gap-4 md:grid-cols-[1.3fr_.7fr]">
         <div className="space-y-4">
@@ -69,7 +81,10 @@ export default async function TaskPage({
                 const path = (item.metadata as { storage_path?: string }).storage_path;
                 const signed = path ? await supabase.storage.from("evidence").createSignedUrl(path, 600) : null;
                 const url = item.url || signed?.data?.signedUrl;
-                return <div key={item.id} className="rounded-xl border border-border bg-card p-4"><div className="flex items-start justify-between gap-2"><div><p className="font-black capitalize">{item.type}</p><p className="mt-1 text-sm text-muted-foreground">{item.description}</p></div><FileText size={20} className="text-cyan-300" /></div>{url && <a href={url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 text-sm font-black text-cyan-300">Open evidence <ExternalLink size={14} /></a>}</div>;
+                const canDeleteEvidence =
+                  !["submitted", "approved", "disputed"].includes(task.status)
+                  && (item.user_id === user.id || project.created_by === user.id);
+                return <div key={item.id} className="rounded-xl border border-border bg-card p-4"><div className="flex items-start justify-between gap-2"><div><p className="font-black capitalize">{item.type}</p><p className="mt-1 text-sm text-muted-foreground">{item.description}</p></div><FileText size={20} className="text-cyan-300" /></div>{url && <a href={url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1 text-sm font-black text-cyan-300">Open evidence <ExternalLink size={14} /></a>}{canDeleteEvidence && <DeleteEvidenceForm deleteAction={deleteEvidence} evidenceId={item.id} />}</div>;
               })}
               {!evidence?.length && (
                 <EmptyState
@@ -92,11 +107,47 @@ export default async function TaskPage({
                 <label>Proof type<select name="type" defaultValue="link"><option>screenshot</option><option>document</option><option>github</option><option>video</option><option>link</option><option>demo</option><option>other</option></select></label>
                 <label>What does this prove?<textarea name="description" required placeholder="Example: This demo link shows the new approval flow matching all three criteria." /></label>
                 <label>Proof link (optional)<input name="url" type="url" placeholder="https://github.com/... or demo link" /></label>
-                <label>Proof file (optional, max 10 MB)<input name="file" type="file" /></label>
+                <label>Proof file (optional, max 10 MB)<input accept={EVIDENCE_FILE_ACCEPT} name="file" type="file" /></label>
                 <Button type="submit">Add proof of work</Button>
               </form>
             </Card>
           )}
+
+          <Card className="border-violet-300/25 bg-violet-400/10">
+            <h2 className="flex items-center gap-2 text-lg font-black"><Brain size={19} /> Gemini evidence reviewer</h2>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              Gemini compares the task criteria with evidence descriptions, safe file metadata, and extracted text when available. It does not open links or inspect file contents unless extracted text is explicitly provided.
+            </p>
+            <form action={requestEvidenceAIReview} className="mt-4 grid gap-3">
+              <input type="hidden" name="task_id" value={id} />
+              <label>Context for the AI reviewer (optional)<textarea maxLength={2000} name="reviewer_context" placeholder="Point out which evidence supports which acceptance criterion." /></label>
+              <Button disabled={!evidence?.length} type="submit" variant="secondary">Generate advisory review</Button>
+            </form>
+            <div className="mt-4 space-y-3">
+              {aiReviews?.map((review) => {
+                const output = review.output as {
+                  recommendation: string;
+                  criteria_met: string[];
+                  criteria_not_proven: string[];
+                  reasoning: string;
+                  confidence: number;
+                  signals_used: string[];
+                };
+                return (
+                  <div className="rounded-xl border border-border bg-card p-4" key={review.id}>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <StatusBadge status={output.recommendation} />
+                      <span className="text-xs font-bold">{output.confidence}% confidence · {review.model}</span>
+                    </div>
+                    <p className="mt-3 text-sm leading-6">{output.reasoning}</p>
+                    {!!output.criteria_not_proven?.length && <p className="mt-3 text-xs font-bold text-amber-300">Not proven: {output.criteria_not_proven.join("; ")}</p>}
+                    <p className="mt-3 text-xs text-muted-foreground">AI recommendation only. A different human reviewer makes the task decision.</p>
+                  </div>
+                );
+              })}
+              {!aiReviews?.length && <p className="text-sm text-muted-foreground">No Gemini evidence review has been generated yet.</p>}
+            </div>
+          </Card>
         </div>
 
         <div className="space-y-4">

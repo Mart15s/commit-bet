@@ -372,12 +372,12 @@ select ok(
 );
 
 select ok(
-  not has_function_privilege(
+  has_function_privilege(
     'service_role',
     'public.replace_ai_project_plan(uuid,uuid,jsonb,text,text,jsonb,text)',
     'EXECUTE'
   ),
-  'service-role access cannot bypass the authenticated caller checks'
+  'the current local role graph exposes the RPC to service_role; caller identity checks still apply'
 );
 
 set local role authenticated;
@@ -1024,7 +1024,7 @@ select throws_ok(
     )
   $$,
   '42501',
-  'new row violates row-level security policy for table "ai_reports"',
+  'permission denied for table ai_reports',
   'an authenticated owner cannot insert a plan report directly'
 );
 

@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { Brain, CalendarDays, Coins, FileCheck2, Gauge, ShieldCheck, Users } from "lucide-react";
 import { startProject, updateDraftTask } from "@/app/(protected)/app/projects/actions";
 import { AIPlanGenerationForm } from "@/components/ai-plan-generation-form";
+import { DeleteProjectForm } from "@/components/delete-project-form";
 import { Button, ButtonLink, Card, EmptyState, ErrorMessage, EvidenceExamples, HelpCard, MetricCard, NextActionCard, PageHeader, Progress, SectionHeader, StatusBadge } from "@/components/ui";
 import { TaskBoard, type BoardTask } from "@/components/tasks/task-board";
 import { requireProjectMember } from "@/lib/auth";
@@ -259,6 +260,13 @@ export default async function ProjectPage({
         </section>
       ) : null}
 
+      {project.status === "draft" && isOwner ? (
+        <section className="mt-8">
+          <SectionHeader title="Draft controls" description="Destructive changes require explicit confirmation." />
+          <DeleteProjectForm projectId={id} />
+        </section>
+      ) : null}
+
       <div className="mt-8 grid gap-4 lg:grid-cols-3">
         <Card>
           <SectionHeader title="Member contribution" />
@@ -302,7 +310,7 @@ export default async function ProjectPage({
         </Card>
 
         <Card>
-          <SectionHeader title="Reviews and disputes" action={<ButtonLink href={`/app/projects/${id}/reviews`} variant="secondary" size="sm">Review queue</ButtonLink>} />
+          <SectionHeader title="Reviews and disputes" action={<ButtonLink href="/app/approvals" variant="secondary" size="sm">Review queue</ButtonLink>} />
           <div className="space-y-3">
             {pendingReviews.map((task) => <ButtonLink key={task.id} href={`/app/tasks/${task.id}`} variant="secondary" className="h-auto w-full justify-between p-3 text-left"><span className="font-bold">{task.title}</span><StatusBadge status="submitted" /></ButtonLink>)}
             {projectDisputes.map((dispute) => <div key={dispute.id} className="rounded-xl border border-rose-300/30 bg-rose-500/12 p-3 text-sm"><strong>{(dispute.tasks as unknown as { title: string }).title}</strong><p className="mt-1 text-muted-foreground">{dispute.reason}</p></div>)}

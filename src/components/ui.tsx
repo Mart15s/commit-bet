@@ -97,7 +97,7 @@ export function PageHeader({
 export function StatusBadge({ status }: { status: string }) {
   const normalized = status.toLowerCase();
   const tone =
-    normalized === "approved" || normalized === "active" || normalized === "completed" || normalized === "met" || normalized === "low"
+    normalized === "approved" || normalized === "active" || normalized === "completed" || normalized === "confirmed" || normalized === "met" || normalized === "low"
       ? "border-emerald-400/30 bg-emerald-400/12 text-emerald-300"
       : normalized === "submitted"
         ? "border-violet-400/30 bg-violet-500/15 text-violet-200"

@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, LockKeyhole, UserPlus } from "lucide-react";
+import { LockKeyhole, UserPlus } from "lucide-react";
 import { login, register } from "@/app/(auth)/actions";
-import { Button, Card, ErrorMessage } from "@/components/ui";
+import { Card, ErrorMessage } from "@/components/ui";
 import { useI18n } from "@/components/language-provider";
+import { PendingButton } from "@/components/pending-button";
 
 export function LoginForm({ error, notice }: { error?: string; notice?: string }) {
   const { t } = useI18n();
@@ -21,8 +22,9 @@ export function LoginForm({ error, notice }: { error?: string; notice?: string }
         {notice && <div className="rounded-xl border border-emerald-400/30 bg-emerald-400/12 p-3 text-sm font-bold text-emerald-200">{notice}</div>}
         <label>{t("auth.email")}<input name="email" type="email" required autoComplete="email" /></label>
         <label>{t("auth.password")}<input name="password" type="password" minLength={6} required autoComplete="current-password" /></label>
-        <Button size="lg" type="submit">{t("auth.loginButton")} <ArrowRight size={18} /></Button>
+        <PendingButton idleLabel={t("auth.loginButton")} pendingLabel="Signing in…" />
       </form>
+      <Link className="mt-4 inline-block text-sm font-black text-primary" href="/forgot-password">Forgot password?</Link>
       <p className="mt-6 text-center text-sm text-muted-foreground">
         {t("auth.newHere")} <Link className="font-black text-primary" href="/register">{t("auth.createAccountLink")}</Link>
       </p>
@@ -48,7 +50,7 @@ export function RegisterForm({ error }: { error?: string }) {
         <div className="rounded-xl border border-amber-300/30 bg-amber-400/12 p-3 text-sm font-bold text-amber-200">
           {t("auth.onboardingNote")}
         </div>
-        <Button size="lg" type="submit">{t("auth.createAccountButton")} <ArrowRight size={18} /></Button>
+        <PendingButton idleLabel={t("auth.createAccountButton")} pendingLabel="Creating account…" />
       </form>
       <p className="mt-6 text-center text-sm text-muted-foreground">
         {t("auth.alreadyRegistered")} <Link className="font-black text-primary" href="/login">{t("auth.loginButton")}</Link>

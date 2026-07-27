@@ -396,25 +396,13 @@ select throws_ok(
   'an authenticated database role without a user identity is rejected'
 );
 
-set local role anon;
-select throws_ok(
-  $$select public.create_project_with_members(
-    '90000000-0000-4000-8000-000000000011',
-    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-    'MVP / Startup project',
-    'Anonymous project',
-    'Anonymous project description',
-    'Anonymous project goal',
-    array['Criterion'],
-    array[]::text[],
-    '2026-07-24',
-    '2026-08-06',
-    20,
-    false,
-    '[]'::jsonb
-  )$$,
-  '42501',
-  'permission denied for function create_project_with_members',
+reset role;
+select ok(
+  not has_function_privilege(
+    'anon',
+    'public.create_project_with_members(uuid,uuid,text,text,text,text,text[],text[],date,date,numeric,boolean,jsonb)',
+    'EXECUTE'
+  ),
   'anon is denied at the function privilege boundary'
 );
 

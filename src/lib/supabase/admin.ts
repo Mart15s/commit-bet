@@ -1,12 +1,12 @@
 import "server-only";
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {
   getSupabaseConfig,
   getSupabaseConfigErrorMessage,
 } from "@/lib/auth-config";
 
-let adminClient: ReturnType<typeof createClient> | null = null;
+let adminClient: SupabaseClient | null = null;
 
 export function createAdminClient() {
   if (!adminClient) {

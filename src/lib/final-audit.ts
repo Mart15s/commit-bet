@@ -563,12 +563,33 @@ export function reconcileFinalReport(
   const memberIds = new Set(input.members.map((member) => member.user_id));
   const pledgedMemberIds = new Set(input.pledges.map((pledge) => pledge.user_id));
   const criteria = new Set(input.project.success_criteria);
+  const reportedCriteria = report.success_criteria_evaluation.map(
+    (item) => item.criterion,
+  );
+  const reportedMembers = report.member_contributions.map(
+    (member) => member.user_id,
+  );
+  const reportedPledges = report.pledge_recommendation.map(
+    (recommendation) => recommendation.user_id,
+  );
+
+  const hasExactCoverage = <T,>(actual: T[], expected: Set<T>) =>
+    actual.length === expected.size
+    && new Set(actual).size === actual.length
+    && actual.every((item) => expected.has(item));
+
+  if (!hasExactCoverage(reportedCriteria, criteria)) {
+    throw new Error("Final AI report did not cover every project success criterion exactly once.");
+  }
+  if (!hasExactCoverage(reportedMembers, memberIds)) {
+    throw new Error("Final AI report did not cover every project member exactly once.");
+  }
+  if (!hasExactCoverage(reportedPledges, pledgedMemberIds)) {
+    throw new Error("Final AI report did not cover every project pledge exactly once.");
+  }
 
   return {
     ...report,
-    success_criteria_evaluation: report.success_criteria_evaluation.filter(
-      (item) => criteria.has(item.criterion),
-    ),
     task_statistics: {
       planned: input.task_statistics.planned,
       approved: input.task_statistics.approved,
@@ -576,11 +597,5 @@ export function reconcileFinalReport(
       disputed: input.task_statistics.disputed,
       late: input.task_statistics.late,
     },
-    member_contributions: report.member_contributions.filter((member) =>
-      memberIds.has(member.user_id),
-    ),
-    pledge_recommendation: report.pledge_recommendation.filter((recommendation) =>
-      pledgedMemberIds.has(recommendation.user_id),
-    ),
   };
 }
