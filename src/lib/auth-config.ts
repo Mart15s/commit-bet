@@ -6,6 +6,9 @@ type AuthErrorLike = {
 
 type SiteUrlEnvironment = {
   NEXT_PUBLIC_SITE_URL?: string;
+  VERCEL_ENV?: string;
+  VERCEL_BRANCH_URL?: string;
+  VERCEL_URL?: string;
   VERCEL_PROJECT_PRODUCTION_URL?: string;
 };
 
@@ -17,20 +20,35 @@ type SupabaseEnvironment = {
   VERCEL_ENV?: string;
 };
 
+function normalizeSiteUrl(value: string) {
+  const withProtocol = /^https?:\/\//i.test(value)
+    ? value
+    : `https://${value}`;
+
+  return withProtocol.replace(/\/+$/, "");
+}
+
 export function getSiteUrl(
   env: SiteUrlEnvironment = {
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+    VERCEL_ENV: process.env.VERCEL_ENV,
+    VERCEL_BRANCH_URL: process.env.VERCEL_BRANCH_URL,
+    VERCEL_URL: process.env.VERCEL_URL,
     VERCEL_PROJECT_PRODUCTION_URL:
       process.env.VERCEL_PROJECT_PRODUCTION_URL,
   },
 ) {
-  const configuredUrl =
-    env.NEXT_PUBLIC_SITE_URL ??
-    (env.VERCEL_PROJECT_PRODUCTION_URL
-      ? `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`
-      : "http://127.0.0.1:3000");
+  const vercelFallback = env.VERCEL_ENV === "preview"
+    ? env.VERCEL_BRANCH_URL ?? env.VERCEL_URL
+    : env.VERCEL_ENV === "production"
+      ? env.VERCEL_PROJECT_PRODUCTION_URL ?? env.VERCEL_URL
+      : undefined;
 
-  return configuredUrl.replace(/\/+$/, "");
+  return normalizeSiteUrl(
+    env.NEXT_PUBLIC_SITE_URL
+      ?? vercelFallback
+      ?? "http://127.0.0.1:3000",
+  );
 }
 
 function isLocalUrl(value: string) {

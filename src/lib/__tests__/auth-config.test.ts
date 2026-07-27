@@ -10,18 +10,46 @@ describe("auth configuration", () => {
   it("prefers the configured site URL and removes trailing slashes", () => {
     expect(
       getSiteUrl({
-        NEXT_PUBLIC_SITE_URL: "https://commit-bet.vercel.app/",
-        VERCEL_PROJECT_PRODUCTION_URL: "preview.vercel.app",
+        NEXT_PUBLIC_SITE_URL: "https://commit-bet.vercel.app///",
+        VERCEL_ENV: "preview",
+        VERCEL_BRANCH_URL: "preview.vercel.app",
       }),
     ).toBe("https://commit-bet.vercel.app");
   });
 
-  it("uses Vercel's production domain when no site URL is configured", () => {
+  it("uses Vercel's stable branch URL in Preview", () => {
     expect(
       getSiteUrl({
+        VERCEL_ENV: "preview",
+        VERCEL_BRANCH_URL: "commit-bet-git-release.vercel.app",
+        VERCEL_URL: "commit-bet-unique.vercel.app",
         VERCEL_PROJECT_PRODUCTION_URL: "commit-bet.vercel.app",
       }),
+    ).toBe("https://commit-bet-git-release.vercel.app");
+  });
+
+  it("falls back to VERCEL_URL in Preview when the branch URL is unavailable", () => {
+    expect(
+      getSiteUrl({
+        VERCEL_ENV: "preview",
+        VERCEL_URL: "commit-bet-unique.vercel.app/",
+        VERCEL_PROJECT_PRODUCTION_URL: "commit-bet.vercel.app",
+      }),
+    ).toBe("https://commit-bet-unique.vercel.app");
+  });
+
+  it("uses Vercel's production domain in Production", () => {
+    expect(
+      getSiteUrl({
+        VERCEL_ENV: "production",
+        VERCEL_PROJECT_PRODUCTION_URL: "commit-bet.vercel.app",
+        VERCEL_URL: "commit-bet-unique.vercel.app",
+      }),
     ).toBe("https://commit-bet.vercel.app");
+  });
+
+  it("uses localhost when no deployment URL is available", () => {
+    expect(getSiteUrl({})).toBe("http://127.0.0.1:3000");
   });
 
   it("turns provider rate-limit errors into an actionable message", () => {

@@ -2,15 +2,12 @@ import "server-only";
 
 type FailureContext = {
   operation: string;
-  durationMs?: number;
-  error?: unknown;
-  provider?: string;
-  model?: string;
+  durationMs: number;
+  httpStatus?: number;
+  errorCategory: string;
+  provider: string;
+  model: string;
 };
-
-function errorKind(error: unknown) {
-  return error instanceof Error ? error.name : typeof error;
-}
 
 export function recordServerFailure(context: FailureContext) {
   console.error(JSON.stringify({
@@ -18,10 +15,10 @@ export function recordServerFailure(context: FailureContext) {
     event: "commitbet_operation_failed",
     operation: context.operation,
     duration_ms: context.durationMs,
-    error_kind: errorKind(context.error),
+    http_status: context.httpStatus,
+    error_category: context.errorCategory,
     provider: context.provider,
     model: context.model,
-    environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV,
   }));
 }
 
