@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { Save, UserRound } from "lucide-react";
 import { updateProfile } from "@/app/(protected)/app/profile/actions";
+import { AccountControls } from "@/components/account-controls";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { LogoutButton } from "@/components/logout-button";
 import { Button, Card, PageHeader } from "@/components/ui";
@@ -81,6 +82,14 @@ export function ProfilePage({ profile }: { profile: Profile }) {
             <h2 className="text-xl font-black tracking-[-.02em]">{t("profile.sessionTitle")}</h2>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">{t("profile.sessionCopy")}</p>
             <LogoutButton className="mt-5 w-full sm:w-fit" variant="danger" />
+          </Card>
+
+          <Card className="p-5 sm:p-6">
+            <h2 className="text-xl font-black tracking-[-.02em]">Your data</h2>
+            <p className="mt-1 mb-5 text-sm leading-6 text-muted-foreground">
+              Export your account records or permanently remove an eligible account.
+            </p>
+            <AccountControls />
           </Card>
         </div>
       </div>

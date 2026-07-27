@@ -1037,7 +1037,7 @@ select throws_ok(
     where id = 'f1000000-0000-4000-8000-000000000018'
   $$,
   '42501',
-  'new row violates row-level security policy for table "projects"',
+  'permission denied for table projects',
   'direct project completion cannot bypass the RPC'
 );
 

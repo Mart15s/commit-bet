@@ -241,6 +241,17 @@ export async function generatePlan(
   if (project.status !== "draft") {
     return failedPlan("Only draft projects can replace an AI plan.");
   }
+  const { count: planGenerationCount, error: planCountError } = await supabase
+    .from("ai_reports")
+    .select("*", { count: "exact", head: true })
+    .eq("project_id", requestParsed.data.projectId)
+    .eq("type", "plan");
+  if (planCountError) {
+    return failedPlan("AI plan usage could not be checked.");
+  }
+  if ((planGenerationCount ?? 0) >= 2) {
+    return failedPlan("This beta project has reached its two AI plan generations.");
+  }
 
   const { data: memberProfiles, error: memberProfilesError } = await supabase
     .from("project_member_profiles")
@@ -394,19 +405,32 @@ export async function updateDraftTask(formData: FormData) {
 
 export async function startProject(formData: FormData) {
   const projectId = String(formData.get("project_id"));
-  const { supabase, user, project } = await requireProjectOwner(projectId);
+  const { supabase, project } = await requireProjectOwner(projectId);
   if (project.status !== "draft") {
     redirect(`/app/projects/${projectId}?error=Only draft projects can be started.`);
   }
-  const { count } = await supabase.from("tasks").select("*", { count: "exact", head: true }).eq("project_id", projectId);
-  if (!count) redirect(`/app/projects/${projectId}?error=Generate at least one task before starting.`);
-  await supabase.from("projects").update({ status: "active" }).eq("id", projectId);
-  await supabase.from("audit_logs").insert({
-    project_id: projectId,
-    user_id: user.id,
-    action: "project_started",
-    details: { started_from: project.status },
+  const { error } = await supabase.rpc("start_project", {
+    target_project_id: projectId,
   });
+  if (error) {
+    redirect(`/app/projects/${projectId}?error=${encodeURIComponent(error.message)}`);
+  }
   revalidatePath("/app");
   redirect(`/app/projects/${projectId}`);
+}
+
+export async function deleteDraftProject(formData: FormData) {
+  const projectId = String(formData.get("project_id") ?? "");
+  if (formData.get("confirm_delete") !== "yes") {
+    redirect(`/app/projects/${projectId}?error=Confirm the draft deletion.`);
+  }
+  const { supabase } = await requireProjectOwner(projectId);
+  const { error } = await supabase.rpc("delete_draft_project", {
+    target_project_id: projectId,
+  });
+  if (error) {
+    redirect(`/app/projects/${projectId}?error=${encodeURIComponent(error.message)}`);
+  }
+  revalidatePath("/app");
+  redirect("/app?notice=Draft project deleted");
 }

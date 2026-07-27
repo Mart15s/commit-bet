@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   loadFinalAuditInput: vi.fn(),
   reconcileFinalReport: vi.fn((_input, report) => report),
   generateFinalReport: vi.fn(),
+  createAdminClient: vi.fn(),
   redirect: vi.fn(),
   revalidatePath: vi.fn(),
 }));
@@ -22,6 +23,10 @@ vi.mock("@/lib/final-audit", () => ({
 }));
 vi.mock("@/lib/ai/service", () => ({
   generateFinalReport: mocks.generateFinalReport,
+  getAIProviderMetadata: vi.fn(() => ({ provider: "gemini", model: "gemini-test" })),
+}));
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: mocks.createAdminClient,
 }));
 vi.mock("next/navigation", () => ({
   redirect: mocks.redirect,
@@ -58,9 +63,10 @@ function formData() {
 function authorizedContext(reportInsertError: { message: string } | null = null) {
   const reportInsert = vi.fn(async () => ({ error: reportInsertError }));
   const auditInsert = vi.fn(async () => ({ error: null }));
-  const from = vi.fn((table: string) => ({
-    insert: table === "ai_reports" ? reportInsert : auditInsert,
-  }));
+  const from = vi.fn(() => ({ insert: auditInsert }));
+  mocks.createAdminClient.mockReturnValue({
+    from: vi.fn(() => ({ insert: reportInsert })),
+  });
   const context = {
     supabase: { from },
     user: { id: ownerId },

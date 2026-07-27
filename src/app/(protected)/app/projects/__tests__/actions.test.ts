@@ -193,9 +193,14 @@ function planActionContext({
     error: null,
   }));
   const profileEq = vi.fn(() => ({ order: profileOrder }));
+  const reportTypeEq = vi.fn(async () => ({ count: 0, error: null }));
+  const reportProjectEq = vi.fn(() => ({ eq: reportTypeEq }));
   const from = vi.fn((table: string) => {
     if (table === "projects") {
       return { select: vi.fn(() => ({ eq: projectEq })) };
+    }
+    if (table === "ai_reports") {
+      return { select: vi.fn(() => ({ eq: reportProjectEq })) };
     }
     if (table === "project_member_profiles") {
       return { select: vi.fn(() => ({ eq: profileEq })) };
@@ -474,9 +479,10 @@ describe("generatePlan atomic replacement action", () => {
       message: "AI plan saved.",
     });
 
-    expect(from).toHaveBeenCalledTimes(2);
+    expect(from).toHaveBeenCalledTimes(3);
     expect(from).toHaveBeenNthCalledWith(1, "projects");
-    expect(from).toHaveBeenNthCalledWith(2, "project_member_profiles");
+    expect(from).toHaveBeenNthCalledWith(2, "ai_reports");
+    expect(from).toHaveBeenNthCalledWith(3, "project_member_profiles");
     expect(rpc).toHaveBeenCalledOnce();
     expect(rpc).toHaveBeenCalledWith(
       "replace_ai_project_plan",

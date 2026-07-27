@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { Brain, CalendarDays, Coins, FileCheck2, Gauge, ShieldCheck, Users } from "lucide-react";
 import { startProject, updateDraftTask } from "@/app/(protected)/app/projects/actions";
 import { AIPlanGenerationForm } from "@/components/ai-plan-generation-form";
+import { DeleteProjectForm } from "@/components/delete-project-form";
 import { Button, ButtonLink, Card, EmptyState, ErrorMessage, EvidenceExamples, HelpCard, MetricCard, NextActionCard, PageHeader, Progress, SectionHeader, StatusBadge } from "@/components/ui";
 import { TaskBoard, type BoardTask } from "@/components/tasks/task-board";
 import { requireProjectMember } from "@/lib/auth";
@@ -256,6 +257,13 @@ export default async function ProjectPage({
             copy="Once the owners, deadlines, and proof expectations look right, start the project with this plan."
             action={<form action={startProject}><input type="hidden" name="project_id" value={id} /><Button type="submit">Start project with this plan</Button></form>}
           />
+        </section>
+      ) : null}
+
+      {project.status === "draft" && isOwner ? (
+        <section className="mt-8">
+          <SectionHeader title="Draft controls" description="Destructive changes require explicit confirmation." />
+          <DeleteProjectForm projectId={id} />
         </section>
       ) : null}
 

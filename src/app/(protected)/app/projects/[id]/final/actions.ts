@@ -3,8 +3,9 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { generateFinalReport } from "@/lib/ai/service";
+import { generateFinalReport, getAIProviderMetadata } from "@/lib/ai/service";
 import { requireProjectOwner, requireUser } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   createSupabaseFinalAuditDataSource,
   loadFinalAuditInput,
@@ -67,16 +68,22 @@ export async function generateFinal(formData: FormData) {
       createSupabaseFinalAuditDataSource(supabase),
       project,
     );
+    const startedAt = Date.now();
     const report = reconcileFinalReport(
       input,
       await generateFinalReport(input),
     );
-    const { error: reportError } = await supabase.from("ai_reports").insert({
+    const aiMetadata = getAIProviderMetadata();
+    const { error: reportError } = await createAdminClient().from("ai_reports").insert({
       project_id: projectId,
       type: "final",
       input_snapshot: input,
       output: report,
-      model: process.env.OPENAI_API_KEY && process.env.AI_PROVIDER === "openai" ? process.env.OPENAI_MODEL || "gpt-5.5" : "mock-v1",
+      provider: aiMetadata.provider,
+      model: aiMetadata.model,
+      created_by: user.id,
+      duration_ms: Date.now() - startedAt,
+      status: "succeeded",
     });
     if (reportError) throw new Error(reportError.message);
     await supabase.from("audit_logs").insert({

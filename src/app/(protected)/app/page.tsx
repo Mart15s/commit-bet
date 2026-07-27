@@ -1,7 +1,6 @@
 import { AlertTriangle, ClipboardCheck, Coins, FileCheck2, Gauge, ListChecks, PlusCircle, Sparkles, Target } from "lucide-react";
 import { ButtonLink, Card, EmptyState, MetricCard, NextActionCard, PageHeader, Progress, SectionHeader, StatusBadge } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
-import { sampleProject } from "@/lib/mock-data";
 import { formatDate, singleRelation } from "@/lib/utils";
 
 type DashboardTask = {
@@ -31,7 +30,7 @@ function daysUntil(value: string) {
 export default async function DashboardPage() {
   const { supabase, user } = await requireUser();
   const [{ data: projects }, { data: assignments }, { data: submitted }, { data: pledges }, { data: evidence }] = await Promise.all([
-    supabase.from("projects").select("*").order("created_at", { ascending: false }),
+    supabase.from("projects").select("*, tasks(status)").order("created_at", { ascending: false }),
     supabase.from("task_assignments").select("tasks(*, projects(title))").eq("user_id", user.id),
     supabase.from("tasks").select("*, task_assignments(user_id), projects(title)").eq("status", "submitted"),
     supabase.from("pledges").select("amount, currency"),
@@ -65,7 +64,7 @@ export default async function DashboardPage() {
         <MetricCard label="Active projects" value={active.length} detail="Commitment sprints in motion" icon={<Target size={20} />} />
         <MetricCard label="Today’s tasks" value={myTasks.length} detail={myTasks[0] ? `Next due ${formatDate(myTasks[0].due_date)}` : "No task pressure"} icon={<ListChecks size={20} />} />
         <MetricCard label="Pending approvals" value={approvals.length} detail="Submitted work needing review" icon={<ClipboardCheck size={20} />} />
-        <MetricCard label="Virtual pledge" value={pledgePoints || sampleProject.pledgePool} detail="Declared points, no real money" icon={<Coins size={20} />} />
+        <MetricCard label="Virtual pledge" value={pledgePoints} detail="Declared points, no real money" icon={<Coins size={20} />} />
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[1.35fr_.65fr]">
@@ -74,7 +73,11 @@ export default async function DashboardPage() {
           <div className="grid gap-3 md:grid-cols-2">
             {active.map((project) => {
               const remaining = daysUntil(project.end_date);
-              const progress = Math.max(12, Math.min(88, remaining <= 0 ? 100 : 100 - remaining * 7));
+              const projectTasks = (project.tasks ?? []) as Array<{ status: string }>;
+              const approvedTasks = projectTasks.filter((task) => task.status === "approved").length;
+              const progress = projectTasks.length
+                ? Math.round((approvedTasks / projectTasks.length) * 100)
+                : 0;
               return (
                 <ButtonLink key={project.id} href={`/app/projects/${project.id}`} variant="secondary" className="h-auto justify-start p-0 text-left">
                   <Card className="w-full border-0">
@@ -122,23 +125,30 @@ export default async function DashboardPage() {
                     ? `${dueSoon.length} assigned task${dueSoon.length === 1 ? "" : "s"} are near deadline without approval.`
                     : projectPreview
                       ? "No urgent blocker detected from your assigned queue."
-                      : sampleProject.aiRiskInsight.summary}
+                      : "No active project exists, so there is no AI risk signal yet."}
                 </p>
                 <p className="mt-3 rounded-xl border border-cyan-300/20 bg-background/50 p-3 text-xs font-bold text-cyan-100">
-                  Why: {dueSoon[0] ? `${dueSoon[0].title} is due ${formatDate(dueSoon[0].due_date)} and still ${dueSoon[0].status.replaceAll("_", " ")}.` : sampleProject.aiRiskInsight.why}
+                  Why: {dueSoon[0]
+                    ? `${dueSoon[0].title} is due ${formatDate(dueSoon[0].due_date)} and still ${dueSoon[0].status.replaceAll("_", " ")}.`
+                    : projectPreview
+                      ? "This uses only your real assigned-task deadlines and statuses."
+                      : "Create and start a commitment before CommitBet can evaluate deadline signals."}
                 </p>
               </div>
             </div>
           </Card>
           <Card>
-            <h2 className="font-black">Team progress signal</h2>
-            <div className="mt-4 space-y-3">
-              {sampleProject.members.map((member) => (
-                <div key={member.id}>
-                  <div className="mb-1 flex justify-between text-sm"><strong>{member.name}</strong><span className="text-muted-foreground">{member.contributionScore}%</span></div>
-                  <Progress value={member.contributionScore} />
-                </div>
-              ))}
+            <h2 className="font-black">Accountability signal</h2>
+            <div className="mt-4 grid gap-3 text-sm">
+              <div className="flex justify-between rounded-xl border border-border bg-secondary p-3">
+                <span>Assigned work</span><strong>{myTasks.length}</strong>
+              </div>
+              <div className="flex justify-between rounded-xl border border-border bg-secondary p-3">
+                <span>Pending human reviews</span><strong>{approvals.length}</strong>
+              </div>
+              <div className="flex justify-between rounded-xl border border-border bg-secondary p-3">
+                <span>Recent evidence records</span><strong>{recentEvidence.length}</strong>
+              </div>
             </div>
           </Card>
         </aside>

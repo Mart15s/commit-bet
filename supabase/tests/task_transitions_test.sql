@@ -292,9 +292,21 @@ select throws_ok(
   'an approved task cannot be reopened by its assignee'
 );
 
+reset role;
 select lives_ok(
-  $$select public.attach_dispute_recommendation('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', '{"confidence_score": 75}'::jsonb)$$,
-  'the dispute opener can attach a recommendation'
+  $$
+    select public.attach_dispute_recommendation_server(
+      'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+      '22222222-2222-4222-8222-222222222222',
+      '{
+        "recommended_resolution": "needs_changes",
+        "missing_information": [],
+        "arguments_for_approval": ["Evidence was supplied"],
+        "arguments_for_rejection": ["Reviewer found a gap"]
+      }'::jsonb
+    )
+  $$,
+  'the server-controlled AI path can attach a validated recommendation'
 );
 
 select is(
@@ -303,6 +315,7 @@ select is(
   'attaching the recommendation transitions rejected to disputed'
 );
 
+set local role authenticated;
 select set_config('request.jwt.claim.sub', '44444444-4444-4444-8444-444444444444', true);
 
 select throws_ok(

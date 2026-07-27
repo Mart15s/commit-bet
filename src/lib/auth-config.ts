@@ -94,6 +94,17 @@ export function getSupabaseConfigErrorMessage(
 
 export function getAuthErrorMessage(error: AuthErrorLike) {
   if (
+    error.code === "invalid_credentials"
+    || /invalid login credentials/i.test(error.message)
+  ) {
+    return "Email or password is incorrect.";
+  }
+
+  if (/email not confirmed/i.test(error.message)) {
+    return "Confirm your email address before logging in.";
+  }
+
+  if (
     error.code === "over_email_send_rate_limit" ||
     error.status === 429 ||
     /email rate limit exceeded/i.test(error.message)
@@ -105,5 +116,5 @@ export function getAuthErrorMessage(error: AuthErrorLike) {
     return "Supabase connection failed. Check the production Supabase URL and publishable key in Vercel.";
   }
 
-  return error.message;
+  return "Authentication could not be completed. Please try again.";
 }
