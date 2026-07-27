@@ -24,11 +24,13 @@ describe("Gemini error safety", () => {
   });
 
   it("retries only rate limits, provider failures, and timeouts", () => {
-    expect(geminiRetryDelayMs({ status: 429 }, 0)).toBe(500);
+    expect(geminiRetryDelayMs({ status: 429 }, 0)).toBe(10_000);
+    expect(geminiRetryDelayMs({ status: 429 }, 1)).toBe(20_000);
     expect(geminiRetryDelayMs({ status: 503 }, 1)).toBe(1000);
     expect(geminiRetryDelayMs({ name: "TimeoutError" }, 0)).toBe(500);
     expect(geminiRetryDelayMs({ status: 400 }, 0)).toBeNull();
     expect(geminiRetryDelayMs({ status: 403 }, 0)).toBeNull();
+    expect(geminiRetryDelayMs({ status: 429 }, 2)).toBeNull();
     expect(geminiRetryDelayMs({ status: 503 }, 2)).toBeNull();
   });
 

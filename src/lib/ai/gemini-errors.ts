@@ -99,7 +99,8 @@ export function classifyGeminiError(error: unknown): GeminiFailure {
 
 export function geminiRetryDelayMs(error: unknown, retryIndex: number) {
   const failure = classifyGeminiError(error);
-  const retryable = failure.httpStatus === 429
+  const rateLimited = failure.httpStatus === 429;
+  const retryable = rateLimited
     || (
       failure.httpStatus !== undefined
       && failure.httpStatus >= 500
@@ -108,7 +109,12 @@ export function geminiRetryDelayMs(error: unknown, retryIndex: number) {
     || failure.category === "timeout";
 
   if (!retryable || retryIndex < 0 || retryIndex > 1) return null;
-  return 500 * (2 ** retryIndex);
+
+  // Gemini rate-limit windows can outlive sub-second transport retries. Keep
+  // the retry count bounded, but give a 429 enough time to cross a short quota
+  // window. Transient provider and timeout failures retain the faster backoff.
+  const baseDelayMs = rateLimited ? 10_000 : 500;
+  return baseDelayMs * (2 ** retryIndex);
 }
 
 const SUPPORTED_SCHEMA_KEYS = new Set([
