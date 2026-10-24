@@ -39,6 +39,11 @@ export function ProjectWorkspace({ overview, plan, tasks, evidence, reviews, tas
     window.addEventListener("hashchange", followHash);
     return () => window.removeEventListener("hashchange", followHash);
   }, []);
+  useEffect(() => {
+    if (active === "plan" && window.location.hash === "#edit-plan") {
+      document.getElementById("edit-plan")?.scrollIntoView({ block: "start" });
+    }
+  }, [active]);
   function select(key: Section) {
     setActive(key);
     window.history.replaceState(null, "", `#${key}`);

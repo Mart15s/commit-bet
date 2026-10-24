@@ -1,7 +1,7 @@
 import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests/e2e",
-  testMatch: ["landing.spec.ts", "ui-remediation.spec.ts"],
+  testMatch: ["landing.spec.ts", "ui-remediation.spec.ts", "premium-ui.spec.ts"],
   timeout: 60_000,
   workers: 1,
   use: {
@@ -14,7 +14,7 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: "npm run dev",
+      command: process.env.PLAYWRIGHT_USE_PRODUCTION_BUILD === "1" ? "npm run start" : "npm run dev",
       url: "http://127.0.0.1:3000",
       reuseExistingServer: true,
     },

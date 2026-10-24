@@ -7,6 +7,8 @@ import { ProjectWizard } from "../../src/components/project-wizard";
 import { ReviewForm } from "../../src/components/review-form";
 import { AIRecommendation } from "../../src/components/ai-recommendation";
 import { Card, PageHeader, StatusBadge } from "../../src/components/ui";
+import { ProjectWorkspace } from "../../src/components/project-workspace";
+import { TaskBoard } from "../../src/components/tasks/task-board";
 import "../../src/app/globals.css";
 
 const params = new URLSearchParams(location.search);
@@ -76,12 +78,25 @@ createRoot(document.getElementById("root")!).render(
     <AppNav profile={{ name: "Alex" }} />
     <main
       id="main-content"
-      className="app-main mx-auto max-w-6xl px-4 pt-6 sm:px-6 lg:px-8"
+      className="app-main mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8"
     >
       <p className="mb-4 text-xs text-muted-foreground">
         UI TEST FIXTURE · sample data · no database writes
       </p>
-      {view === "log" ? (
+      {view === "project" ? (
+        <>
+          <PageHeader title="Launch the working signup flow" />
+          <ProjectWorkspace
+            taskCount={tasks.length}
+            reviewCount={1}
+            overview={<Card><h2>Project overview</h2><p>One of three tasks is peer approved.</p><a href="#plan">Review the draft plan</a></Card>}
+            plan={<Card><h2>Editable draft plan</h2><label>Task name<input defaultValue="Build the signup flow" /></label><p>AI recommendation. Human confirmation required.</p><a href="#edit-plan">Edit plan</a></Card>}
+            tasks={<TaskBoard tasks={tasks.map(task => ({ ...task, dueDate: task.due_date, ownerName: "Alex", expectedEvidenceTypes: ["Demo link"], acceptanceCriteria: ["Show saved signup"] }))} />}
+            evidence={<Card><h2>Submitted artifacts</h2><p>Walkthrough video · Awaiting peer review</p></Card>}
+            reviews={<Card><h2>Human review</h2><ReviewForm taskId={taskId} /></Card>}
+          />
+        </>
+      ) : view === "log" ? (
         <>
           <PageHeader title="log.title" description="log.copy" />
           <DailyLogForm
@@ -133,6 +148,8 @@ createRoot(document.getElementById("root")!).render(
                 hasTeam: false,
               }
             : {})}
+          {...(view === "draft" ? { projects: [{ ...project, status: "draft" }], tasks: tasks.map(task => ({ ...task, status: "todo" })), evidence: [] } : {})}
+          {...(view === "failed" ? { loadError: true } : {})}
         />
       )}
     </main>

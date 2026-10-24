@@ -183,7 +183,7 @@ export default async function ProjectPage({
               variant="secondary"
               size="sm"
             >
-              <T id="Task board" />
+              {project.status === "draft" ? <WorkspaceCopy en="Review plan" lt="Peržiūrėti planą" /> : <T id="Task board" />}
             </ButtonLink>
           </div>
         }
@@ -468,7 +468,9 @@ export default async function ProjectPage({
             <AIRecommendation
               scope="plan"
               mock={reports?.[0]?.model?.startsWith("mock")}
-            />
+            >
+              {plan?.reasoning && <details><summary className="min-h-11 cursor-pointer py-2 text-sm"><WorkspaceCopy en="Why this plan?" lt="Kodėl toks planas?" /></summary><p className="text-sm leading-6 text-muted-foreground">{plan.reasoning}</p></details>}
+            </AIRecommendation>
             <SectionHeader
               title="AI plan draft"
               description="The draft should be useful, but your team should still tune it before starting."

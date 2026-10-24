@@ -21,6 +21,8 @@ for (const language of ["en", "lt"])
         "log",
         "wizard",
         "review",
+        "project",
+        "draft",
       ]) {
         await page.goto(
           view === "landing"
@@ -45,7 +47,7 @@ for (const language of ["en", "lt"])
           });
         }
         if (
-          ["dashboard", "empty", "log", "wizard", "review"].includes(view) &&
+          ["dashboard", "empty", "log", "wizard", "review", "project", "draft"].includes(view) &&
           width < 1024
         ) {
           const nav = page

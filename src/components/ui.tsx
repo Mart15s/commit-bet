@@ -57,8 +57,9 @@ export function ButtonLink({
   size?: keyof typeof sizes;
   className?: string;
 }) {
+  const LinkComponent = href.startsWith("#") ? "a" : Link;
   return (
-    <Link
+    <LinkComponent
       href={href}
       className={cn(
         "inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
@@ -68,7 +69,7 @@ export function ButtonLink({
       )}
     >
       {children}
-    </Link>
+    </LinkComponent>
   );
 }
 

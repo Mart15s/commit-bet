@@ -335,7 +335,7 @@ export function Dashboard({
               )}
             </Card>
             <NextActionCard
-              className="flex items-center p-6"
+              className="self-start p-6"
               title={nextTitle}
               copy={nextCopy}
               action={
