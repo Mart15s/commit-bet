@@ -133,7 +133,7 @@ export default async function DisputePage({
       {recommendation && (
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <Card>
-            <h2 className="font-bold text-success">
+            <h2 className="font-bold text-foreground">
               <T id="Arguments for approval" />
             </h2>
             <ul className="mt-3 list-disc space-y-2 pl-5 text-sm">

@@ -17,7 +17,7 @@ const dictionaries = {
   en: {
     ...uiTranslations.en,
     ...screenCopy.en,
-    "app.brand": "CommitBet",
+    "app.brand": "5GieAEOU",
     "app.tagline": "Evidence-based team accountability",
 
     "nav.home": "Home",
@@ -29,7 +29,7 @@ const dictionaries = {
     "nav.account": "Account",
 
     "language.label": "Language",
-    "language.helper": "Choose the language used across CommitBet.",
+    "language.helper": "Choose the language used across 5GieAEOU.",
     "language.saving": "Saving language...",
     "language.saved": "Language saved.",
     "language.saveError":
@@ -65,7 +65,7 @@ const dictionaries = {
     "landing.howTitle": "A promise becomes a reviewable chain of evidence.",
     "landing.differentEyebrow": "Different from Trello, Notion, Jira",
     "landing.differentTitle":
-      "CommitBet is for finishing, not organizing forever.",
+      "5GieAEOU is for finishing, not organizing forever.",
     "landing.differentCopy":
       "A sprint has success criteria, owners, pledge points, evidence, peer approval, and a final human-confirmed outcome.",
     "landing.assetTitle": "Evidence is the core product asset.",
@@ -109,7 +109,7 @@ const dictionaries = {
     "landing.flowReportCopy": "AI recommends with reasons; humans confirm.",
     "landing.diffBacklog": "Not a backlog",
     "landing.diffBacklogCopy":
-      "CommitBet starts with a time-boxed promise, not infinite task capture.",
+      "5GieAEOU starts with a time-boxed promise, not infinite task capture.",
     "landing.diffEvidence": "Evidence over vibes",
     "landing.diffEvidenceCopy":
       "Progress only counts when daily logs and task proof support the claim.",
@@ -176,11 +176,11 @@ const dictionaries = {
       "Choose the small group that will commit and review proof together.",
     "onboarding.projectType": "Project type",
     "onboarding.projectTypeHelper":
-      "Choose the closest preset so CommitBet can suggest useful criteria.",
+      "Choose the closest preset so 5GieAEOU can suggest useful criteria.",
     "onboarding.projectName": "Project name",
     "onboarding.projectNameHelper":
       "Short and concrete, like the name you would put on a sprint board.",
-    "onboarding.projectNamePlaceholder": "Launch the first CommitBet waitlist",
+    "onboarding.projectNamePlaceholder": "Launch the first 5GieAEOU waitlist",
     "onboarding.description": "Description",
     "onboarding.descriptionHelper":
       "One or two sentences about what you are building and why it matters now.",
@@ -474,7 +474,7 @@ const dictionaries = {
   lt: {
     ...uiTranslations.lt,
     ...screenCopy.lt,
-    "app.brand": "CommitBet",
+    "app.brand": "5GieAEOU",
     "app.tagline": "Komandinė atsakomybė pagal įrodymus",
 
     "nav.home": "Pradžia",
@@ -486,7 +486,7 @@ const dictionaries = {
     "nav.account": "Paskyra",
 
     "language.label": "Kalba",
-    "language.helper": "Pasirinkite kalbą, naudojamą CommitBet.",
+    "language.helper": "Pasirinkite kalbą, naudojamą 5GieAEOU.",
     "language.saving": "Saugoma kalba...",
     "language.saved": "Kalba išsaugota.",
     "language.saveError":
@@ -522,7 +522,7 @@ const dictionaries = {
     "landing.howTitle": "Pažadas tampa peržiūrima įrodymų grandine.",
     "landing.differentEyebrow": "Kitaip nei Trello, Notion ar Jira",
     "landing.differentTitle":
-      "CommitBet skirtas užbaigti, o ne organizuoti be galo.",
+      "5GieAEOU skirtas užbaigti, o ne organizuoti be galo.",
     "landing.differentCopy":
       "Sprintas turi sėkmės kriterijus, atsakingus žmones, taškų įsipareigojimus, įrodymus, kolegų patvirtinimą ir galutinį žmogaus sprendimą.",
     "landing.assetTitle": "Įrodymai yra pagrindinis produkto turtas.",
@@ -568,7 +568,7 @@ const dictionaries = {
       "DI rekomenduoja su priežastimis; žmonės patvirtina.",
     "landing.diffBacklog": "Ne užduočių sąrašas",
     "landing.diffBacklogCopy":
-      "CommitBet prasideda nuo aiškaus laiko pažado, o ne begalinio užduočių kaupimo.",
+      "5GieAEOU prasideda nuo aiškaus laiko pažado, o ne begalinio užduočių kaupimo.",
     "landing.diffEvidence": "Įrodymai vietoj nuojautos",
     "landing.diffEvidenceCopy":
       "Progresas skaičiuojamas tik tada, kai jį pagrindžia dienos įrašai ir užduočių įrodymai.",
@@ -636,12 +636,12 @@ const dictionaries = {
       "Pasirinkite mažą grupę, kuri įsipareigos ir peržiūrės įrodymus.",
     "onboarding.projectType": "Projekto tipas",
     "onboarding.projectTypeHelper":
-      "Pasirinkite artimiausią šabloną, kad CommitBet pasiūlytų naudingus kriterijus.",
+      "Pasirinkite artimiausią šabloną, kad 5GieAEOU pasiūlytų naudingus kriterijus.",
     "onboarding.projectName": "Projekto pavadinimas",
     "onboarding.projectNameHelper":
       "Trumpai ir konkrečiai, kaip sprinto lentoje.",
     "onboarding.projectNamePlaceholder":
-      "Paleisti pirmą CommitBet laukiančiųjų sąrašą",
+      "Paleisti pirmą 5GieAEOU laukiančiųjų sąrašą",
     "onboarding.description": "Aprašymas",
     "onboarding.descriptionHelper":
       "Vienas ar du sakiniai apie tai, ką kuriate ir kodėl tai svarbu dabar.",

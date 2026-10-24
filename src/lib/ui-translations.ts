@@ -1,6 +1,12 @@
 // Additional keys are merged into the existing EN/LT dictionaries in i18n.ts.
 export const uiTranslations = {
   en: {
+    "Proof and review data could not be loaded. No evidence state has been inferred.": "Proof and review data could not be loaded. No evidence state has been inferred.",
+    "Retry": "Retry",
+    "THE PROMISE": "THE PROMISE",
+    "THE PROOF": "THE PROOF",
+    "Uploaded by": "Uploaded by",
+    "Uploaded artifact. Source and authorship have not been independently verified.": "Uploaded artifact. Source and authorship have not been independently verified.",
     "project.planSize":
       "This draft has {count} tasks for a {days}-day sprint. Consider trimming scope before starting.",
     "project.proofExpectations":
@@ -247,6 +253,12 @@ export const uiTranslations = {
     "evidence.short video": "Short video",
   },
   lt: {
+    "Proof and review data could not be loaded. No evidence state has been inferred.": "Nepavyko įkelti įrodymų ir peržiūros duomenų. Įrodymų būsena nenustatyta.",
+    "Retry": "Bandyti dar kartą",
+    "THE PROMISE": "PAŽADAS",
+    "THE PROOF": "ĮRODYMAI",
+    "Uploaded by": "Įkėlė",
+    "Uploaded artifact. Source and authorship have not been independently verified.": "Įkeltas rezultatas. Šaltinis ir autorystė nepriklausomai nepatikrinti.",
     "project.planSize":
       "Juodraštyje yra {count} užduočių {days} dienų sprintui. Prieš pradėdami apsvarstykite galimybę sumažinti apimtį.",
     "project.proofExpectations":

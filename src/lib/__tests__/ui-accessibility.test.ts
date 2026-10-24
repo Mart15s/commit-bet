@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { uiTranslations } from "@/lib/ui-translations";
 import { getDictionary, translate } from "@/lib/i18n";
+import { readFileSync } from "node:fs";
 function luminance(hex: string) {
   const rgb = [1, 3, 5]
     .map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
@@ -18,24 +19,28 @@ describe("UI accessibility and localization", () => {
     );
   });
   it("uses readable AA palette pairs", () => {
-    for (const background of ["#0B1220", "#111C2E", "#19283C"])
+    const css = readFileSync("src/app/globals.css", "utf8");
+    const color = (name: string) => {
+      const value = css.match(new RegExp(`--${name}:\\s*(#[0-9a-f]{6})`, "i"))?.[1];
+      if (!value) throw new Error(`Missing brand token ${name}`);
+      return value;
+    };
+    expect(color("obsidian-void").toUpperCase()).toBe("#0B0F14");
+    expect(color("laser-mint").toUpperCase()).toBe("#00F59B");
+    expect(color("blaze-amber").toUpperCase()).toBe("#FF8A00");
+    expect(color("slate-steel").toUpperCase()).toBe("#1E293B");
+    expect(color("muted-titanium").toUpperCase()).toBe("#94A3B8");
+    expect(color("pure-glare").toUpperCase()).toBe("#F8FAFC");
+    expect(color("sovereign-gold").toUpperCase()).toBe("#FFD700");
+    for (const background of [color("obsidian-void"), color("slate-steel")])
       for (const foreground of [
-        "#F8FAFC",
-        "#9FB0C3",
-        "#2DD4BF",
-        "#60A5FA",
-        "#34D399",
-        "#FBBF24",
-        "#FB7185",
-        "#7DD3FC",
+        color("pure-glare"), color("muted-titanium"), color("laser-mint"), color("blaze-amber"),
       ])
         expect(
           contrast(background, foreground),
           `${foreground} on ${background}`,
         ).toBeGreaterThanOrEqual(4.5);
-    for (const background of ["#2DD4BF", "#14B8A6"])
-      expect(contrast("#0B1220", background)).toBeGreaterThanOrEqual(4.5);
-    expect(contrast("#60738A", "#111C2E")).toBeGreaterThanOrEqual(3);
+    expect(contrast(color("obsidian-void"), color("pure-glare"))).toBeGreaterThanOrEqual(4.5);
   });
   it("localizes review states instead of displaying raw database status", () => {
     expect(translate("lt", "status.needs_changes")).toBe("Prašoma pakeitimų");

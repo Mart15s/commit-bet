@@ -91,7 +91,7 @@ export function ProfilePage({ profile }: { profile: Profile }) {
               <div
                 className={
                   state.ok
-                    ? "rounded-xl border border-success/30 bg-success/12 p-3 text-sm font-bold text-success"
+                    ? "rounded-xl border border-border bg-surface p-3 text-sm font-bold text-foreground"
                     : "rounded-xl border border-danger/30 bg-danger/12 p-3 text-sm font-bold text-danger"
                 }
               >

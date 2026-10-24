@@ -151,7 +151,7 @@ export default async function ApprovalsPage({
                     )}
                   </div>
                 </div>
-                <div className="rounded-2xl border border-warning/20 bg-warning/10 p-4">
+                <div className="rounded-2xl border border-border bg-surface p-4">
                   <h3 className="font-bold">
                     <T id="Acceptance criteria" />
                   </h3>
@@ -161,7 +161,7 @@ export default async function ApprovalsPage({
                         key={criterion}
                         className="flex gap-2 text-sm leading-6"
                       >
-                        <span className="mt-2 size-1.5 shrink-0 rounded-full bg-warning" />
+                        <span className="mt-2 size-1.5 shrink-0 rounded-full bg-muted-foreground" />
                         {criterion}
                       </li>
                     ))}

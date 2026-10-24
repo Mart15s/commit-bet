@@ -34,7 +34,7 @@ export function AIRecommendation({
           </p>
         )}
       </div>
-      {mock && <p className="mt-3 text-sm text-warning">{t("ai.mockCopy")}</p>}
+      {mock && <p className="mt-3 text-sm text-muted-foreground">{t("ai.mockCopy")}</p>}
       {children && (
         <div className="mt-4 space-y-3 text-sm leading-6">{children}</div>
       )}

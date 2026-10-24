@@ -46,7 +46,7 @@ export default async function TaskPage({
     .eq("id", id)
     .single();
   if (!task) notFound();
-  const [{ data: evidence }, { data: reviews }, { data: disputes }] =
+  const [evidenceResult, reviewsResult, disputesResult] =
     await Promise.all([
       supabase
         .from("evidence")
@@ -64,6 +64,12 @@ export default async function TaskPage({
         .eq("task_id", id)
         .order("created_at", { ascending: false }),
     ]);
+  if ([evidenceResult, reviewsResult, disputesResult].some(result => result.error)) {
+    return <><PageHeader title={task.title} /><p role="alert"><T id="Proof and review data could not be loaded. No evidence state has been inferred." /></p><ButtonLink href={`/app/tasks/${id}`} variant="secondary"><T id="Retry" /></ButtonLink></>;
+  }
+  const evidence = evidenceResult.data;
+  const reviews = reviewsResult.data;
+  const disputes = disputesResult.data;
   const assignment = singleRelation(
     task.task_assignments as unknown as
       | { user_id: string; assigned_reason: string; profiles: { name: string } }
@@ -103,8 +109,9 @@ export default async function TaskPage({
         assignee={isAssignee}
         canReview={canReview}
       />
-      <div className="mt-5 grid gap-4 md:grid-cols-[1.3fr_.7fr]">
+      <div className="mt-5 grid items-start gap-5 md:grid-cols-2">
         <div className="space-y-4">
+          <h2 className="font-mono text-sm font-semibold tracking-widest"><T id="THE PROMISE" /></h2>
           <Card>
             <p className="leading-7 text-muted-foreground">
               {task.description}
@@ -185,7 +192,9 @@ export default async function TaskPage({
               </div>
             )}
           </Card>
-
+        </div>
+        <div className="space-y-4">
+          <h2 className="font-mono text-sm font-semibold tracking-widest"><T id="THE PROOF" /></h2>
           <Card className="border-ai/25 bg-ai/10">
             <h2 id="task-evidence" className="text-lg font-bold">
               <T id="Evidence (" />
@@ -217,6 +226,9 @@ export default async function TaskPage({
                         <p className="mt-1 text-sm text-muted-foreground">
                           {item.description}
                         </p>
+                        <p className="mt-2 text-xs text-muted-foreground"><T id="Uploaded by" /> {singleRelation(item.profiles as { name: string } | { name: string }[] | null)?.name || item.user_id}</p>
+                        <time className="mt-1 block break-all font-mono text-xs text-muted-foreground" dateTime={item.created_at}>{new Date(item.created_at).toISOString()}</time>
+                        <p className="mt-2 text-xs text-muted-foreground"><T id="Uploaded artifact. Source and authorship have not been independently verified." /></p>
                       </div>
                       <FileText size={20} className="text-ai" />
                     </div>
@@ -314,9 +326,6 @@ export default async function TaskPage({
                 </form>
               </Card>
             )}
-        </div>
-
-        <div className="space-y-4">
           {isAssignee && (
             <Card>
               <h2 className="font-bold">

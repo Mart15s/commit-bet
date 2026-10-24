@@ -60,7 +60,7 @@ export default async function NewProjectPage({
       ) : (
         <EmptyState
           title="Create a team first"
-          copy="CommitBet works best with a small group that can commit, submit proof, and approve each other's work."
+          copy="5GieAEOU works best with a small group that can commit, submit proof, and approve each other's work."
           tip="Next, create a team or join one with an invite code. Then you can start your first project."
           action={<ButtonLink href="/app/teams">Set up a team</ButtonLink>}
         />

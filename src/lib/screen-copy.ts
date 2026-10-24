@@ -164,8 +164,8 @@ const lt: Record<string, string> = {
     "Palyginkite įrodymus su kiekvienu priėmimo kriterijumi. Jūsų sprendimas lemia, ar užduotis įskaičiuojama į projekto pažangą.",
   "Daily check-ins should take less than 2 minutes. They help the team see progress before review time.":
     "Dienos įrašas turėtų užtrukti iki 2 minučių. Jis leidžia komandai matyti pažangą dar prieš peržiūrą.",
-  "Declared commitments only. CommitBet does not hold money.":
-    "Tik deklaruoti virtualūs įsipareigojimai. CommitBet nelaiko pinigų.",
+  "Declared commitments only. 5GieAEOU does not hold money.":
+    "Tik deklaruoti virtualūs įsipareigojimai. 5GieAEOU nelaiko pinigų.",
   "Disputes are not a fight button. AI helps structure the disagreement, then a human owner confirms the resolution.":
     "Ginčas padeda išsiaiškinti nesutarimą. AI parengia rekomendaciją, o projekto savininkas patvirtina sprendimą.",
   "Each criterion is evaluated against evidence and review outcomes.":
@@ -210,8 +210,8 @@ const lt: Record<string, string> = {
   "Recommendation only. Humans still confirm the task outcome and no financial or pledge action is automatic.":
     "Tai tik rekomendacija. Užduoties rezultatą patvirtina žmonės. Finansiniai ar įsipareigojimų sprendimai nevykdomi automatiškai.",
   "Recommendation unavailable.": "Rekomendacija nepasiekiama.",
-  "Review the AI recommendation together, then confirm the final outcome manually. CommitBet does not collect or transfer money.":
-    "Kartu peržiūrėkite AI rekomendaciją ir rankiniu būdu patvirtinkite galutinį rezultatą. CommitBet nerenka ir neperveda pinigų.",
+  "Review the AI recommendation together, then confirm the final outcome manually. 5GieAEOU does not collect or transfer money.":
+    "Kartu peržiūrėkite AI rekomendaciją ir rankiniu būdu patvirtinkite galutinį rezultatą. 5GieAEOU nerenka ir neperveda pinigų.",
   "Review the draft before starting. You can edit task names, owners, due dates, and priorities below. Keep evidence requirements concrete so reviewers know what to check.":
     "Prieš pradėdami peržiūrėkite juodraštį. Toliau galite keisti užduočių pavadinimus, vykdytojus, terminus ir svarbą. Aiškiai apibrėžkite įrodymus, kad vertintojai žinotų, ką tikrinti.",
   "Review the plan before starting. You can edit tasks, deadlines, and evidence requirements before the project becomes active.":

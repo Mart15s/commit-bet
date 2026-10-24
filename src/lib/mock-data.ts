@@ -2,8 +2,8 @@ import type { AIReport, Project, Task, TaskStatus } from "@/lib/types";
 
 export const sampleProject: Project = {
   id: "commitbet-alpha",
-  title: "Ship CommitBet waitlist sprint",
-  description: "A 14-day sprint to launch the first public CommitBet waitlist and evidence workflow demo.",
+  title: "Ship 5GieAEOU waitlist sprint",
+  description: "A 14-day sprint to launch the first public 5GieAEOU waitlist and evidence workflow demo.",
   goal: "Launch a credible waitlist page with a working signup flow, demo evidence, and a final review narrative.",
   status: "active",
   startDate: "2026-06-18",
@@ -55,13 +55,13 @@ export const sampleProject: Project = {
       id: "task-landing",
       projectId: "commitbet-alpha",
       title: "Build waitlist landing page",
-      description: "Create the public page that explains CommitBet and captures early access signups.",
+      description: "Create the public page that explains 5GieAEOU and captures early access signups.",
       ownerId: "ion",
       ownerName: "Ion Petraitis",
       status: "approved",
       priority: "critical",
       dueDate: "2026-06-22",
-      acceptanceCriteria: ["Responsive hero is live", "CTA leads to signup", "Core flow is explained without gambling language"],
+      acceptanceCriteria: ["Responsive hero is live", "CTA leads to signup", "Core flow explains virtual commitments clearly"],
       expectedEvidenceTypes: ["demo", "screenshot", "link"],
       evidence: [
         {

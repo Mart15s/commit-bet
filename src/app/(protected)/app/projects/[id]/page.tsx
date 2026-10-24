@@ -710,7 +710,7 @@ export default async function ProjectPage({
                 <T id="Virtual pledges" />
               </h2>
               <p className="mt-1 text-xs text-muted-foreground">
-                <T id="Declared commitments only. CommitBet does not hold money." />
+                <T id="Declared commitments only. 5GieAEOU does not hold money." />
               </p>
             </div>
           </div>
