@@ -47,7 +47,7 @@ export function AIPlanGenerationForm({
           className={
             state.status === "error"
               ? "mt-2 max-w-xl text-sm font-bold text-danger"
-              : "mt-2 max-w-xl text-sm font-bold text-success"
+              : "mt-2 max-w-xl text-sm font-bold text-foreground"
           }
         >
           {t(state.message)}

@@ -37,9 +37,10 @@ for (const language of ["en", "lt"])
           ),
         ).toBe(true);
         if ([390, 1440].includes(width)) {
-          await fs.mkdir("audit-evidence", { recursive: true });
+          const evidenceDirectory = process.env.PLAYWRIGHT_SCREENSHOT_DIR || "audit-evidence";
+          await fs.mkdir(evidenceDirectory, { recursive: true });
           await page.screenshot({
-            path: `audit-evidence/${view}-${language}-${width}.png`,
+            path: `${evidenceDirectory}/${view}-${language}-${width}.png`,
             fullPage: true,
           });
         }

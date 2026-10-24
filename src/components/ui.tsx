@@ -153,7 +153,7 @@ export function StatusBadge({ status }: { status: string }) {
                   normalized === "high" ||
                   normalized === "missed"
                 ? "border-danger/35 bg-danger/16 text-danger"
-                : "border-slate-500/40 bg-slate-700/40 text-slate-300";
+                : "border-border bg-surface text-muted-foreground";
   const label = t(`status.${normalized}`);
   return (
     <span

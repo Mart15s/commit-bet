@@ -275,7 +275,7 @@ export default async function FinalReportPage({
                         </p>
                       ) : null}
                       {member.issues.length ? (
-                        <p className="mt-1 text-xs font-bold text-warning">
+                        <p className="mt-1 text-xs font-bold text-muted-foreground">
                           <T id="Open issues:" /> {member.issues.join(", ")}
                         </p>
                       ) : null}
@@ -340,7 +340,7 @@ export default async function FinalReportPage({
                     <T id="Human confirmation required" />
                   </h2>
                   <p className="text-sm leading-6 text-muted-foreground">
-                    <T id="Review the AI recommendation together, then confirm the final outcome manually. CommitBet does not collect or transfer money." />
+                    <T id="Review the AI recommendation together, then confirm the final outcome manually. 5GieAEOU does not collect or transfer money." />
                   </p>
                 </div>
               </div>

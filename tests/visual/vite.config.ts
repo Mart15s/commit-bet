@@ -3,8 +3,10 @@ import path from "node:path";
 const root = process.cwd();
 export default defineConfig({
   root: path.resolve(root, "tests/visual"),
+  publicDir: path.resolve(root, "public"),
   resolve: {
     alias: [
+      { find: "next/image", replacement: path.resolve(root, "tests/visual/next-image.tsx") },
       {
         find: "next/link",
         replacement: path.resolve(root, "tests/visual/next-link.tsx"),
