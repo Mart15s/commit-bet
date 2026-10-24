@@ -82,7 +82,7 @@ export function Card({
   return (
     <section
       className={cn(
-        "rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-[0_1px_0_rgba(248,250,252,.04)]",
+        "premium-card rounded-2xl border border-border bg-card p-5 text-card-foreground",
         className,
       )}
     >
@@ -113,7 +113,7 @@ export function PageHeader({
     <header className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row">
       <div>
         {(eyebrow || eyebrowKey) && (
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[.16em] text-primary">
+          <p className="mb-2 font-mono text-[11px] font-medium uppercase tracking-[.16em] text-muted-foreground">
             {eyebrowKey ? t(eyebrowKey) : eyebrow}
           </p>
         )}
@@ -171,10 +171,12 @@ export function Progress({
   value,
   className,
   label,
+  verified = false,
 }: {
   value: number;
   className?: string;
   label?: string;
+  verified?: boolean;
 }) {
   const { t } = useI18n();
   const safeValue = Number.isFinite(value)
@@ -187,10 +189,10 @@ export function Progress({
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={safeValue}
-      className={cn("h-2 overflow-hidden rounded-full bg-muted", className)}
+      className={cn("h-1.5 overflow-hidden rounded-full bg-muted", className)}
     >
       <div
-        className="h-full rounded-full bg-primary transition-all"
+        className={cn("h-full rounded-full transition-all", verified ? "bg-success" : "bg-primary")}
         style={{ width: `${safeValue}%` }}
       />
     </div>
@@ -224,7 +226,7 @@ export function MetricCard({
           )}
         </div>
         {icon && (
-          <div className="rounded-xl border border-primary/20 bg-primary/10 p-2 text-primary">
+          <div className="rounded-xl border border-border bg-background/40 p-2 text-muted-foreground">
             {icon}
           </div>
         )}
@@ -275,16 +277,16 @@ export function EmptyState({
 }) {
   const { t } = useI18n();
   return (
-    <Card className={cn("py-10 text-center", className)}>
+    <Card className={cn("py-7 text-center", className)}>
       {icon && (
-        <div className="mx-auto mb-4 grid size-12 place-items-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
+        <div className="mx-auto mb-4 grid size-11 place-items-center rounded-xl border border-border bg-elevated/50 text-muted-foreground">
           {icon}
         </div>
       )}
       <h2 className="text-xl font-bold">{t(title)}</h2>
       <p className="mx-auto mt-2 max-w-md text-muted-foreground">{t(copy)}</p>
       {tip && (
-        <p className="mx-auto mt-4 max-w-md rounded-xl border border-border bg-surface p-3 text-sm font-bold text-muted-foreground">
+        <p className="mx-auto mt-3 max-w-md text-xs leading-6 text-muted-foreground">
           {t(tip)}
         </p>
       )}

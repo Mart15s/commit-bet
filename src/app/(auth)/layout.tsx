@@ -10,18 +10,17 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   const { t, language } = useI18n();
   return (
     <main className="grid min-h-screen lg:grid-cols-[1fr_1fr]">
-      <section className="hidden border-r border-border bg-surface p-10 lg:flex lg:flex-col lg:justify-between xl:p-16">
+      <section className="auth-story hidden border-r border-border bg-surface p-10 lg:flex lg:flex-col lg:justify-between xl:p-16">
         <div className="flex items-start justify-between gap-4">
           <Link href="/" className="inline-flex min-h-11 items-center"><BrandLogo /></Link>
           <LanguageSwitcher compact />
         </div>
         <div className="max-w-xl py-12">
-          <BrandLogo variant="monogram" className="mb-9 w-24" />
           <p className="font-mono text-xs uppercase tracking-[.15em] text-muted-foreground">{t("auth.accountability")}</p>
-          <h2 className="mt-4 font-mono text-4xl font-bold leading-tight xl:text-5xl">
+          <h2 className="mt-4 text-5xl font-semibold leading-tight tracking-tight xl:text-6xl">
             {language === "lt" ? "Nuo pažado iki kodo. Be pasiteisinimų." : "Ship or explain."}
           </h2>
-          <p className="mt-5 font-mono text-lg">{language === "lt" ? "AI vertina faktus. Žmonės priima sprendimus." : "AI audits, humans decide."}</p>
+          <p className="mt-5 text-xl font-medium">{language === "lt" ? "AI vertina faktus. Žmonės priima sprendimus." : "AI audits, humans decide."}</p>
           <p className="mt-5 max-w-md leading-7 text-muted-foreground">{t("auth.sideCopy")}</p>
           <div className="mt-9 space-y-4 border-t border-border pt-7">
             {[[FileText, t("auth.evidenceFirst")], [Brain, language === "lt" ? "AI rekomenduoja" : "AI recommends"], [Users, t("auth.humansDecide")]].map(([Icon, label]) => (

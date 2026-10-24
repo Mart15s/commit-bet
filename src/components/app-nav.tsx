@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import {
   ClipboardCheck,
   Home,
@@ -46,6 +46,7 @@ export function AppNav({
   const { t } = useI18n();
   const pathname = usePathname();
   const dialog = useRef<HTMLDialogElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const isActive = (href: string) =>
     href === "/app" ? pathname === href : pathname.startsWith(href);
   const moreActive = moreLinks
@@ -56,7 +57,12 @@ export function AppNav({
       type="button"
       aria-label={t("nav.more")}
       aria-haspopup="dialog"
-      onClick={() => dialog.current?.showModal()}
+      aria-expanded={menuOpen}
+      aria-controls="workspace-menu"
+      onClick={() => {
+        dialog.current?.showModal();
+        setMenuOpen(true);
+      }}
       className={cn(
         "min-h-12 rounded-xl font-semibold",
         mobile
@@ -79,8 +85,8 @@ export function AppNav({
       >
         {t("nav.skip")}
       </a>
-      <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 lg:px-8">
+      <header className="app-header sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 lg:px-8">
           <Link
             href="/app"
             className="flex items-center gap-2 text-lg font-bold tracking-tight"
@@ -98,9 +104,7 @@ export function AppNav({
                 aria-current={isActive(href) ? "page" : undefined}
                 className={cn(
                   "inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold",
-                  href === "/app/logs/new"
-                    ? "bg-primary text-primary-foreground hover:bg-primary-hover"
-                    : isActive(href)
+                  isActive(href)
                       ? "bg-elevated text-primary"
                       : "text-muted-foreground hover:bg-elevated hover:text-foreground",
                 )}
@@ -127,9 +131,7 @@ export function AppNav({
             aria-current={isActive(href) ? "page" : undefined}
             className={cn(
               "flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-center text-[10px] font-semibold sm:text-xs",
-              href === "/app/logs/new"
-                ? "bg-primary text-primary-foreground hover:bg-primary-hover"
-                : isActive(href)
+              isActive(href)
                   ? "bg-primary/10 text-primary"
                   : "text-muted-foreground hover:text-foreground",
             )}
@@ -142,15 +144,17 @@ export function AppNav({
       </nav>
       <dialog
         ref={dialog}
+        id="workspace-menu"
         aria-labelledby="more-title"
-        className="rounded-2xl border border-border bg-surface p-5 shadow-2xl"
+        className="workspace-menu border border-border bg-surface p-5 shadow-2xl"
+        onClose={() => setMenuOpen(false)}
         onClick={(event) => {
           if (event.target === dialog.current) dialog.current?.close();
         }}
       >
         <div className="mb-4 flex items-center justify-between gap-4">
           <div>
-            <h2 id="more-title" className="text-xl font-bold">
+            <h2 id="more-title" className="text-base font-semibold">
               {t("nav.more")}
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -174,7 +178,7 @@ export function AppNav({
               key={href}
               href={href}
               aria-current={isActive(href) ? "page" : undefined}
-              className="flex min-h-12 items-center gap-3 rounded-xl border border-border px-4 py-3 text-sm font-semibold hover:bg-elevated"
+              className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-elevated"
             >
               <Icon size={19} className="text-primary" />
               {t(key)}

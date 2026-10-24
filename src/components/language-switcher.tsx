@@ -74,7 +74,7 @@ export function LanguageSwitcher({
               aria-label={languageLabels[option]}
               aria-pressed={language === option}
               className={cn(
-                "min-h-8 min-w-10 rounded-lg px-2.5 uppercase transition hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "min-h-11 min-w-11 rounded-lg px-2.5 uppercase transition hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 language === option
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground",
