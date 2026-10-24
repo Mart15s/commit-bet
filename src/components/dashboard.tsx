@@ -1,14 +1,15 @@
 "use client";
+import "@/app/workspace.css";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
   CalendarDays,
-  ClipboardCheck,
   Layers3,
   Plus,
-  Target,
+  FileText,
+  CheckCheck,
 } from "lucide-react";
 import { useI18n } from "@/components/language-provider";
 import {
@@ -16,7 +17,6 @@ import {
   Card,
   EmptyState,
   ErrorMessage,
-  MetricCard,
   NextActionCard,
   PageHeader,
   Progress,
@@ -83,7 +83,7 @@ export function Dashboard({
       <Link
         href={`/app/projects/${sprint.id}`}
         key={sprint.id}
-        className="block rounded-2xl border border-border bg-card p-5 transition hover:border-primary/50"
+        className="workspace-sprint-card block rounded-2xl border border-border bg-card p-5 transition hover:border-primary/50"
       >
         <div className="flex items-start justify-between gap-3">
           <h3 className="font-bold">{sprint.title}</h3>
@@ -99,6 +99,7 @@ export function Dashboard({
           </strong>
         </div>
         <Progress
+          verified
           label={t("dash.verified")}
           value={verified}
           className="mt-2"
@@ -158,6 +159,8 @@ export function Dashboard({
         </div>
       </>
     );
+  const draft = projects.find((project) => project.status === "draft");
+  const otherProjects = projects.filter((project) => project.id !== current?.id && (current || project.id !== draft?.id));
   const currentTasks = current ? projectTasks(current.id) : [];
   const time = current
     ? sprintTime(current.start_date, current.end_date, today)
@@ -206,7 +209,7 @@ export function Dashboard({
     </Link>
   );
   return (
-    <>
+    <div className="workspace-dashboard">
       <PageHeader
         eyebrowKey="dash.eyebrow"
         titleKey="dash.title"
@@ -233,15 +236,18 @@ export function Dashboard({
           }
         />
       ) : !current ? (
-        <EmptyState
-          title={t("dash.noActive")}
-          copy={t("dash.noActiveCopy")}
-          action={
-            <ButtonLink href="/app/projects">{t("nav.sprints")}</ButtonLink>
-          }
-        />
+        draft ? <section className="workspace-draft-focus">
+          <div><div className="workspace-draft-icon"><Layers3 size={20} /></div><div className="flex items-center gap-3"><span className="text-xs uppercase tracking-widest text-muted-foreground">{language === "lt" ? "Kitas žingsnis" : "Your next step"}</span><StatusBadge status="draft" /></div><h2>{draft.title}</h2><p>{draft.goal}</p><p className="mt-3">{language === "lt" ? "Peržiūrėkite planą, suderinkite užduotis ir pradėkite sprintą." : "Review the plan, agree on the work, and start your sprint."}</p></div>
+          <ButtonLink href={`/app/projects/${draft.id}#plan`}>{language === "lt" ? "Tęsti rengimą" : "Continue setup"}<ArrowRight size={16} /></ButtonLink>
+        </section> : <EmptyState title={t("dash.noActive")} copy={t("dash.noActiveCopy")} className="py-6" action={<ButtonLink href="/app/projects/new">{t("dash.new")}<Plus size={16} /></ButtonLink>} />
       ) : (
         <>
+          <div className="workspace-execution-strip">
+            <div><span>{t("dash.today")}</span><strong>{metrics.todayCount}</strong></div>
+            <div><span>{t("dash.pending")}</span><strong>{metrics.reviews.length}</strong></div>
+            <div><span>{t("dash.active")}</span><strong>{metrics.active.length}</strong></div>
+            <div><span>{t("dash.points")}</span><strong>{metrics.points}</strong></div>
+          </div>
           <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
             <Card className="border-primary/30 p-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -300,6 +306,7 @@ export function Dashboard({
                 </strong>
               </div>
               <Progress
+                verified
                 label={t("dash.verified")}
                 value={projectProgress(currentTasks)}
                 className="mt-3"
@@ -314,6 +321,12 @@ export function Dashboard({
                     })
                   : t("dash.noTasks")}
               </p>
+              {currentTasks.length > 0 && <>
+                <div className="workspace-status-track" role="img" aria-label={language === "lt" ? "Užduočių pasiskirstymas pagal būseną" : "Tasks by current status"}>
+                  {["approved", "submitted", "in_progress", "todo", "needs_changes", "rejected", "disputed"].map(status => <span key={status} data-state={status} style={{ width: `${currentTasks.filter(task => task.status === status).length / currentTasks.length * 100}%` }} />)}
+                </div>
+                <div className="workspace-status-legend">{["approved", "submitted", "in_progress"].map(status => <span key={status}><i data-state={status} />{t(`status.${status}`)} {currentTasks.filter(task => task.status === status).length}</span>)}</div>
+              </>}
               {time && (
                 <div className="mt-5 flex justify-between border-t border-border pt-4 text-xs text-muted-foreground">
                   <span>{t("dash.elapsed")}</span>
@@ -378,27 +391,6 @@ export function Dashboard({
               </div>
             </section>
           </div>
-          <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <MetricCard
-              label={t("dash.today")}
-              value={metrics.todayCount}
-              icon={<Target size={19} />}
-            />
-            <MetricCard
-              label={t("dash.pending")}
-              value={metrics.reviews.length}
-              icon={<ClipboardCheck size={19} />}
-            />
-            <MetricCard
-              label={t("dash.active")}
-              value={metrics.active.length}
-            />
-            <MetricCard
-              label={t("dash.points")}
-              value={metrics.points}
-              detail={t("dash.pointsCopy")}
-            />
-          </div>
           <section className="mt-7">
             <SectionHeader title={t("dash.activity")} />
             <div className="grid gap-3 sm:grid-cols-2">
@@ -416,7 +408,9 @@ export function Dashboard({
                     <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
                       {item.description}
                     </p>
-                    <p className="mt-3 text-xs text-muted-foreground">
+                    <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+                      {task?.status === "approved" ? <CheckCheck size={13} className="text-success" /> : <FileText size={13} />}
+                      {task && <span>{t(`status.${task.status}`)} · </span>}
                       {new Intl.DateTimeFormat(
                         language === "lt" ? "lt-LT" : "en-GB",
                         { dateStyle: "medium" },
@@ -436,7 +430,7 @@ export function Dashboard({
           </section>
         </>
       )}
-      {projects.some((p) => p.id !== current?.id) && (
+      {otherProjects.length > 0 && (
         <div className="mt-7">
           <SectionHeader
             title={t("dash.history")}
@@ -448,13 +442,12 @@ export function Dashboard({
             }
           />
           <div className="grid gap-3 sm:grid-cols-2">
-            {projects
-              .filter((p) => p.id !== current?.id)
+            {otherProjects
               .slice(0, 4)
               .map(sprintCard)}
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

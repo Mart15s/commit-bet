@@ -1,121 +1,56 @@
 "use client";
+import { useState } from "react";
+import Link from "next/link";
 import { useI18n } from "@/components/language-provider";
-import { CalendarDays, FileCheck2, UserRound } from "lucide-react";
-import { ButtonLink, Card, StatusBadge } from "@/components/ui";
+import { CalendarDays, FileText, ListFilter } from "lucide-react";
+import { StatusBadge } from "@/components/ui";
+import "@/app/workspace.css";
 
 export type BoardTask = {
-  id: string;
-  title: string;
-  description?: string | null;
-  status: string;
-  priority: string;
-  dueDate: string;
-  ownerName?: string;
-  expectedEvidenceTypes: string[];
-  acceptanceCriteria: string[];
+  id: string; title: string; description?: string | null; status: string;
+  priority: string; dueDate: string; ownerName?: string;
+  expectedEvidenceTypes: string[]; acceptanceCriteria: string[];
 };
-
 const columns = [
-  { key: "todo", label: "Todo", empty: "AI-planned tasks will start here." },
-  {
-    key: "in_progress",
-    label: "In progress",
-    empty: "Work appears here once someone starts.",
-  },
-  {
-    key: "submitted",
-    label: "Submitted",
-    empty: "Proof waiting for peer review lands here.",
-  },
-  {
-    key: "approved",
-    label: "Approved",
-    empty: "Approved proof counts toward progress.",
-  },
-  {
-    key: "needs_changes",
-    label: "Needs changes",
-    empty: "Tasks needing clearer proof show here.",
-  },
-  {
-    key: "rejected",
-    label: "Rejected",
-    empty: "Only unsupported proof should land here.",
-  },
-  {
-    key: "disputed",
-    label: "Disputed",
-    empty: "AI can structure disagreements here.",
-  },
+  { key: "todo", empty: "AI-planned tasks will start here." },
+  { key: "in_progress", empty: "Work appears here once someone starts." },
+  { key: "submitted", empty: "Proof waiting for peer review lands here." },
+  { key: "approved", empty: "Approved proof counts toward progress." },
+  { key: "needs_changes", empty: "Tasks needing clearer proof show here." },
+  { key: "rejected", empty: "Only unsupported proof should land here." },
+  { key: "disputed", empty: "AI can structure disagreements here." },
 ];
-
 export function TaskBoard({ tasks }: { tasks: BoardTask[] }) {
   const { t, language } = useI18n();
-  return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {columns.map((column) => {
-        const items = tasks.filter((task) => task.status === column.key);
-        return (
-          <section
-            key={column.key}
-            className="min-w-0 rounded-2xl border border-border bg-surface/80 p-3"
-          >
-            <div className="mb-3 flex items-center justify-between gap-2 px-1">
-              <h2 className="text-sm font-bold">
-                {t(`status.${column.key}`)}
-              </h2>
-              <span className="rounded-full border border-border bg-elevated px-2 py-1 text-xs font-bold text-muted-foreground">
-                {items.length}
-              </span>
-            </div>
-            <div className="grid gap-3">
-              {items.map((task) => (
-                <ButtonLink
-                  key={task.id}
-                  href={`/app/tasks/${task.id}`}
-                  variant="secondary"
-                  className="h-auto justify-start p-0 text-left"
-                >
-                  <Card className="w-full border-0 p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-bold leading-5">{task.title}</h3>
-                      <StatusBadge status={task.priority} />
-                    </div>
-                    <div className="mt-3 space-y-2 text-xs text-muted-foreground">
-                      <p className="flex items-center gap-2">
-                        <UserRound size={14} />{" "}
-                        {task.ownerName || t("Unassigned")}
-                      </p>
-                      <p className="flex items-center gap-2">
-                        <CalendarDays size={14} />{" "}
-                        {new Intl.DateTimeFormat(
-                          language === "lt" ? "lt-LT" : "en-GB",
-                          { dateStyle: "medium" },
-                        ).format(new Date(`${task.dueDate}T12:00:00`))}
-                      </p>
-                      <p className="flex items-center gap-2">
-                        <FileCheck2 size={14} />{" "}
-                        {task.expectedEvidenceTypes.join(", ") ||
-                          t("Evidence expected")}
-                      </p>
-                    </div>
-                    <p className="mt-3 line-clamp-2 text-xs leading-5 text-muted-foreground">
-                      {task.acceptanceCriteria[0] ||
-                        task.description ||
-                        t("Acceptance criteria pending.")}
-                    </p>
-                  </Card>
-                </ButtonLink>
-              ))}
-              {!items.length && (
-                <div className="rounded-xl border border-dashed border-border bg-secondary/55 p-4 text-center text-xs font-bold leading-5 text-muted-foreground">
-                  {t(column.empty)}
-                </div>
-              )}
-            </div>
-          </section>
-        );
+  const [filter, setFilter] = useState("all");
+  const copy = (en: string, lt: string) => language === "lt" ? lt : en;
+  return <div>
+    <div className="board-toolbar">
+      <p className="flex items-center gap-2 text-xs text-muted-foreground"><ListFilter size={15} />{copy("Filter the board", "Filtruokite lentą")}</p>
+      <div className="board-filters" role="group" aria-label={copy("Task status filter", "Užduočių būsenų filtras")}>
+        <button type="button" aria-pressed={filter === "all"} onClick={() => setFilter("all")}>{copy("All", "Visos")} · {tasks.length}</button>
+        {columns.filter(column => tasks.some(task => task.status === column.key)).map(column => <button key={column.key} type="button" aria-pressed={filter === column.key} onClick={() => setFilter(column.key)}>{t(`status.${column.key}`)} · {tasks.filter(task => task.status === column.key).length}</button>)}
+      </div>
+    </div>
+    <div className="board-grid">
+      {columns.filter(column => filter === "all" || filter === column.key).map(column => {
+        const items = tasks.filter(task => task.status === column.key);
+        return <section key={column.key} className={`board-column ${items.length ? "" : "board-column-empty"}`} data-status={column.key}>
+          <div className="board-column-head"><h2><span className="board-status-dot" />{t(`status.${column.key}`)}</h2><span className="tab-count">{items.length}</span></div>
+          <div className="grid gap-2">
+            {items.map(task => <Link className="board-task" key={task.id} href={`/app/tasks/${task.id}`}>
+              <div className="mb-3 flex items-center justify-between gap-2"><span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{copy("Task", "Užduotis")}</span><StatusBadge status={task.priority} /></div>
+              <h3>{task.title}</h3>
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+                <p className="board-task-meta"><span className="board-avatar" aria-hidden="true">{(task.ownerName || "?").slice(0, 1).toUpperCase()}</span>{task.ownerName || t("Unassigned")}</p>
+                <p className="board-task-meta"><CalendarDays size={13} />{task.dueDate ? new Intl.DateTimeFormat(language === "lt" ? "lt-LT" : "en-GB", { month: "short", day: "numeric" }).format(new Date(`${task.dueDate}T12:00:00`)) : copy("No due date", "Be termino")}</p>
+              </div>
+              <div className="board-task-proof"><p className="flex items-center gap-1.5"><FileText size={12} />{task.expectedEvidenceTypes.map(item => t(item)).join(", ") || t("Evidence expected")}</p><p className="mt-1 line-clamp-2">{task.acceptanceCriteria[0] || task.description || t("Acceptance criteria pending.")}</p></div>
+            </Link>)}
+            {!items.length && <p className="board-empty">{t(column.empty)}</p>}
+          </div>
+        </section>;
       })}
     </div>
-  );
+  </div>;
 }
