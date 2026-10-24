@@ -13,7 +13,14 @@ export default async function NewProjectPage({
   const { data: memberships } = await supabase
     .from("team_members")
     .select("team_id, teams(id, name), profiles(id, name, email)");
-  const teamRows = new Map<string, { id: string; name: string; members: Array<{ id: string; name: string; email: string }> }>();
+  const teamRows = new Map<
+    string,
+    {
+      id: string;
+      name: string;
+      members: Array<{ id: string; name: string; email: string }>;
+    }
+  >();
 
   for (const membership of memberships ?? []) {
     const team = membership.teams as unknown as { id: string; name: string };
@@ -24,7 +31,14 @@ export default async function NewProjectPage({
         .eq("team_id", team.id);
       teamRows.set(team.id, {
         ...team,
-        members: (members ?? []).map((member) => member.profiles as unknown as { id: string; name: string; email: string }),
+        members: (members ?? []).map(
+          (member) =>
+            member.profiles as unknown as {
+              id: string;
+              name: string;
+              email: string;
+            },
+        ),
       });
     }
   }
@@ -32,7 +46,10 @@ export default async function NewProjectPage({
 
   return (
     <>
-      <PageHeader title="Create a commitment sprint" description="Define the agreement first. AI will help turn it into an executable plan." />
+      <PageHeader
+        titleKey="Create a commitment sprint"
+        descriptionKey="Define the agreement first. AI will help turn it into an executable plan."
+      />
       {teams.length ? (
         <ProjectWizard
           teams={teams}

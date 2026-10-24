@@ -1,9 +1,24 @@
 import { expect, test } from "@playwright/test";
-
-test("mobile landing page exposes the MVP promise", async ({ page }) => {
+test("landing page offers an honest walkthrough and labeled sample content", async ({
+  page,
+}) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /stop abandoning projects/i })).toBeVisible();
-  await expect(page.getByText(/No real payments/i)).toBeVisible();
-  await expect(page.getByRole("link", { name: /start a commitment sprint/i })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Finish what you start. Together." }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Illustrative product preview · sample data"),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "See how it works" }),
+  ).toHaveAttribute("href", "#how-it-works");
+  await expect(page.getByRole("link", { name: "Sign in" })).toHaveAttribute(
+    "href",
+    "/login",
+  );
+  await expect(
+    page
+      .getByText("Commitment points are virtual and have no monetary value.")
+      .first(),
+  ).toBeVisible();
 });
-

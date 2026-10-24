@@ -1,3 +1,6 @@
+import { screenCopy } from "./screen-copy";
+import { uiTranslations } from "./ui-translations";
+
 export const languages = ["en", "lt"] as const;
 
 export type Language = (typeof languages)[number];
@@ -12,6 +15,8 @@ export const languageLabels: Record<Language, string> = {
 
 const dictionaries = {
   en: {
+    ...uiTranslations.en,
+    ...screenCopy.en,
     "app.brand": "CommitBet",
     "app.tagline": "Evidence-based team accountability",
 
@@ -27,7 +32,8 @@ const dictionaries = {
     "language.helper": "Choose the language used across CommitBet.",
     "language.saving": "Saving language...",
     "language.saved": "Language saved.",
-    "language.saveError": "Could not save language. Your local choice is still applied on this device.",
+    "language.saveError":
+      "Could not save language. Your local choice is still applied on this device.",
 
     "logout.button": "Log out",
     "logout.loading": "Logging out...",
@@ -36,8 +42,9 @@ const dictionaries = {
     "landing.login": "Log in",
     "landing.startSprint": "Start sprint",
     "landing.heroBadge": "Evidence-based team accountability",
-    "landing.heroTitle": "Stop abandoning projects after 2 days.",
-    "landing.heroCopy": "CommitBet uses AI, evidence and commitment stakes to make your team finish what it starts.",
+    "landing.heroTitle": "Finish what you start. Together.",
+    "landing.heroCopy":
+      "AI accountability for teams that want to finish what they start. Set a clear goal, show daily proof, and move forward with peer review.",
     "landing.createSprint": "Start a commitment sprint",
     "landing.viewProduct": "View product",
     "landing.virtualPledges": "Virtual pledges only",
@@ -49,60 +56,78 @@ const dictionaries = {
     "landing.approved": "Approved",
     "landing.commitmentProgress": "Commitment progress",
     "landing.problemEyebrow": "The problem",
-    "landing.problemTitle": "Small teams do not need another place to park tasks.",
+    "landing.problemTitle":
+      "Small teams do not need another place to park tasks.",
     "landing.problemOne": "Kickoff energy fades.",
     "landing.problemTwo": "Success stays vague.",
     "landing.problemThree": "Nobody knows what proof counts.",
     "landing.howEyebrow": "How it works",
     "landing.howTitle": "A promise becomes a reviewable chain of evidence.",
     "landing.differentEyebrow": "Different from Trello, Notion, Jira",
-    "landing.differentTitle": "CommitBet is for finishing, not organizing forever.",
-    "landing.differentCopy": "A sprint has success criteria, owners, pledge points, evidence, peer approval, and a final human-confirmed outcome.",
+    "landing.differentTitle":
+      "CommitBet is for finishing, not organizing forever.",
+    "landing.differentCopy":
+      "A sprint has success criteria, owners, pledge points, evidence, peer approval, and a final human-confirmed outcome.",
     "landing.assetTitle": "Evidence is the core product asset.",
-    "landing.assetCopy": "Every task defines expected proof. Daily logs stay lightweight, peer reviews compare proof to acceptance criteria, and the final report explains exactly which evidence mattered.",
+    "landing.assetCopy":
+      "Every task defines expected proof. Daily logs stay lightweight, peer reviews compare proof to acceptance criteria, and the final report explains exactly which evidence mattered.",
     "landing.screenshots": "Screenshots",
     "landing.githubLinks": "GitHub links",
     "landing.demoVideos": "Demo videos",
     "landing.aiRisk": "AI risk insight",
     "landing.why": "Why:",
     "landing.neutralReviewer": "Neutral reviewer",
-    "landing.neutralReviewerCopy": "AI summarizes risk, checks evidence patterns, and gives a reasoned recommendation.",
+    "landing.neutralReviewerCopy":
+      "AI summarizes risk, checks evidence patterns, and gives a reasoned recommendation.",
     "landing.peerApproval": "Peer approval",
-    "landing.peerApprovalCopy": "Team members approve, request changes, reject, or dispute submitted work.",
+    "landing.peerApprovalCopy":
+      "Team members approve, request changes, reject, or dispute submitted work.",
     "landing.humanConfirmation": "Human confirmation",
-    "landing.humanConfirmationCopy": "Final pledge outcomes are manually confirmed. No real payments or escrow in this MVP.",
-    "landing.finalTitle": "Turn vague project promises into evidence-based commitments.",
-    "landing.finalCopy": "Build the project, prove the work, review the evidence, and let humans make the final call.",
+    "landing.humanConfirmationCopy":
+      "Final pledge outcomes are manually confirmed. No real payments or escrow in this MVP.",
+    "landing.finalTitle":
+      "Turn vague project promises into evidence-based commitments.",
+    "landing.finalCopy":
+      "Build the project, prove the work, review the evidence, and let humans make the final call.",
     "landing.startWithPledges": "Start with virtual pledges",
     "landing.signIn": "Sign in",
     "landing.flowProject": "Project",
-    "landing.flowProjectCopy": "Name the outcome, team, deadline, and success criteria.",
+    "landing.flowProjectCopy":
+      "Name the outcome, team, deadline, and success criteria.",
     "landing.flowCommitment": "Commitment",
-    "landing.flowCommitmentCopy": "Declare virtual pledge points so the sprint feels real.",
+    "landing.flowCommitmentCopy":
+      "Declare virtual pledge points so the sprint feels real.",
     "landing.flowPlan": "AI Plan",
-    "landing.flowPlanCopy": "Turn the promise into owners, due dates, proof, and risks.",
+    "landing.flowPlanCopy":
+      "Turn the promise into owners, due dates, proof, and risks.",
     "landing.flowEvidence": "Daily Evidence",
     "landing.flowEvidenceCopy": "Log only what changed and attach the proof.",
     "landing.flowApproval": "Peer Approval",
-    "landing.flowApprovalCopy": "Teammates compare proof against acceptance criteria.",
+    "landing.flowApprovalCopy":
+      "Teammates compare proof against acceptance criteria.",
     "landing.flowReport": "AI Final Report",
     "landing.flowReportCopy": "AI recommends with reasons; humans confirm.",
     "landing.diffBacklog": "Not a backlog",
-    "landing.diffBacklogCopy": "CommitBet starts with a time-boxed promise, not infinite task capture.",
+    "landing.diffBacklogCopy":
+      "CommitBet starts with a time-boxed promise, not infinite task capture.",
     "landing.diffEvidence": "Evidence over vibes",
-    "landing.diffEvidenceCopy": "Progress only counts when daily logs and task proof support the claim.",
+    "landing.diffEvidenceCopy":
+      "Progress only counts when daily logs and task proof support the claim.",
     "landing.diffAi": "AI is neutral",
-    "landing.diffAiCopy": "AI explains risk and recommendations, but it never becomes the final judge.",
+    "landing.diffAiCopy":
+      "AI explains risk and recommendations, but it never becomes the final judge.",
 
     "auth.accountability": "Accountability platform",
     "auth.sideTitle": "Finish the project your team promised to finish.",
-    "auth.sideCopy": "Sign in to manage commitments, daily evidence, peer reviews, and AI recommendations that still require human confirmation.",
+    "auth.sideCopy":
+      "Sign in to manage commitments, daily evidence, peer reviews, and AI recommendations that still require human confirmation.",
     "auth.evidenceFirst": "Evidence first",
     "auth.peerApproved": "Peer approved",
     "auth.aiExplains": "AI explains why",
     "auth.humansDecide": "Humans decide",
     "auth.loginTitle": "Welcome back",
-    "auth.loginCopy": "Continue reviewing evidence, daily logs, and pledge outcomes.",
+    "auth.loginCopy":
+      "Continue reviewing evidence, daily logs, and pledge outcomes.",
     "auth.email": "Email",
     "auth.password": "Password",
     "auth.name": "Name",
@@ -110,8 +135,10 @@ const dictionaries = {
     "auth.newHere": "New here?",
     "auth.createAccountLink": "Create an account",
     "auth.registerTitle": "Create your account",
-    "auth.registerCopy": "Set up your profile, then create or join a small team commitment sprint.",
-    "auth.onboardingNote": "Onboarding starts with your team, project goal, success criteria, and virtual pledge points. No real money is handled.",
+    "auth.registerCopy":
+      "Set up your profile, then create or join a small team commitment sprint.",
+    "auth.onboardingNote":
+      "Onboarding starts with your team, project goal, success criteria, and virtual pledge points. No real money is handled.",
     "auth.createAccountButton": "Create account",
     "auth.alreadyRegistered": "Already registered?",
 
@@ -125,13 +152,14 @@ const dictionaries = {
     "common.to": "to",
 
     "onboarding.stepCounter": "Step {current} of {total}",
-    "onboarding.stepHelper": "Choose from quick options first. Add custom details only when needed.",
+    "onboarding.stepHelper":
+      "Choose from quick options first. Add custom details only when needed.",
     "onboarding.steps.project": "What are you trying to finish?",
     "onboarding.steps.criteria": "How will you know it worked?",
     "onboarding.steps.duration": "When is the finish line?",
     "onboarding.steps.members": "Who is committing with you?",
     "onboarding.steps.pledge": "What is everyone putting at stake?",
-    "onboarding.steps.ai": "Let AI create your action plan",
+    "onboarding.steps.ai": "How your AI plan will work",
     "onboarding.steps.review": "Review everything before starting",
     "onboarding.stepOne": "Step 1",
     "onboarding.stepTwo": "Step 2",
@@ -141,87 +169,122 @@ const dictionaries = {
     "onboarding.stepSix": "Step 6",
     "onboarding.stepSeven": "Step 7",
     "onboarding.projectTitle": "What are you trying to finish?",
-    "onboarding.projectCopy": "Pick the project shape and describe the outcome. AI will use this to suggest success criteria and tasks.",
+    "onboarding.projectCopy":
+      "Pick the project shape and describe the outcome. AI will use this to suggest success criteria and tasks.",
     "onboarding.team": "Team",
-    "onboarding.teamHelper": "Choose the small group that will commit and review proof together.",
+    "onboarding.teamHelper":
+      "Choose the small group that will commit and review proof together.",
     "onboarding.projectType": "Project type",
-    "onboarding.projectTypeHelper": "Choose the closest preset so CommitBet can suggest useful criteria.",
+    "onboarding.projectTypeHelper":
+      "Choose the closest preset so CommitBet can suggest useful criteria.",
     "onboarding.projectName": "Project name",
-    "onboarding.projectNameHelper": "Short and concrete, like the name you would put on a sprint board.",
+    "onboarding.projectNameHelper":
+      "Short and concrete, like the name you would put on a sprint board.",
     "onboarding.projectNamePlaceholder": "Launch the first CommitBet waitlist",
     "onboarding.description": "Description",
-    "onboarding.descriptionHelper": "One or two sentences about what you are building and why it matters now.",
-    "onboarding.descriptionPlaceholder": "We want to validate whether small teams will use proof-based commitments to finish a launch.",
+    "onboarding.descriptionHelper":
+      "One or two sentences about what you are building and why it matters now.",
+    "onboarding.descriptionPlaceholder":
+      "We want to validate whether small teams will use proof-based commitments to finish a launch.",
     "onboarding.mainGoal": "Main goal",
-    "onboarding.mainGoalHelper": "Write the outcome a teammate could check at the deadline.",
-    "onboarding.mainGoalPlaceholder": "Launch a landing page, collect 20 waitlist emails, and record a 2-minute demo video within 14 days.",
+    "onboarding.mainGoalHelper":
+      "Write the outcome a teammate could check at the deadline.",
+    "onboarding.mainGoalPlaceholder":
+      "Launch a landing page, collect 20 waitlist emails, and record a 2-minute demo video within 14 days.",
     "onboarding.criteriaTitle": "How will you know it worked?",
-    "onboarding.criteriaHelper": "Select what must be true for this project to count as successful.",
+    "onboarding.criteriaHelper":
+      "Select what must be true for this project to count as successful.",
     "onboarding.suggestedCriteria": "Suggested success criteria",
-    "onboarding.successCriteriaCopy": "Select what must be true for this project to count as successful.",
+    "onboarding.successCriteriaCopy":
+      "Select what must be true for this project to count as successful.",
     "onboarding.customCriteria": "Custom success criteria",
-    "onboarding.customCriteriaHelper": "Add any project-specific result your team needs to prove.",
+    "onboarding.customCriteriaHelper":
+      "Add any project-specific result your team needs to prove.",
     "onboarding.durationTitle": "When is the finish line?",
-    "onboarding.durationHelper": "Pick a window short enough to create urgency and long enough to gather real proof.",
+    "onboarding.durationHelper":
+      "Pick a window short enough to create urgency and long enough to gather real proof.",
     "onboarding.startDate": "Start date",
     "onboarding.startDateHelper": "The day your team starts logging proof.",
     "onboarding.customEndDate": "Custom end date",
-    "onboarding.customEndDateHelper": "Keep the deadline close enough that reviews stay fresh.",
+    "onboarding.customEndDateHelper":
+      "Keep the deadline close enough that reviews stay fresh.",
     "onboarding.membersTitle": "Member setup",
-    "onboarding.membersHelper": "Use chips to describe each member quickly. AI will use this to assign realistic tasks.",
+    "onboarding.membersHelper":
+      "Use chips to describe each member quickly. AI will use this to assign realistic tasks.",
     "onboarding.rolesTitle": "Roles / main areas",
-    "onboarding.rolesHelper": "Choose at least one role or strength so AI knows where this member fits.",
+    "onboarding.rolesHelper":
+      "Choose at least one role or strength so AI knows where this member fits.",
     "onboarding.strengthsTitle": "Strengths",
-    "onboarding.strengthsHelper": "Choose what this member is good at. AI will use this to assign realistic tasks.",
+    "onboarding.strengthsHelper":
+      "Choose what this member is good at. AI will use this to assign realistic tasks.",
     "onboarding.weaknessesTitle": "Weaknesses / avoided areas",
-    "onboarding.weaknessesHelper": "Choose areas this member prefers to avoid or needs help with.",
+    "onboarding.weaknessesHelper":
+      "Choose areas this member prefers to avoid or needs help with.",
     "onboarding.preferredWorkTitle": "Preferred work types",
-    "onboarding.preferredWorkHelper": "Choose the kinds of tasks this member is most likely to complete well.",
+    "onboarding.preferredWorkHelper":
+      "Choose the kinds of tasks this member is most likely to complete well.",
     "onboarding.evidenceTitle": "Evidence types",
-    "onboarding.evidenceHelper": "Choose what proof this member can realistically submit.",
+    "onboarding.evidenceHelper":
+      "Choose what proof this member can realistically submit.",
     "onboarding.availabilityTitle": "Availability",
     "onboarding.availabilityHelper": "Pick the closest daily time commitment.",
     "onboarding.customAvailability": "Custom minutes per day",
-    "onboarding.customAvailabilityHelper": "Use this when the presets are not quite right.",
+    "onboarding.customAvailabilityHelper":
+      "Use this when the presets are not quite right.",
     "onboarding.experienceTitle": "Experience level",
-    "onboarding.experienceHelper": "Choose how much support this member may need.",
+    "onboarding.experienceHelper":
+      "Choose how much support this member may need.",
     "onboarding.bestWorkTimeTitle": "Best working time",
-    "onboarding.bestWorkTimeHelper": "Choose when this member is most likely to make progress.",
+    "onboarding.bestWorkTimeHelper":
+      "Choose when this member is most likely to make progress.",
     "onboarding.memberNotes": "Optional notes",
-    "onboarding.memberNotesHelper": "Keep this short. Add scheduling constraints, pairing needs, or assignment preferences.",
-    "onboarding.memberNotesPlaceholder": "I can review after 5pm. Avoid backend tasks unless paired.",
+    "onboarding.memberNotesHelper":
+      "Keep this short. Add scheduling constraints, pairing needs, or assignment preferences.",
+    "onboarding.memberNotesPlaceholder":
+      "I can review after 5pm. Avoid backend tasks unless paired.",
     "onboarding.pledgeTitle": "Pledge points",
-    "onboarding.pledgeHelper": "Choose a virtual commitment amount. No real payment flow is added.",
-    "onboarding.pledgeTip": "Beginner tip: 20 points is enough to feel real without making the project stressful. No money is collected, escrowed, or distributed.",
+    "onboarding.pledgeHelper":
+      "Choose a virtual commitment amount. No real payment flow is added.",
+    "onboarding.pledgeTip":
+      "Beginner tip: 20 points is enough to feel real without making the project stressful. No money is collected, escrowed, or distributed.",
     "onboarding.customPledge": "Custom pledge points",
     "onboarding.customPledgeHelper": "Use virtual points only.",
     "onboarding.pledgeAppliesTo": "Project pledge",
-    "onboarding.pledgeAppliesToCopy": "Each selected member will pledge {points} virtual points.",
-    "onboarding.aiTitle": "Let AI create your action plan",
-    "onboarding.aiHelper": "The AI plan is a draft. It uses project criteria, member roles, strengths, availability, and evidence types.",
+    "onboarding.pledgeAppliesToCopy":
+      "Each selected member will pledge {points} virtual points.",
+    "onboarding.aiTitle": "How your AI plan will work",
+    "onboarding.aiHelper":
+      "The AI plan is a draft. It uses project criteria, member roles, strengths, availability, and evidence types.",
     "onboarding.proofExamples": "Proof of work examples",
     "onboarding.phase": "Phase {number}",
-    "onboarding.planOwner": "Owner: {owner} - Due {date} - assigned from roles, strengths, evidence, and availability",
+    "onboarding.planOwner":
+      "Owner: {owner} - Due {date} - assigned from roles, strengths, evidence, and availability",
     "onboarding.selectedTeammate": "Selected teammate",
     "onboarding.acceptance": "Acceptance",
     "onboarding.expectedEvidence": "Expected evidence",
     "onboarding.reviewTitle": "Review everything before starting",
-    "onboarding.reviewHelper": "This creates a draft project. Nothing starts until you generate and approve the AI plan on the project page.",
+    "onboarding.reviewHelper":
+      "This creates a draft project. Nothing starts until you generate and approve the AI plan on the project page.",
     "onboarding.membersMetric": "Members",
     "onboarding.pointsMetric": "Pledge points",
     "onboarding.criteriaMetric": "Criteria",
     "onboarding.flowTitle": "Accountability flow",
-    "onboarding.flowCopy": "Project -> Commitment -> AI Plan -> Daily Evidence -> Peer Approval -> AI Final Report -> Human Confirmation",
+    "onboarding.flowCopy":
+      "Project -> Commitment -> AI Plan -> Daily Evidence -> Peer Approval -> AI Final Report -> Human Confirmation",
     "onboarding.readyTitle": "Ready to create the draft",
-    "onboarding.readyCopy": "Next, generate the AI plan, edit anything that feels off, then start the project when the team is aligned.",
+    "onboarding.readyCopy":
+      "Next, generate the AI plan, edit anything that feels off, then start the project when the team is aligned.",
     "onboarding.createDraft": "Create draft commitment",
     "onboarding.customPlaceholder": "Type a custom option",
     "onboarding.selectedOptions": "Selected options",
     "onboarding.validation.customRequired": "Custom option cannot be empty.",
     "onboarding.validation.duplicateCustom": "That option is already selected.",
-    "onboarding.validation.criteriaRequired": "Choose at least one success criterion.",
-    "onboarding.validation.memberRequired": "Select at least one project member.",
-    "onboarding.validation.roleOrStrength": "Choose at least one role or strength for this member.",
+    "onboarding.validation.criteriaRequired":
+      "Choose at least one success criterion.",
+    "onboarding.validation.memberRequired":
+      "Select at least one project member.",
+    "onboarding.validation.roleOrStrength":
+      "Choose at least one role or strength for this member.",
     "onboarding.roles.softwareDevelopment": "Software Development",
     "onboarding.roles.frontend": "Frontend",
     "onboarding.roles.backend": "Backend",
@@ -352,7 +415,8 @@ const dictionaries = {
     "onboarding.criteria.authenticationWorks": "Authentication works",
     "onboarding.criteria.mainDashboardExists": "Main dashboard exists",
     "onboarding.criteria.coreUserFlowWorks": "Core user flow works",
-    "onboarding.criteria.databaseStoresRequiredData": "Database stores required data",
+    "onboarding.criteria.databaseStoresRequiredData":
+      "Database stores required data",
     "onboarding.criteria.demoVideoRecorded": "Demo video recorded",
     "onboarding.criteria.fiveTestUsersInvited": "At least 5 test users invited",
     "onboarding.criteria.pageIsLive": "Page is live",
@@ -360,44 +424,56 @@ const dictionaries = {
     "onboarding.criteria.signupFormWorks": "Signup/waitlist form works",
     "onboarding.criteria.mobileLayoutWorks": "Mobile layout works",
     "onboarding.criteria.analyticsInstalled": "Analytics installed",
-    "onboarding.criteria.threeSectionsCompleted": "At least 3 sections completed",
+    "onboarding.criteria.threeSectionsCompleted":
+      "At least 3 sections completed",
     "onboarding.criteria.contentCalendarCreated": "Content calendar created",
     "onboarding.criteria.fivePostsPublished": "At least 5 posts published",
     "onboarding.criteria.targetAudienceDefined": "Target audience defined",
     "onboarding.criteria.basicAnalyticsReviewed": "Basic analytics reviewed",
-    "onboarding.criteria.campaignResultsSummarized": "Campaign results summarized",
+    "onboarding.criteria.campaignResultsSummarized":
+      "Campaign results summarized",
     "onboarding.plan.defineRubric": "Define commitment and proof rubric",
     "onboarding.plan.verticalSlice": "Ship the first working vertical slice",
     "onboarding.plan.validate": "Collect daily logs and peer approvals",
     "onboarding.plan.documentEvidence": "Document or shared link",
     "onboarding.plan.demoEvidence": "Demo link or deployment evidence",
     "onboarding.plan.reviewEvidence": "Screenshots and review comments",
-    "onboarding.plan.criteriaRubric": "Success criteria mapped to evidence types",
-    "onboarding.plan.criteriaSlice": "End-to-end flow can be reviewed by a teammate",
-    "onboarding.plan.criteriaReview": "At least one submitted task has human approval",
+    "onboarding.plan.criteriaRubric":
+      "Success criteria mapped to evidence types",
+    "onboarding.plan.criteriaSlice":
+      "End-to-end flow can be reviewed by a teammate",
+    "onboarding.plan.criteriaReview":
+      "At least one submitted task has human approval",
 
     "profile.title": "Profile",
-    "profile.description": "Update your name, avatar, language, and session settings in one place.",
+    "profile.description":
+      "Update your name, avatar, language, and session settings in one place.",
     "profile.accountTitle": "Account information",
-    "profile.accountCopy": "This is how teammates recognize you in commitments, evidence, and reviews.",
+    "profile.accountCopy":
+      "This is how teammates recognize you in commitments, evidence, and reviews.",
     "profile.fullName": "Display name",
     "profile.fullNamePlaceholder": "Your name",
     "profile.email": "Email",
     "profile.emailHelp": "Your email comes from your sign-in account.",
     "profile.avatarUrl": "Avatar URL",
     "profile.avatarUrlPlaceholder": "https://example.com/avatar.png",
-    "profile.avatarHelp": "Optional. Paste a public image link if you want a custom avatar.",
+    "profile.avatarHelp":
+      "Optional. Paste a public image link if you want a custom avatar.",
     "profile.save": "Save changes",
     "profile.saving": "Saving...",
     "profile.saved": "Profile saved.",
     "profile.error": "Could not save profile.",
     "profile.nameRequired": "Please enter a display name.",
     "profile.languageTitle": "Language",
-    "profile.languageCopy": "Language changes apply immediately and are saved to your account.",
+    "profile.languageCopy":
+      "Language changes apply immediately and are saved to your account.",
     "profile.sessionTitle": "Session / Log out",
-    "profile.sessionCopy": "Use this when you are done or switching accounts. You will return to the landing page.",
+    "profile.sessionCopy":
+      "Use this when you are done or switching accounts. You will return to the landing page.",
   },
   lt: {
+    ...uiTranslations.lt,
+    ...screenCopy.lt,
     "app.brand": "CommitBet",
     "app.tagline": "Komandinė atsakomybė pagal įrodymus",
 
@@ -413,7 +489,8 @@ const dictionaries = {
     "language.helper": "Pasirinkite kalbą, naudojamą CommitBet.",
     "language.saving": "Saugoma kalba...",
     "language.saved": "Kalba išsaugota.",
-    "language.saveError": "Kalbos nepavyko išsaugoti. Vietinis pasirinkimas šiame įrenginyje vis tiek pritaikytas.",
+    "language.saveError":
+      "Kalbos nepavyko išsaugoti. Vietinis pasirinkimas šiame įrenginyje vis tiek pritaikytas.",
 
     "logout.button": "Atsijungti",
     "logout.loading": "Atsijungiama...",
@@ -422,8 +499,9 @@ const dictionaries = {
     "landing.login": "Prisijungti",
     "landing.startSprint": "Pradėti sprintą",
     "landing.heroBadge": "Komandinė atsakomybė pagal įrodymus",
-    "landing.heroTitle": "Nustokite palikti projektus po 2 dienų.",
-    "landing.heroCopy": "CommitBet naudoja DI, įrodymus ir įsipareigojimus, kad jūsų komanda užbaigtų tai, ką pradėjo.",
+    "landing.heroTitle": "Užbaikite tai, ką pradėjote. Kartu.",
+    "landing.heroCopy":
+      "AI atsakomybės platforma komandoms, norinčioms užbaigti tai, ką pradėjo. Nustatykite aiškų tikslą, kasdien pateikite įrodymus ir judėkite pirmyn su komandos peržiūra.",
     "landing.createSprint": "Pradėti įsipareigojimo sprintą",
     "landing.viewProduct": "Peržiūrėti produktą",
     "landing.virtualPledges": "Tik virtualūs įsipareigojimai",
@@ -435,60 +513,81 @@ const dictionaries = {
     "landing.approved": "Patvirtinta",
     "landing.commitmentProgress": "Įsipareigojimo progresas",
     "landing.problemEyebrow": "Problema",
-    "landing.problemTitle": "Mažoms komandoms nereikia dar vienos vietos užduotims laikyti.",
+    "landing.problemTitle":
+      "Mažoms komandoms nereikia dar vienos vietos užduotims laikyti.",
     "landing.problemOne": "Starto energija išblėsta.",
     "landing.problemTwo": "Sėkmė lieka neaiški.",
     "landing.problemThree": "Niekas nežino, kokie įrodymai tinka.",
     "landing.howEyebrow": "Kaip tai veikia",
     "landing.howTitle": "Pažadas tampa peržiūrima įrodymų grandine.",
     "landing.differentEyebrow": "Kitaip nei Trello, Notion ar Jira",
-    "landing.differentTitle": "CommitBet skirtas užbaigti, o ne organizuoti be galo.",
-    "landing.differentCopy": "Sprintas turi sėkmės kriterijus, atsakingus žmones, taškų įsipareigojimus, įrodymus, kolegų patvirtinimą ir galutinį žmogaus sprendimą.",
+    "landing.differentTitle":
+      "CommitBet skirtas užbaigti, o ne organizuoti be galo.",
+    "landing.differentCopy":
+      "Sprintas turi sėkmės kriterijus, atsakingus žmones, taškų įsipareigojimus, įrodymus, kolegų patvirtinimą ir galutinį žmogaus sprendimą.",
     "landing.assetTitle": "Įrodymai yra pagrindinis produkto turtas.",
-    "landing.assetCopy": "Kiekviena užduotis apibrėžia laukiamus įrodymus. Dienos įrašai išlieka lengvi, kolegų peržiūros lygina įrodymus su kriterijais, o finalinė ataskaita paaiškina, kurie įrodymai buvo svarbiausi.",
+    "landing.assetCopy":
+      "Kiekviena užduotis apibrėžia laukiamus įrodymus. Dienos įrašai išlieka lengvi, kolegų peržiūros lygina įrodymus su kriterijais, o finalinė ataskaita paaiškina, kurie įrodymai buvo svarbiausi.",
     "landing.screenshots": "Ekrano kopijos",
     "landing.githubLinks": "GitHub nuorodos",
     "landing.demoVideos": "Demo vaizdo įrašai",
     "landing.aiRisk": "DI rizikos įžvalga",
     "landing.why": "Kodėl:",
     "landing.neutralReviewer": "Neutralus vertintojas",
-    "landing.neutralReviewerCopy": "DI apibendrina riziką, tikrina įrodymų modelius ir pateikia pagrįstą rekomendaciją.",
+    "landing.neutralReviewerCopy":
+      "DI apibendrina riziką, tikrina įrodymų modelius ir pateikia pagrįstą rekomendaciją.",
     "landing.peerApproval": "Kolegų patvirtinimas",
-    "landing.peerApprovalCopy": "Komandos nariai patvirtina, prašo pakeitimų, atmeta arba ginčija pateiktą darbą.",
+    "landing.peerApprovalCopy":
+      "Komandos nariai patvirtina, prašo pakeitimų, atmeta arba ginčija pateiktą darbą.",
     "landing.humanConfirmation": "Žmogaus patvirtinimas",
-    "landing.humanConfirmationCopy": "Galutiniai įsipareigojimo rezultatai patvirtinami rankiniu būdu. MVP nėra realių mokėjimų ar depozito.",
-    "landing.finalTitle": "Paverskite miglotus projekto pažadus į įsipareigojimus pagal įrodymus.",
-    "landing.finalCopy": "Sukurkite projektą, įrodykite darbą, peržiūrėkite įrodymus ir leiskite žmonėms priimti galutinį sprendimą.",
+    "landing.humanConfirmationCopy":
+      "Galutiniai įsipareigojimo rezultatai patvirtinami rankiniu būdu. MVP nėra realių mokėjimų ar depozito.",
+    "landing.finalTitle":
+      "Paverskite miglotus projekto pažadus į įsipareigojimus pagal įrodymus.",
+    "landing.finalCopy":
+      "Sukurkite projektą, įrodykite darbą, peržiūrėkite įrodymus ir leiskite žmonėms priimti galutinį sprendimą.",
     "landing.startWithPledges": "Pradėti su virtualiais įsipareigojimais",
     "landing.signIn": "Prisijungti",
     "landing.flowProject": "Projektas",
-    "landing.flowProjectCopy": "Įvardykite rezultatą, komandą, terminą ir sėkmės kriterijus.",
+    "landing.flowProjectCopy":
+      "Įvardykite rezultatą, komandą, terminą ir sėkmės kriterijus.",
     "landing.flowCommitment": "Įsipareigojimas",
-    "landing.flowCommitmentCopy": "Deklaruokite virtualius taškus, kad sprintas būtų rimtas.",
+    "landing.flowCommitmentCopy":
+      "Deklaruokite virtualius taškus, kad sprintas būtų rimtas.",
     "landing.flowPlan": "DI planas",
-    "landing.flowPlanCopy": "Pažadą paverskite atsakingais žmonėmis, terminais, įrodymais ir rizikomis.",
+    "landing.flowPlanCopy":
+      "Pažadą paverskite atsakingais žmonėmis, terminais, įrodymais ir rizikomis.",
     "landing.flowEvidence": "Dienos įrodymai",
-    "landing.flowEvidenceCopy": "Fiksuokite tik tai, kas pasikeitė, ir pridėkite įrodymą.",
+    "landing.flowEvidenceCopy":
+      "Fiksuokite tik tai, kas pasikeitė, ir pridėkite įrodymą.",
     "landing.flowApproval": "Kolegų patvirtinimas",
-    "landing.flowApprovalCopy": "Komandos nariai lygina įrodymus su priėmimo kriterijais.",
+    "landing.flowApprovalCopy":
+      "Komandos nariai lygina įrodymus su priėmimo kriterijais.",
     "landing.flowReport": "DI finalinė ataskaita",
-    "landing.flowReportCopy": "DI rekomenduoja su priežastimis; žmonės patvirtina.",
+    "landing.flowReportCopy":
+      "DI rekomenduoja su priežastimis; žmonės patvirtina.",
     "landing.diffBacklog": "Ne užduočių sąrašas",
-    "landing.diffBacklogCopy": "CommitBet prasideda nuo aiškaus laiko pažado, o ne begalinio užduočių kaupimo.",
+    "landing.diffBacklogCopy":
+      "CommitBet prasideda nuo aiškaus laiko pažado, o ne begalinio užduočių kaupimo.",
     "landing.diffEvidence": "Įrodymai vietoj nuojautos",
-    "landing.diffEvidenceCopy": "Progresas skaičiuojamas tik tada, kai jį pagrindžia dienos įrašai ir užduočių įrodymai.",
+    "landing.diffEvidenceCopy":
+      "Progresas skaičiuojamas tik tada, kai jį pagrindžia dienos įrašai ir užduočių įrodymai.",
     "landing.diffAi": "DI yra neutralus",
-    "landing.diffAiCopy": "DI paaiškina riziką ir rekomendacijas, bet netampa galutiniu teisėju.",
+    "landing.diffAiCopy":
+      "DI paaiškina riziką ir rekomendacijas, bet netampa galutiniu teisėju.",
 
     "auth.accountability": "Atsakomybės platforma",
-    "auth.sideTitle": "Užbaikite projektą, kurį jūsų komanda pažadėjo užbaigti.",
-    "auth.sideCopy": "Prisijunkite valdyti įsipareigojimų, dienos įrodymų, kolegų peržiūrų ir DI rekomendacijų, kurias vis tiek patvirtina žmogus.",
+    "auth.sideTitle":
+      "Užbaikite projektą, kurį jūsų komanda pažadėjo užbaigti.",
+    "auth.sideCopy":
+      "Prisijunkite valdyti įsipareigojimų, dienos įrodymų, kolegų peržiūrų ir DI rekomendacijų, kurias vis tiek patvirtina žmogus.",
     "auth.evidenceFirst": "Pirma įrodymai",
     "auth.peerApproved": "Patvirtina kolegos",
     "auth.aiExplains": "DI paaiškina kodėl",
     "auth.humansDecide": "Sprendžia žmonės",
     "auth.loginTitle": "Sveiki sugrįžę",
-    "auth.loginCopy": "Tęskite įrodymų, dienos įrašų ir įsipareigojimų rezultatų peržiūrą.",
+    "auth.loginCopy":
+      "Tęskite įrodymų, dienos įrašų ir įsipareigojimų rezultatų peržiūrą.",
     "auth.email": "El. paštas",
     "auth.password": "Slaptažodis",
     "auth.name": "Vardas",
@@ -496,8 +595,10 @@ const dictionaries = {
     "auth.newHere": "Pirmą kartą čia?",
     "auth.createAccountLink": "Sukurti paskyrą",
     "auth.registerTitle": "Sukurkite paskyrą",
-    "auth.registerCopy": "Sukurkite profilį, tada kurkite arba junkitės prie mažos komandos įsipareigojimo sprinto.",
-    "auth.onboardingNote": "Pradžia vyksta su komanda, projekto tikslu, sėkmės kriterijais ir virtualiais taškais. Realūs pinigai nenaudojami.",
+    "auth.registerCopy":
+      "Sukurkite profilį, tada kurkite arba junkitės prie mažos komandos įsipareigojimo sprinto.",
+    "auth.onboardingNote":
+      "Pradžia vyksta su komanda, projekto tikslu, sėkmės kriterijais ir virtualiais taškais. Realūs pinigai nenaudojami.",
     "auth.createAccountButton": "Sukurti paskyrą",
     "auth.alreadyRegistered": "Jau užsiregistravote?",
 
@@ -511,13 +612,14 @@ const dictionaries = {
     "common.to": "iki",
 
     "onboarding.stepCounter": "{current} žingsnis iš {total}",
-    "onboarding.stepHelper": "Pirmiausia rinkitės greitus variantus. Savo detales pridėkite tik tada, kai reikia.",
+    "onboarding.stepHelper":
+      "Pirmiausia rinkitės greitus variantus. Savo detales pridėkite tik tada, kai reikia.",
     "onboarding.steps.project": "Ką bandote užbaigti?",
     "onboarding.steps.criteria": "Kaip žinosite, kad pavyko?",
     "onboarding.steps.duration": "Kada finišas?",
     "onboarding.steps.members": "Kas įsipareigoja kartu?",
     "onboarding.steps.pledge": "Ką kiekvienas įsipareigoja?",
-    "onboarding.steps.ai": "Leiskite AI sukurti veiksmų planą",
+    "onboarding.steps.ai": "Kaip veiks jūsų AI planas",
     "onboarding.steps.review": "Peržiūrėkite viską prieš pradžią",
     "onboarding.stepOne": "1 žingsnis",
     "onboarding.stepTwo": "2 žingsnis",
@@ -527,87 +629,126 @@ const dictionaries = {
     "onboarding.stepSix": "6 žingsnis",
     "onboarding.stepSeven": "7 žingsnis",
     "onboarding.projectTitle": "Ką bandote užbaigti?",
-    "onboarding.projectCopy": "Pasirinkite projekto tipą ir aprašykite rezultatą. AI tai naudos kriterijams ir užduotims siūlyti.",
+    "onboarding.projectCopy":
+      "Pasirinkite projekto tipą ir aprašykite rezultatą. AI tai naudos kriterijams ir užduotims siūlyti.",
     "onboarding.team": "Komanda",
-    "onboarding.teamHelper": "Pasirinkite mažą grupę, kuri įsipareigos ir peržiūrės įrodymus.",
+    "onboarding.teamHelper":
+      "Pasirinkite mažą grupę, kuri įsipareigos ir peržiūrės įrodymus.",
     "onboarding.projectType": "Projekto tipas",
-    "onboarding.projectTypeHelper": "Pasirinkite artimiausią šabloną, kad CommitBet pasiūlytų naudingus kriterijus.",
+    "onboarding.projectTypeHelper":
+      "Pasirinkite artimiausią šabloną, kad CommitBet pasiūlytų naudingus kriterijus.",
     "onboarding.projectName": "Projekto pavadinimas",
-    "onboarding.projectNameHelper": "Trumpai ir konkrečiai, kaip sprinto lentoje.",
-    "onboarding.projectNamePlaceholder": "Paleisti pirmą CommitBet laukiančiųjų sąrašą",
+    "onboarding.projectNameHelper":
+      "Trumpai ir konkrečiai, kaip sprinto lentoje.",
+    "onboarding.projectNamePlaceholder":
+      "Paleisti pirmą CommitBet laukiančiųjų sąrašą",
     "onboarding.description": "Aprašymas",
-    "onboarding.descriptionHelper": "Vienas ar du sakiniai apie tai, ką kuriate ir kodėl tai svarbu dabar.",
-    "onboarding.descriptionPlaceholder": "Norime patikrinti, ar mažos komandos naudos įrodymais paremtus įsipareigojimus paleidimui užbaigti.",
+    "onboarding.descriptionHelper":
+      "Vienas ar du sakiniai apie tai, ką kuriate ir kodėl tai svarbu dabar.",
+    "onboarding.descriptionPlaceholder":
+      "Norime patikrinti, ar mažos komandos naudos įrodymais paremtus įsipareigojimus paleidimui užbaigti.",
     "onboarding.mainGoal": "Pagrindinis tikslas",
-    "onboarding.mainGoalHelper": "Parašykite rezultatą, kurį komandos narys galėtų patikrinti termino dieną.",
-    "onboarding.mainGoalPlaceholder": "Paleisti landing page, surinkti 20 el. paštų ir įrašyti 2 minučių demo per 14 dienų.",
+    "onboarding.mainGoalHelper":
+      "Parašykite rezultatą, kurį komandos narys galėtų patikrinti termino dieną.",
+    "onboarding.mainGoalPlaceholder":
+      "Paleisti landing page, surinkti 20 el. paštų ir įrašyti 2 minučių demo per 14 dienų.",
     "onboarding.criteriaTitle": "Kaip žinosite, kad pavyko?",
-    "onboarding.criteriaHelper": "Pasirink, kas turi būti pasiekta, kad projektas būtų laikomas sėkmingu.",
+    "onboarding.criteriaHelper":
+      "Pasirink, kas turi būti pasiekta, kad projektas būtų laikomas sėkmingu.",
     "onboarding.suggestedCriteria": "Siūlomi sėkmės kriterijai",
-    "onboarding.successCriteriaCopy": "Pasirink, kas turi būti pasiekta, kad projektas būtų laikomas sėkmingu.",
+    "onboarding.successCriteriaCopy":
+      "Pasirink, kas turi būti pasiekta, kad projektas būtų laikomas sėkmingu.",
     "onboarding.customCriteria": "Savi sėkmės kriterijai",
-    "onboarding.customCriteriaHelper": "Pridėkite projekto rezultatą, kurį jūsų komandai reikia įrodyti.",
+    "onboarding.customCriteriaHelper":
+      "Pridėkite projekto rezultatą, kurį jūsų komandai reikia įrodyti.",
     "onboarding.durationTitle": "Kada finišas?",
-    "onboarding.durationHelper": "Pasirinkite laikotarpį, kuris sukuria skubą, bet leidžia surinkti tikrus įrodymus.",
+    "onboarding.durationHelper":
+      "Pasirinkite laikotarpį, kuris sukuria skubą, bet leidžia surinkti tikrus įrodymus.",
     "onboarding.startDate": "Pradžios data",
-    "onboarding.startDateHelper": "Diena, kai komanda pradeda registruoti įrodymus.",
+    "onboarding.startDateHelper":
+      "Diena, kai komanda pradeda registruoti įrodymus.",
     "onboarding.customEndDate": "Pasirinktinė pabaigos data",
-    "onboarding.customEndDateHelper": "Laikykite terminą pakankamai arti, kad peržiūros išliktų aktualios.",
+    "onboarding.customEndDateHelper":
+      "Laikykite terminą pakankamai arti, kad peržiūros išliktų aktualios.",
     "onboarding.membersTitle": "Narių nustatymai",
-    "onboarding.membersHelper": "Naudokite pasirinkimus, kad greitai apibūdintumėte kiekvieną narį. AI tai naudos realistiškam užduočių paskirstymui.",
+    "onboarding.membersHelper":
+      "Naudokite pasirinkimus, kad greitai apibūdintumėte kiekvieną narį. AI tai naudos realistiškam užduočių paskirstymui.",
     "onboarding.rolesTitle": "Rolės / pagrindinės sritys",
-    "onboarding.rolesHelper": "Pasirinkite bent vieną rolę arba stiprybę, kad AI žinotų, kur šis narys tinka.",
+    "onboarding.rolesHelper":
+      "Pasirinkite bent vieną rolę arba stiprybę, kad AI žinotų, kur šis narys tinka.",
     "onboarding.strengthsTitle": "Stiprybės",
-    "onboarding.strengthsHelper": "Pasirink, kas šiam nariui sekasi geriausiai. AI tai naudos realistiškam užduočių paskirstymui.",
+    "onboarding.strengthsHelper":
+      "Pasirink, kas šiam nariui sekasi geriausiai. AI tai naudos realistiškam užduočių paskirstymui.",
     "onboarding.weaknessesTitle": "Silpnybės / vengtinos sritys",
-    "onboarding.weaknessesHelper": "Pasirink sritis, kurių šis narys norėtų vengti arba kur jam reikia pagalbos.",
+    "onboarding.weaknessesHelper":
+      "Pasirink sritis, kurių šis narys norėtų vengti arba kur jam reikia pagalbos.",
     "onboarding.preferredWorkTitle": "Pageidaujami darbų tipai",
-    "onboarding.preferredWorkHelper": "Pasirinkite užduočių tipus, kuriuos šis narys greičiausiai atliks gerai.",
+    "onboarding.preferredWorkHelper":
+      "Pasirinkite užduočių tipus, kuriuos šis narys greičiausiai atliks gerai.",
     "onboarding.evidenceTitle": "Įrodymų tipai",
-    "onboarding.evidenceHelper": "Pasirink, kokius įrodymus šis narys realiai gali pateikti.",
+    "onboarding.evidenceHelper":
+      "Pasirink, kokius įrodymus šis narys realiai gali pateikti.",
     "onboarding.availabilityTitle": "Užimtumas",
-    "onboarding.availabilityHelper": "Pasirinkite artimiausią dienos laiko įsipareigojimą.",
+    "onboarding.availabilityHelper":
+      "Pasirinkite artimiausią dienos laiko įsipareigojimą.",
     "onboarding.customAvailability": "Savos minutės per dieną",
-    "onboarding.customAvailabilityHelper": "Naudokite, kai šablonai ne visai tinka.",
+    "onboarding.customAvailabilityHelper":
+      "Naudokite, kai šablonai ne visai tinka.",
     "onboarding.experienceTitle": "Patirties lygis",
-    "onboarding.experienceHelper": "Pasirinkite, kiek pagalbos šiam nariui gali reikėti.",
+    "onboarding.experienceHelper":
+      "Pasirinkite, kiek pagalbos šiam nariui gali reikėti.",
     "onboarding.bestWorkTimeTitle": "Geriausias darbo laikas",
-    "onboarding.bestWorkTimeHelper": "Pasirinkite, kada šis narys greičiausiai judės į priekį.",
+    "onboarding.bestWorkTimeHelper":
+      "Pasirinkite, kada šis narys greičiausiai judės į priekį.",
     "onboarding.memberNotes": "Papildomos pastabos",
-    "onboarding.memberNotesHelper": "Trumpai. Pridėkite grafiko ribojimus, poravimo poreikius ar paskyrimo nuostatas.",
-    "onboarding.memberNotesPlaceholder": "Galiu peržiūrėti po 17 val. Vengti backend užduočių, nebent dirbu poroje.",
+    "onboarding.memberNotesHelper":
+      "Trumpai. Pridėkite grafiko ribojimus, poravimo poreikius ar paskyrimo nuostatas.",
+    "onboarding.memberNotesPlaceholder":
+      "Galiu peržiūrėti po 17 val. Vengti backend užduočių, nebent dirbu poroje.",
     "onboarding.pledgeTitle": "Įsipareigojimo taškai",
-    "onboarding.pledgeHelper": "Pasirinkite virtualų įsipareigojimą. Realus mokėjimo procesas nepridedamas.",
-    "onboarding.pledgeTip": "Patarimas pradedantiesiems: 20 taškų pakanka, kad jaustųsi rimta, bet nekeltų per daug streso. Pinigai nerenkami, nelaikomi ir neskirstomi.",
+    "onboarding.pledgeHelper":
+      "Pasirinkite virtualų įsipareigojimą. Realus mokėjimo procesas nepridedamas.",
+    "onboarding.pledgeTip":
+      "Patarimas pradedantiesiems: 20 taškų pakanka, kad jaustųsi rimta, bet nekeltų per daug streso. Pinigai nerenkami, nelaikomi ir neskirstomi.",
     "onboarding.customPledge": "Savi įsipareigojimo taškai",
     "onboarding.customPledgeHelper": "Naudokite tik virtualius taškus.",
     "onboarding.pledgeAppliesTo": "Projekto įsipareigojimas",
-    "onboarding.pledgeAppliesToCopy": "Kiekvienas pasirinktas narys įsipareigos {points} virtualių taškų.",
-    "onboarding.aiTitle": "Leiskite AI sukurti veiksmų planą",
-    "onboarding.aiHelper": "AI planas yra juodraštis. Jis naudoja projekto kriterijus, narių roles, stiprybes, užimtumą ir įrodymų tipus.",
+    "onboarding.pledgeAppliesToCopy":
+      "Kiekvienas pasirinktas narys įsipareigos {points} virtualių taškų.",
+    "onboarding.aiTitle": "Kaip veiks jūsų AI planas",
+    "onboarding.aiHelper":
+      "AI planas yra juodraštis. Jis naudoja projekto kriterijus, narių roles, stiprybes, užimtumą ir įrodymų tipus.",
     "onboarding.proofExamples": "Darbo įrodymų pavyzdžiai",
     "onboarding.phase": "{number} etapas",
-    "onboarding.planOwner": "Atsakingas: {owner} - Terminas {date} - paskirta pagal roles, stiprybes, įrodymus ir užimtumą",
+    "onboarding.planOwner":
+      "Atsakingas: {owner} - Terminas {date} - paskirta pagal roles, stiprybes, įrodymus ir užimtumą",
     "onboarding.selectedTeammate": "Pasirinktas komandos narys",
     "onboarding.acceptance": "Priėmimas",
     "onboarding.expectedEvidence": "Laukiami įrodymai",
     "onboarding.reviewTitle": "Peržiūrėkite viską prieš pradžią",
-    "onboarding.reviewHelper": "Tai sukuria projekto juodraštį. Niekas neprasideda, kol projekto puslapyje nesugeneruosite ir nepatvirtinsite AI plano.",
+    "onboarding.reviewHelper":
+      "Tai sukuria projekto juodraštį. Niekas neprasideda, kol projekto puslapyje nesugeneruosite ir nepatvirtinsite AI plano.",
     "onboarding.membersMetric": "Nariai",
     "onboarding.pointsMetric": "Įsipareigojimo taškai",
     "onboarding.criteriaMetric": "Kriterijai",
     "onboarding.flowTitle": "Atsakomybės eiga",
-    "onboarding.flowCopy": "Projektas -> Įsipareigojimas -> AI planas -> Dienos įrodymai -> Kolegų patvirtinimas -> AI finalinė ataskaita -> Žmogaus patvirtinimas",
+    "onboarding.flowCopy":
+      "Projektas -> Įsipareigojimas -> AI planas -> Dienos įrodymai -> Kolegų patvirtinimas -> AI finalinė ataskaita -> Žmogaus patvirtinimas",
     "onboarding.readyTitle": "Pasiruošta kurti juodraštį",
-    "onboarding.readyCopy": "Toliau sugeneruokite AI planą, pakoreguokite, kas netinka, ir pradėkite projektą, kai komanda sutaria.",
+    "onboarding.readyCopy":
+      "Toliau sugeneruokite AI planą, pakoreguokite, kas netinka, ir pradėkite projektą, kai komanda sutaria.",
     "onboarding.createDraft": "Sukurti įsipareigojimo juodraštį",
     "onboarding.customPlaceholder": "Įrašykite savo pasirinkimą",
     "onboarding.selectedOptions": "Pasirinkti variantai",
-    "onboarding.validation.customRequired": "Pasirinktinis variantas negali būti tuščias.",
+    "onboarding.validation.customRequired":
+      "Pasirinktinis variantas negali būti tuščias.",
     "onboarding.validation.duplicateCustom": "Šis variantas jau pasirinktas.",
-    "onboarding.validation.criteriaRequired": "Pasirinkite bent vieną sėkmės kriterijų.",
-    "onboarding.validation.memberRequired": "Pasirinkite bent vieną projekto narį.",
-    "onboarding.validation.roleOrStrength": "Pasirinkite bent vieną šio nario rolę arba stiprybę.",
+    "onboarding.validation.criteriaRequired":
+      "Pasirinkite bent vieną sėkmės kriterijų.",
+    "onboarding.validation.memberRequired":
+      "Pasirinkite bent vieną projekto narį.",
+    "onboarding.validation.roleOrStrength":
+      "Pasirinkite bent vieną šio nario rolę arba stiprybę.",
     "onboarding.roles.softwareDevelopment": "Programinės įrangos kūrimas",
     "onboarding.roles.frontend": "Frontend",
     "onboarding.roles.backend": "Backend",
@@ -721,7 +862,8 @@ const dictionaries = {
     "onboarding.projectTypes.webApp": "Web app",
     "onboarding.projectTypes.marketingCampaign": "Rinkodaros kampanija",
     "onboarding.projectTypes.contentSprint": "Turinio sprintas",
-    "onboarding.projectTypes.schoolUniversity": "Mokyklos / universiteto projektas",
+    "onboarding.projectTypes.schoolUniversity":
+      "Mokyklos / universiteto projektas",
     "onboarding.projectTypes.hackathon": "Hakatono projektas",
     "onboarding.projectTypes.businessValidation": "Verslo validacija",
     "onboarding.projectTypes.researchProject": "Tyrimų projektas",
@@ -737,51 +879,70 @@ const dictionaries = {
     "onboarding.criteria.workingDeployedVersion": "Veikianti įdiegta versija",
     "onboarding.criteria.authenticationWorks": "Autentifikacija veikia",
     "onboarding.criteria.mainDashboardExists": "Yra pagrindinis skydelis",
-    "onboarding.criteria.coreUserFlowWorks": "Pagrindinis vartotojo kelias veikia",
-    "onboarding.criteria.databaseStoresRequiredData": "Duomenų bazė saugo reikalingus duomenis",
+    "onboarding.criteria.coreUserFlowWorks":
+      "Pagrindinis vartotojo kelias veikia",
+    "onboarding.criteria.databaseStoresRequiredData":
+      "Duomenų bazė saugo reikalingus duomenis",
     "onboarding.criteria.demoVideoRecorded": "Demo vaizdo įrašas įrašytas",
-    "onboarding.criteria.fiveTestUsersInvited": "Pakviesti bent 5 testiniai vartotojai",
+    "onboarding.criteria.fiveTestUsersInvited":
+      "Pakviesti bent 5 testiniai vartotojai",
     "onboarding.criteria.pageIsLive": "Puslapis veikia viešai",
     "onboarding.criteria.valuePropClear": "Pagrindinė vertės žinutė aiški",
-    "onboarding.criteria.signupFormWorks": "Registracijos / laukiančiųjų forma veikia",
+    "onboarding.criteria.signupFormWorks":
+      "Registracijos / laukiančiųjų forma veikia",
     "onboarding.criteria.mobileLayoutWorks": "Mobilus išdėstymas veikia",
     "onboarding.criteria.analyticsInstalled": "Analitika įdiegta",
     "onboarding.criteria.threeSectionsCompleted": "Užbaigtos bent 3 sekcijos",
-    "onboarding.criteria.contentCalendarCreated": "Turinio kalendorius sukurtas",
+    "onboarding.criteria.contentCalendarCreated":
+      "Turinio kalendorius sukurtas",
     "onboarding.criteria.fivePostsPublished": "Paskelbti bent 5 įrašai",
-    "onboarding.criteria.targetAudienceDefined": "Tikslinė auditorija apibrėžta",
-    "onboarding.criteria.basicAnalyticsReviewed": "Pagrindinė analitika peržiūrėta",
-    "onboarding.criteria.campaignResultsSummarized": "Kampanijos rezultatai apibendrinti",
-    "onboarding.plan.defineRubric": "Apibrėžti įsipareigojimą ir įrodymų taisykles",
-    "onboarding.plan.verticalSlice": "Paleisti pirmą veikiančią vertikalią dalį",
-    "onboarding.plan.validate": "Surinkti dienos įrašus ir kolegų patvirtinimus",
+    "onboarding.criteria.targetAudienceDefined":
+      "Tikslinė auditorija apibrėžta",
+    "onboarding.criteria.basicAnalyticsReviewed":
+      "Pagrindinė analitika peržiūrėta",
+    "onboarding.criteria.campaignResultsSummarized":
+      "Kampanijos rezultatai apibendrinti",
+    "onboarding.plan.defineRubric":
+      "Apibrėžti įsipareigojimą ir įrodymų taisykles",
+    "onboarding.plan.verticalSlice":
+      "Paleisti pirmą veikiančią vertikalią dalį",
+    "onboarding.plan.validate":
+      "Surinkti dienos įrašus ir kolegų patvirtinimus",
     "onboarding.plan.documentEvidence": "Dokumentas arba bendra nuoroda",
     "onboarding.plan.demoEvidence": "Demo nuoroda arba diegimo įrodymas",
     "onboarding.plan.reviewEvidence": "Ekrano kopijos ir peržiūros komentarai",
-    "onboarding.plan.criteriaRubric": "Sėkmės kriterijai susieti su įrodymų tipais",
-    "onboarding.plan.criteriaSlice": "Komandos narys gali peržiūrėti end-to-end eigą",
-    "onboarding.plan.criteriaReview": "Bent viena pateikta užduotis turi žmogaus patvirtinimą",
+    "onboarding.plan.criteriaRubric":
+      "Sėkmės kriterijai susieti su įrodymų tipais",
+    "onboarding.plan.criteriaSlice":
+      "Komandos narys gali peržiūrėti end-to-end eigą",
+    "onboarding.plan.criteriaReview":
+      "Bent viena pateikta užduotis turi žmogaus patvirtinimą",
 
     "profile.title": "Profilis",
-    "profile.description": "Vienoje vietoje atnaujinkite vardą, avatarą, kalbą ir sesijos nustatymus.",
+    "profile.description":
+      "Vienoje vietoje atnaujinkite vardą, avatarą, kalbą ir sesijos nustatymus.",
     "profile.accountTitle": "Paskyros informacija",
-    "profile.accountCopy": "Taip komandos nariai jus atpažins įsipareigojimuose, įrodymuose ir peržiūrose.",
+    "profile.accountCopy":
+      "Taip komandos nariai jus atpažins įsipareigojimuose, įrodymuose ir peržiūrose.",
     "profile.fullName": "Rodomas vardas",
     "profile.fullNamePlaceholder": "Jūsų vardas",
     "profile.email": "El. paštas",
     "profile.emailHelp": "El. paštas gaunamas iš jūsų prisijungimo paskyros.",
     "profile.avatarUrl": "Avataro URL",
     "profile.avatarUrlPlaceholder": "https://example.com/avatar.png",
-    "profile.avatarHelp": "Nebūtina. Įklijuokite viešą paveikslėlio nuorodą, jei norite pasirinktinio avataro.",
+    "profile.avatarHelp":
+      "Nebūtina. Įklijuokite viešą paveikslėlio nuorodą, jei norite pasirinktinio avataro.",
     "profile.save": "Išsaugoti pakeitimus",
     "profile.saving": "Saugoma...",
     "profile.saved": "Profilis išsaugotas.",
     "profile.error": "Profilio išsaugoti nepavyko.",
     "profile.nameRequired": "Įveskite rodomą vardą.",
     "profile.languageTitle": "Kalba",
-    "profile.languageCopy": "Kalbos pakeitimai pritaikomi iš karto ir išsaugomi paskyroje.",
+    "profile.languageCopy":
+      "Kalbos pakeitimai pritaikomi iš karto ir išsaugomi paskyroje.",
     "profile.sessionTitle": "Sesija / atsijungimas",
-    "profile.sessionCopy": "Naudokite baigę darbą arba keisdami paskyras. Grįšite į pradinį puslapį.",
+    "profile.sessionCopy":
+      "Naudokite baigę darbą arba keisdami paskyras. Grįšite į pradinį puslapį.",
   },
 } as const;
 
@@ -798,5 +959,7 @@ export function getDictionary(language: Language) {
 export function translate(language: Language, key: TranslationKey | string) {
   const dictionary = getDictionary(language);
   const fallback = dictionaries[defaultLanguage];
-  return dictionary[key as TranslationKey] ?? fallback[key as TranslationKey] ?? key;
+  return (
+    dictionary[key as TranslationKey] ?? fallback[key as TranslationKey] ?? key
+  );
 }

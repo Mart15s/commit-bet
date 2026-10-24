@@ -12,7 +12,13 @@ function optionLabel(option: ChipOption, t: Translate) {
 }
 
 function selectedLabel(value: string, options: ChipOption[], t: Translate) {
-  return optionLabel(options.find((option) => option.value === value) ?? { value, labelKey: value }, t);
+  return optionLabel(
+    options.find((option) => option.value === value) ?? {
+      value,
+      labelKey: value,
+    },
+    t,
+  );
 }
 
 export function MultiChipField({
@@ -51,7 +57,11 @@ export function MultiChipField({
       setMessage(t("onboarding.validation.customRequired"));
       return;
     }
-    if (value.some((item) => item.toLocaleLowerCase() === trimmed.toLocaleLowerCase())) {
+    if (
+      value.some(
+        (item) => item.toLocaleLowerCase() === trimmed.toLocaleLowerCase(),
+      )
+    ) {
       setMessage(t("onboarding.validation.duplicateCustom"));
       return;
     }
@@ -63,22 +73,33 @@ export function MultiChipField({
 
   return (
     <fieldset className="grid gap-3">
-      <legend className="font-black text-foreground">
+      <legend className="font-bold text-foreground">
         {label}
-        {required && <span className="text-amber-300"> *</span>}
+        {required && <span className="text-warning"> *</span>}
       </legend>
-      {helper && <p className="-mt-2 text-sm leading-6 text-muted-foreground">{helper}</p>}
+      {helper && (
+        <p className="-mt-2 text-sm leading-6 text-muted-foreground">
+          {helper}
+        </p>
+      )}
 
       {value.length > 0 && (
-        <div className="flex flex-wrap gap-2" aria-label={t("onboarding.selectedOptions")}>
+        <div
+          className="flex flex-wrap gap-2"
+          aria-label={t("onboarding.selectedOptions")}
+        >
           {value.map((item) => (
             <button
               key={item}
               type="button"
-              onClick={() => onChange(value.filter((selected) => selected !== item))}
-              className="inline-flex max-w-full items-center gap-2 rounded-full border border-primary/35 bg-primary/15 px-3 py-1.5 text-left text-xs font-black text-violet-100"
+              onClick={() =>
+                onChange(value.filter((selected) => selected !== item))
+              }
+              className="inline-flex min-h-11 max-w-full items-center gap-2 rounded-full border border-primary/35 bg-primary/15 px-3 py-1.5 text-left text-xs font-bold text-primary"
             >
-              <span className="truncate">{selectedLabel(item, options, t)}</span>
+              <span className="truncate">
+                {selectedLabel(item, options, t)}
+              </span>
               <X size={13} aria-hidden="true" />
             </button>
           ))}
@@ -94,15 +115,19 @@ export function MultiChipField({
               type="button"
               onClick={() => toggle(option.value)}
               className={cn(
-                "inline-flex max-w-full items-center gap-2 rounded-full border px-3 py-2 text-left text-xs font-black transition sm:text-sm",
+                "inline-flex min-h-11 max-w-full items-center gap-2 rounded-full border px-3 py-2 text-left text-xs font-bold transition sm:text-sm",
                 selected
-                  ? "border-primary bg-primary/20 text-violet-100 shadow-[0_0_18px_rgba(124,58,237,.16)]"
+                  ? "border-primary bg-primary/20 text-primary"
                   : "border-border bg-secondary text-muted-foreground hover:bg-elevated hover:text-foreground",
               )}
               aria-pressed={selected}
             >
               <span className="truncate">{optionLabel(option, t)}</span>
-              {option.recommended && <span className="rounded-full bg-amber-300/15 px-2 py-0.5 text-[10px] uppercase text-amber-200">{t("common.recommended")}</span>}
+              {option.recommended && (
+                <span className="rounded-full bg-warning/15 px-2 py-0.5 text-[10px] uppercase text-warning">
+                  {t("common.recommended")}
+                </span>
+              )}
             </button>
           );
         })}
@@ -112,7 +137,7 @@ export function MultiChipField({
             setCustomOpen((open) => !open);
             setMessage("");
           }}
-          className="inline-flex items-center gap-2 rounded-full border border-dashed border-cyan-300/40 bg-cyan-400/10 px-3 py-2 text-xs font-black text-cyan-100 transition hover:bg-cyan-400/15 sm:text-sm"
+          className="inline-flex min-h-11 items-center gap-2 rounded-full border border-dashed border-ai/40 bg-ai/10 px-3 py-2 text-xs font-bold text-ai transition hover:bg-ai/15 sm:text-sm"
         >
           <Plus size={15} />
           {t("common.addCustom")}
@@ -124,19 +149,20 @@ export function MultiChipField({
           <input
             value={customValue}
             onChange={(event) => setCustomValue(event.target.value)}
+            aria-label={t("onboarding.customPlaceholder")}
             placeholder={t("onboarding.customPlaceholder")}
           />
           <button
             type="button"
             onClick={addCustom}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-cyan-300/35 bg-cyan-400/10 px-4 font-black text-cyan-100"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-ai/35 bg-ai/10 px-4 font-bold text-ai"
           >
             <Plus size={16} />
             {t("common.add")}
           </button>
         </div>
       )}
-      {message && <p className="text-sm font-bold text-amber-200">{message}</p>}
+      {message && <p className="text-sm font-bold text-warning">{message}</p>}
     </fieldset>
   );
 }
@@ -182,17 +208,21 @@ export function SingleChipField({
 
   return (
     <fieldset className="grid gap-3">
-      <legend className="font-black text-foreground">
+      <legend className="font-bold text-foreground">
         {label}
-        {required && <span className="text-amber-300"> *</span>}
+        {required && <span className="text-warning"> *</span>}
       </legend>
-      {helper && <p className="-mt-2 text-sm leading-6 text-muted-foreground">{helper}</p>}
+      {helper && (
+        <p className="-mt-2 text-sm leading-6 text-muted-foreground">
+          {helper}
+        </p>
+      )}
 
       {value && (
         <button
           type="button"
           onClick={() => onChange("")}
-          className="inline-flex w-fit max-w-full items-center gap-2 rounded-full border border-primary/35 bg-primary/15 px-3 py-1.5 text-left text-xs font-black text-violet-100"
+          className="inline-flex w-fit max-w-full items-center gap-2 rounded-full border border-primary/35 bg-primary/15 px-3 py-1.5 text-left text-xs font-bold text-primary"
         >
           <span className="truncate">{selectedLabel(value, options, t)}</span>
           <X size={13} aria-hidden="true" />
@@ -211,15 +241,19 @@ export function SingleChipField({
                 setMessage("");
               }}
               className={cn(
-                "inline-flex max-w-full items-center gap-2 rounded-full border px-3 py-2 text-left text-xs font-black transition sm:text-sm",
+                "inline-flex min-h-11 max-w-full items-center gap-2 rounded-full border px-3 py-2 text-left text-xs font-bold transition sm:text-sm",
                 selected
-                  ? "border-primary bg-primary/20 text-violet-100 shadow-[0_0_18px_rgba(124,58,237,.16)]"
+                  ? "border-primary bg-primary/20 text-primary"
                   : "border-border bg-secondary text-muted-foreground hover:bg-elevated hover:text-foreground",
               )}
               aria-pressed={selected}
             >
               <span className="truncate">{optionLabel(option, t)}</span>
-              {option.recommended && <span className="rounded-full bg-amber-300/15 px-2 py-0.5 text-[10px] uppercase text-amber-200">{t("common.recommended")}</span>}
+              {option.recommended && (
+                <span className="rounded-full bg-warning/15 px-2 py-0.5 text-[10px] uppercase text-warning">
+                  {t("common.recommended")}
+                </span>
+              )}
             </button>
           );
         })}
@@ -230,7 +264,7 @@ export function SingleChipField({
               setCustomOpen((open) => !open);
               setMessage("");
             }}
-            className="inline-flex items-center gap-2 rounded-full border border-dashed border-cyan-300/40 bg-cyan-400/10 px-3 py-2 text-xs font-black text-cyan-100 transition hover:bg-cyan-400/15 sm:text-sm"
+            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-dashed border-ai/40 bg-ai/10 px-3 py-2 text-xs font-bold text-ai transition hover:bg-ai/15 sm:text-sm"
           >
             <Plus size={15} />
             {t("common.addCustom")}
@@ -243,19 +277,20 @@ export function SingleChipField({
           <input
             value={customValue}
             onChange={(event) => setCustomValue(event.target.value)}
+            aria-label={t("onboarding.customPlaceholder")}
             placeholder={t("onboarding.customPlaceholder")}
           />
           <button
             type="button"
             onClick={addCustom}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-cyan-300/35 bg-cyan-400/10 px-4 font-black text-cyan-100"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-ai/35 bg-ai/10 px-4 font-bold text-ai"
           >
             <Plus size={16} />
             {t("common.add")}
           </button>
         </div>
       )}
-      {message && <p className="text-sm font-bold text-amber-200">{message}</p>}
+      {message && <p className="text-sm font-bold text-warning">{message}</p>}
     </fieldset>
   );
 }

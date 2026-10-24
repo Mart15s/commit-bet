@@ -5,7 +5,12 @@ import { useEffect, useState, useTransition } from "react";
 import { updatePreferredLanguage } from "@/app/(protected)/app/profile/actions";
 import { useI18n } from "@/components/language-provider";
 import { cn } from "@/lib/utils";
-import { isLanguage, languageLabels, languages, type Language } from "@/lib/i18n";
+import {
+  isLanguage,
+  languageLabels,
+  languages,
+  type Language,
+} from "@/lib/i18n";
 
 export function LanguageSwitcher({
   persistToProfile = false,
@@ -46,13 +51,19 @@ export function LanguageSwitcher({
   return (
     <div className={cn("grid gap-2", compact && "w-auto", className)}>
       <div className="grid gap-2">
-        <span className={cn("text-sm font-bold text-muted-foreground", compact && "sr-only", labelClassName)}>
+        <span
+          className={cn(
+            "text-sm font-bold text-muted-foreground",
+            compact && "sr-only",
+            labelClassName,
+          )}
+        >
           {t("language.label")}
         </span>
         <div
           aria-label={t("language.label")}
           className={cn(
-            "inline-flex w-fit items-center gap-1 rounded-xl border border-primary/35 bg-primary/10 p-1 text-sm font-black text-foreground shadow-[0_0_20px_rgba(124,58,237,.14)]",
+            "inline-flex w-fit items-center gap-1 rounded-xl border border-primary/35 bg-primary/10 p-1 text-sm font-bold text-foreground",
             compact && "rounded-lg",
           )}
           role="group"
@@ -64,7 +75,9 @@ export function LanguageSwitcher({
               aria-pressed={language === option}
               className={cn(
                 "min-h-8 min-w-10 rounded-lg px-2.5 uppercase transition hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                language === option ? "bg-primary text-primary-foreground shadow-[0_0_14px_rgba(124,58,237,.28)]" : "text-muted-foreground",
+                language === option
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground",
               )}
               disabled={isPending}
               key={option}
@@ -76,8 +89,14 @@ export function LanguageSwitcher({
           ))}
         </div>
       </div>
-      {isPending && <p className="text-xs font-bold text-muted-foreground">{t("language.saving")}</p>}
-      {message && <p className="text-xs font-bold text-muted-foreground">{message}</p>}
+      {isPending && (
+        <p className="text-xs font-bold text-muted-foreground">
+          {t("language.saving")}
+        </p>
+      )}
+      {message && (
+        <p className="text-xs font-bold text-muted-foreground">{message}</p>
+      )}
     </div>
   );
 }

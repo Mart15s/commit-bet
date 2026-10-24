@@ -1,11 +1,20 @@
+import { T } from "@/components/language-provider";
 import { ButtonLink, PageHeader } from "@/components/ui";
 import { TaskBoard, type BoardTask } from "@/components/tasks/task-board";
 import { requireProjectMember } from "@/lib/auth";
 import { singleRelation } from "@/lib/utils";
 
-type Assignment = { user_id: string; assigned_reason: string; profiles: { name: string } };
+type Assignment = {
+  user_id: string;
+  assigned_reason: string;
+  profiles: { name: string };
+};
 
-export default async function ProjectTasksPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ProjectTasksPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   const { supabase, project } = await requireProjectMember(id);
   const { data: tasks } = await supabase
@@ -15,7 +24,9 @@ export default async function ProjectTasksPage({ params }: { params: Promise<{ i
     .order("due_date");
 
   const boardTasks: BoardTask[] = (tasks ?? []).map((task) => {
-    const assignment = singleRelation(task.task_assignments as unknown as Assignment | Assignment[]);
+    const assignment = singleRelation(
+      task.task_assignments as unknown as Assignment | Assignment[],
+    );
     return {
       id: task.id,
       title: task.title,
@@ -31,12 +42,28 @@ export default async function ProjectTasksPage({ params }: { params: Promise<{ i
 
   return (
     <>
-      <ButtonLink href={`/app/projects/${id}`} variant="ghost" size="sm" className="mb-3">Back to project</ButtonLink>
+      <ButtonLink
+        href={`/app/projects/${id}`}
+        variant="ghost"
+        size="sm"
+        className="mb-3"
+      >
+        <T id="Back to project" />
+      </ButtonLink>
       <PageHeader
-        eyebrow="Task board"
+        eyebrowKey="Task board"
         title={project.title}
-        description="Move work from todo to approved through evidence submission and peer review."
-        action={project.status === "active" ? <ButtonLink href={`/app/logs/new?project=${id}`} variant="secondary">Daily log</ButtonLink> : undefined}
+        descriptionKey="Move work from todo to approved through evidence submission and peer review."
+        action={
+          project.status === "active" ? (
+            <ButtonLink
+              href={`/app/logs/new?project=${id}`}
+              variant="secondary"
+            >
+              <T id="Daily log" />
+            </ButtonLink>
+          ) : undefined
+        }
       />
       <TaskBoard tasks={boardTasks} />
     </>

@@ -39,11 +39,18 @@ export function LogoutButton({
 
   return (
     <div className="grid gap-2">
-      <Button className={className} disabled={isLoading} onClick={handleLogout} size={size} type="button" variant={variant}>
+      <Button
+        className={className}
+        disabled={isLoading}
+        onClick={handleLogout}
+        size={size}
+        type="button"
+        variant={variant}
+      >
         {showIcon && <LogOut size={16} />}
         {isLoading ? t("logout.loading") : t("logout.button")}
       </Button>
-      {error && <p className="text-xs font-bold text-red-200">{error}</p>}
+      {error && <p className="text-xs font-bold text-danger">{error}</p>}
     </div>
   );
 }
