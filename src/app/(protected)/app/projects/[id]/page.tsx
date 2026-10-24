@@ -1,3 +1,5 @@
+import "@/app/workspace.css";
+import { ProjectWorkspace, WorkspaceCopy } from "@/components/project-workspace";
 import { AIRecommendation } from "@/components/ai-recommendation";
 import { T, DateText } from "@/components/language-provider";
 import { projectProgress } from "@/lib/progress";
@@ -170,24 +172,29 @@ export default async function ProjectPage({
   return (
     <>
       <PageHeader
-        eyebrow={project.status}
+        eyebrowKey="dash.eyebrow"
         title={project.title}
         description={project.goal}
         action={
           <div className="flex flex-wrap gap-2">
             <StatusBadge status={project.status} />
             <ButtonLink
-              href={`/app/projects/${id}/tasks`}
+              href={project.status === "draft" ? "#plan" : `/app/projects/${id}/tasks`}
               variant="secondary"
               size="sm"
             >
-              <T id="Task board" />
+              {project.status === "draft" ? <WorkspaceCopy en="Review plan" lt="Peržiūrėti planą" /> : <T id="Task board" />}
             </ButtonLink>
           </div>
         }
       />
+      <p className="project-timeline"><CalendarDays size={14} /><DateText value={project.start_date} /> — <DateText value={project.end_date} /><span>·</span><T id="Team" /> {profiles?.length ?? 0}</p>
       <ErrorMessage message={query.error} />
 
+      <ProjectWorkspace
+        taskCount={taskRows.length}
+        reviewCount={pendingReviews.length}
+        overview={<>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           label="dash.verified"
@@ -222,7 +229,7 @@ export default async function ProjectPage({
           </span>
           <span>{progress}%</span>
         </div>
-        <Progress value={progress} />
+        <Progress verified value={progress} />
       </Card>
 
       {project.status === "draft" && isOwner && (
@@ -231,9 +238,7 @@ export default async function ProjectPage({
             <Brain className="mt-1 text-ai" />
             <div>
               <h2 className="text-xl font-bold">
-                {taskRows.length
-                  ? "Review the draft AI plan"
-                  : "Generate your execution plan"}
+                <T id={taskRows.length ? "Review the draft AI plan" : "Generate your execution plan"} />
               </h2>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
                 <T id="AI turns the commitment into editable tasks with owners, deadlines, acceptance criteria, expected evidence, and risk notes." />
@@ -257,39 +262,215 @@ export default async function ProjectPage({
               <T id="Review the plan before starting. You can edit tasks, deadlines, and evidence requirements before the project becomes active." />
             </HelpCard>
           )}
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-            <AIPlanGenerationForm
-              className="flex-1"
-              idempotencyKey={planRequestId}
-              label={
-                taskRows.length ? "Regenerate AI plan" : "Generate AI plan"
-              }
-              projectId={id}
-            />
-            {taskRows.length ? (
-              <ButtonLink href="#edit-plan" variant="secondary">
-                <T id="Edit plan first" />
-              </ButtonLink>
-            ) : null}
-            {taskRows.length ? (
+          {reports?.[0]?.model?.startsWith("mock") && <p className="mt-3 text-xs text-muted-foreground"><WorkspaceCopy en="Illustrative output from the mock provider. Review the draft in Plan before starting." lt="Iliustracinis bandomojo teikėjo rezultatas. Prieš pradėdami peržiūrėkite juodraštį skiltyje „Planas“." /></p>}
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            {taskRows.length ? <>
               <form action={startProject}>
                 <input type="hidden" name="project_id" value={id} />
-                <Button className="w-full" variant="secondary" type="submit">
-                  <T id="Start project with this plan" />
-                </Button>
+                <Button type="submit"><T id="Start project with this plan" /></Button>
               </form>
-            ) : null}
+              <ButtonLink href="#plan" variant="secondary"><T id="Edit plan first" /></ButtonLink>
+              <details className="plan-regenerate">
+                <summary><T id="Regenerate AI plan" /></summary>
+                <div className="mt-3 max-w-lg space-y-3">
+                  <p className="text-sm text-muted-foreground"><WorkspaceCopy en="Regenerating replaces the current draft tasks and assignments. Review the new plan before starting." lt="Generavimas pakeis dabartines juodraščio užduotis ir jų paskyrimus. Prieš pradėdami peržiūrėkite naują planą." /></p>
+                  <AIPlanGenerationForm secondary idempotencyKey={planRequestId} label="Regenerate AI plan" projectId={id} />
+                </div>
+              </details>
+            </> : <AIPlanGenerationForm idempotencyKey={planRequestId} label="Generate AI plan" projectId={id} />}
           </div>
         </Card>
       )}
 
-      {project.status === "draft" && taskRows.length ? (
+      <div className="mt-5">
+        <Card>
+          <SectionHeader
+            title="Tasks by status"
+            description="Progress only becomes real when submitted evidence is reviewed."
+            action={
+              <ButtonLink
+                href={`/app/projects/${id}/tasks`}
+                variant="secondary"
+                size="sm"
+              >
+                <T id="Open board" />
+              </ButtonLink>
+            }
+          />
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {statusCounts.map((item) => (
+              <div
+                key={item.status}
+                className="rounded-xl border border-border bg-secondary p-3"
+              >
+                <StatusBadge status={item.status} />
+                <p className="mt-2 text-2xl font-bold">{item.count}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+      </div>
+      <div className="mt-5 grid gap-4 lg:grid-cols-2">
+        <Card>
+          <SectionHeader title="Approved assigned tasks" />
+          <div className="space-y-4">
+            {profiles?.map((profile) => {
+              const memberTasks = taskRows.filter((task) => {
+                const assignment = singleRelation(
+                  task.task_assignments as unknown as Assignment | Assignment[],
+                );
+                return assignment?.user_id === profile.user_id;
+              });
+              const memberApproved = memberTasks.filter(
+                (task) => task.status === "approved",
+              ).length;
+              const score = memberTasks.length
+                ? Math.round((memberApproved / memberTasks.length) * 100)
+                : 0;
+              return (
+                <div key={profile.user_id}>
+                  <div className="mb-1 flex justify-between text-sm">
+                    <strong>
+                      {(profile.profiles as unknown as { name: string }).name}
+                    </strong>
+                    <span className="text-muted-foreground">
+                      {memberTasks.length ? `${score}%` : "—"}
+                    </span>
+                  </div>
+                  <Progress verified value={score} />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {memberApproved}/{memberTasks.length}{" "}
+                    <T id="assigned tasks approved" />
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+
+        <Card>
+          <SectionHeader
+            title="Recent daily logs"
+            action={
+              project.status === "active" ? (
+                <ButtonLink
+                  href={`/app/logs/new?project=${id}`}
+                  variant="secondary"
+                  size="sm"
+                >
+                  <T id="Log today" />
+                </ButtonLink>
+              ) : null
+            }
+          />
+          <div className="space-y-3">
+            {logs?.map((log) => (
+              <div
+                key={log.id}
+                className="border-b border-border pb-3 last:border-0"
+              >
+                <p className="font-bold">
+                  {(log.profiles as unknown as { name: string }).name} ·{" "}
+                  {log.time_spent_minutes} <T id="min" />
+                </p>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  {log.summary}
+                </p>
+              </div>
+            ))}
+            {!logs?.length && (
+              <EmptyState
+                title="No daily logs yet"
+                copy="Daily check-ins should take less than 2 minutes. They help the team see progress before review time."
+                action={
+                  project.status === "active" ? (
+                    <ButtonLink
+                      href={`/app/logs/new?project=${id}`}
+                      variant="secondary"
+                    >
+                      <T id="Log today" />
+                    </ButtonLink>
+                  ) : null
+                }
+                className="py-7"
+              />
+            )}
+          </div>
+        </Card>
+
+      </div>
+      <div className="mt-8 grid gap-4 lg:grid-cols-[.85fr_1.15fr]">
+        <Card>
+          <div className="flex items-start gap-3">
+            <Coins className="text-primary" />
+            <div>
+              <h2 className="font-bold">
+                <T id="Virtual pledges" />
+              </h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                <T id="Declared commitments only. 5GieAEOU does not hold money." />
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 space-y-2">
+            {pledges?.map((pledge) => (
+              <div
+                key={pledge.id}
+                className="flex justify-between rounded-xl border border-primary/20 bg-primary/10 p-3"
+              >
+                <span>
+                  {(pledge.profiles as unknown as { name: string }).name}
+                </span>
+                <strong className="text-primary">
+                  {pledge.amount} {pledge.currency}
+                </strong>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {project.status === "active" && isOwner ? (
+          <Card className="flex flex-col items-start justify-between gap-4 border-primary/30 bg-primary/10 sm:flex-row sm:items-center">
+            <div className="flex gap-3">
+              <ShieldCheck className="text-primary" />
+              <div>
+                <h2 className="font-bold">
+                  <T id="Ready to close the sprint?" />
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  <T id="Generate an evidence-based AI final report before confirming virtual pledge outcomes." />
+                </p>
+              </div>
+            </div>
+            <ButtonLink href={`/app/projects/${id}/final`}>
+              <T id="Final report" />
+            </ButtonLink>
+          </Card>
+        ) : (
+          <Card className="flex gap-3">
+            <FileCheck2 className="text-ai" />
+            <div>
+              <h2 className="font-bold">
+                <T id="Evidence is the source of truth" />
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                <T id="Use task detail pages to attach proof and peer reviews before the final report." />
+              </p>
+            </div>
+          </Card>
+        )}
+      </div>
+</>}
+        plan={<>      {taskRows.length ? (
         <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_.85fr]">
           <Card>
             <AIRecommendation
               scope="plan"
               mock={reports?.[0]?.model?.startsWith("mock")}
-            />
+            >
+              {plan?.reasoning && <details><summary className="min-h-11 cursor-pointer py-2 text-sm"><WorkspaceCopy en="Why this plan?" lt="Kodėl toks planas?" /></summary><p className="text-sm leading-6 text-muted-foreground">{plan.reasoning}</p></details>}
+            </AIRecommendation>
             <SectionHeader
               title="AI plan draft"
               description="The draft should be useful, but your team should still tune it before starting."
@@ -359,90 +540,12 @@ export default async function ProjectPage({
                 <p className="font-bold">
                   <T id="AI risk note" />
                 </p>
-                <p className="mt-1 text-muted-foreground">{plan.risks[0]}</p>
+                <p className="mt-1 text-muted-foreground">{plan.risks.join(" · ")}</p>
               </div>
             ) : null}
           </Card>
         </div>
       ) : null}
-
-      <div className="mt-6 grid gap-4 lg:grid-cols-[1.1fr_.9fr]">
-        <Card>
-          <SectionHeader
-            title="Tasks by status"
-            description="Progress only becomes real when submitted evidence is reviewed."
-            action={
-              <ButtonLink
-                href={`/app/projects/${id}/tasks`}
-                variant="secondary"
-                size="sm"
-              >
-                <T id="Open board" />
-              </ButtonLink>
-            }
-          />
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {statusCounts.map((item) => (
-              <div
-                key={item.status}
-                className="rounded-xl border border-border bg-secondary p-3"
-              >
-                <StatusBadge status={item.status} />
-                <p className="mt-2 text-2xl font-bold">{item.count}</p>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        {plan?.risks?.length ? (
-          <AIRecommendation
-            scope="plan"
-            mock={reports?.[0]?.model?.startsWith("mock")}
-          >
-            <ul className="list-disc space-y-2 pl-4">
-              {plan.risks.map((risk) => (
-                <li key={risk}>{risk}</li>
-              ))}
-            </ul>
-            {plan.reasoning && <p>{plan.reasoning}</p>}
-          </AIRecommendation>
-        ) : (
-          <HelpCard title="Deadline check">
-            <p>
-              <T id="project.deadlineCopy" />
-            </p>
-            <p className="mt-2">
-              <T id="project.dueDate" /> <DateText value={project.end_date} />
-            </p>
-          </HelpCard>
-        )}
-      </div>
-
-      {taskRows.length ? (
-        <section className="mt-8">
-          <SectionHeader
-            title="Task board"
-            description="Todo, in progress, submitted, approved, changes, rejected, and disputed work in one view."
-          />
-          <TaskBoard tasks={boardTasks} />
-        </section>
-      ) : (
-        <section className="mt-8">
-          <EmptyState
-            title="No tasks yet"
-            copy="Tasks will appear after the owner generates an AI plan. The plan is editable before the project starts."
-            action={
-              project.status === "draft" && isOwner ? (
-                <AIPlanGenerationForm
-                  idempotencyKey={planRequestId}
-                  label="Generate AI plan"
-                  projectId={id}
-                />
-              ) : null
-            }
-          />
-        </section>
-      )}
 
       {project.status === "draft" && isOwner && taskRows.length ? (
         <section className="mt-8" id="edit-plan">
@@ -565,95 +668,44 @@ export default async function ProjectPage({
         </section>
       ) : null}
 
-      <div className="mt-8 grid gap-4 lg:grid-cols-3">
-        <Card>
-          <SectionHeader title="Approved assigned tasks" />
-          <div className="space-y-4">
-            {profiles?.map((profile) => {
-              const memberTasks = taskRows.filter((task) => {
-                const assignment = singleRelation(
-                  task.task_assignments as unknown as Assignment | Assignment[],
-                );
-                return assignment?.user_id === profile.user_id;
-              });
-              const memberApproved = memberTasks.filter(
-                (task) => task.status === "approved",
-              ).length;
-              const score = memberTasks.length
-                ? Math.round((memberApproved / memberTasks.length) * 100)
-                : 0;
-              return (
-                <div key={profile.user_id}>
-                  <div className="mb-1 flex justify-between text-sm">
-                    <strong>
-                      {(profile.profiles as unknown as { name: string }).name}
-                    </strong>
-                    <span className="text-muted-foreground">
-                      {memberTasks.length ? `${score}%` : "—"}
-                    </span>
-                  </div>
-                  <Progress value={score} />
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {memberApproved}/{memberTasks.length}{" "}
-                    <T id="assigned tasks approved" />
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
-
-        <Card>
+{!taskRows.length && <EmptyState title="No tasks yet" copy="Tasks will appear after the owner generates an AI plan. The plan is editable before the project starts." />}</>}
+        tasks={<>      {taskRows.length ? (
+        <section className="mt-8">
           <SectionHeader
-            title="Recent daily logs"
+            title="Task board"
+            description="Todo, in progress, submitted, approved, changes, rejected, and disputed work in one view."
+          />
+          <TaskBoard tasks={boardTasks} />
+        </section>
+      ) : (
+        <section className="mt-8">
+          <EmptyState
+            title="No tasks yet"
+            copy="Tasks will appear after the owner generates an AI plan. The plan is editable before the project starts."
             action={
-              project.status === "active" ? (
-                <ButtonLink
-                  href={`/app/logs/new?project=${id}`}
-                  variant="secondary"
-                  size="sm"
-                >
-                  <T id="Log today" />
-                </ButtonLink>
+              project.status === "draft" && isOwner ? (
+                <AIPlanGenerationForm
+                  idempotencyKey={planRequestId}
+                  label="Generate AI plan"
+                  projectId={id}
+                />
               ) : null
             }
           />
-          <div className="space-y-3">
-            {logs?.map((log) => (
-              <div
-                key={log.id}
-                className="border-b border-border pb-3 last:border-0"
-              >
-                <p className="font-bold">
-                  {(log.profiles as unknown as { name: string }).name} ·{" "}
-                  {log.time_spent_minutes} <T id="min" />
-                </p>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  {log.summary}
-                </p>
-              </div>
-            ))}
-            {!logs?.length && (
-              <EmptyState
-                title="No daily logs yet"
-                copy="Daily check-ins should take less than 2 minutes. They help the team see progress before review time."
-                action={
-                  project.status === "active" ? (
-                    <ButtonLink
-                      href={`/app/logs/new?project=${id}`}
-                      variant="secondary"
-                    >
-                      <T id="Log today" />
-                    </ButtonLink>
-                  ) : null
-                }
-                className="py-7"
-              />
-            )}
-          </div>
-        </Card>
+        </section>
+      )}
 
-        <Card>
+</>}
+        evidence={<Card>
+  <SectionHeader title="Evidence is the source of truth" description="Use task detail pages to attach proof and peer reviews before the final report." />
+  <div className="space-y-2">
+    {boardTasks.map((task) => <ButtonLink key={task.id} href={`/app/tasks/${task.id}#task-evidence`} variant="secondary" className="w-full justify-between text-left">
+      <span className="flex min-w-0 items-center gap-3"><FileCheck2 size={17} className="shrink-0 text-muted-foreground" /><span>{task.title}</span></span><StatusBadge status={task.status} />
+    </ButtonLink>)}
+    {!boardTasks.length && <p className="text-sm text-muted-foreground"><T id="No tasks yet" /></p>}
+  </div>
+</Card>}
+        reviews={        <Card>
           <SectionHeader
             title="Reviews and disputes"
             action={
@@ -699,69 +751,8 @@ export default async function ProjectPage({
             )}
           </div>
         </Card>
-      </div>
-
-      <div className="mt-8 grid gap-4 lg:grid-cols-[.85fr_1.15fr]">
-        <Card>
-          <div className="flex items-start gap-3">
-            <Coins className="text-primary" />
-            <div>
-              <h2 className="font-bold">
-                <T id="Virtual pledges" />
-              </h2>
-              <p className="mt-1 text-xs text-muted-foreground">
-                <T id="Declared commitments only. 5GieAEOU does not hold money." />
-              </p>
-            </div>
-          </div>
-          <div className="mt-4 space-y-2">
-            {pledges?.map((pledge) => (
-              <div
-                key={pledge.id}
-                className="flex justify-between rounded-xl border border-primary/20 bg-primary/10 p-3"
-              >
-                <span>
-                  {(pledge.profiles as unknown as { name: string }).name}
-                </span>
-                <strong className="text-primary">
-                  {pledge.amount} {pledge.currency}
-                </strong>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        {project.status === "active" && isOwner ? (
-          <Card className="flex flex-col items-start justify-between gap-4 border-primary/30 bg-primary/10 sm:flex-row sm:items-center">
-            <div className="flex gap-3">
-              <ShieldCheck className="text-primary" />
-              <div>
-                <h2 className="font-bold">
-                  <T id="Ready to close the sprint?" />
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  <T id="Generate an evidence-based AI final report before confirming virtual pledge outcomes." />
-                </p>
-              </div>
-            </div>
-            <ButtonLink href={`/app/projects/${id}/final`}>
-              <T id="Final report" />
-            </ButtonLink>
-          </Card>
-        ) : (
-          <Card className="flex gap-3">
-            <FileCheck2 className="text-ai" />
-            <div>
-              <h2 className="font-bold">
-                <T id="Evidence is the source of truth" />
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                <T id="Use task detail pages to attach proof and peer reviews before the final report." />
-              </p>
-            </div>
-          </Card>
-        )}
-      </div>
+}
+      />
     </>
   );
 }

@@ -32,7 +32,7 @@ export default async function ProtectedLayout({
       />
       <main
         id="main-content"
-        className="app-main mx-auto min-h-screen max-w-6xl px-4 pt-6 sm:px-6 md:px-8 md:pt-8"
+        className="app-main mx-auto min-h-screen max-w-7xl px-4 pt-6 sm:px-6 md:px-8 md:pt-8"
       >
         {children}
       </main>

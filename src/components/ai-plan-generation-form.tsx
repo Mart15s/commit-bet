@@ -17,11 +17,13 @@ export function AIPlanGenerationForm({
   idempotencyKey,
   label,
   className,
+  secondary = false,
 }: {
   projectId: string;
   idempotencyKey: string;
   label: string;
   className?: string;
+  secondary?: boolean;
 }) {
   const { t } = useI18n();
   const [state, formAction, pending] = useActionState(
@@ -34,6 +36,7 @@ export function AIPlanGenerationForm({
       <input type="hidden" name="project_id" value={projectId} />
       <input type="hidden" name="idempotency_key" value={idempotencyKey} />
       <Button
+        variant={secondary ? "ghost" : "primary"}
         aria-disabled={pending}
         className="w-full"
         disabled={pending}

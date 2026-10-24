@@ -1,12 +1,13 @@
+import "@/app/workspace.css";
+import { WorkspaceCopy } from "@/components/project-workspace";
 import { T } from "@/components/language-provider";
-import { FileCheck2 } from "lucide-react";
+import { FileCheck2, ClipboardCheck } from "lucide-react";
 import { ReviewForm } from "@/components/review-form";
 import {
   ButtonLink,
   Card,
-  EmptyState,
+  ErrorMessage,
   EvidenceExamples,
-  HelpCard,
   PageHeader,
   StatusBadge,
 } from "@/components/ui";
@@ -42,7 +43,7 @@ export default async function ApprovalsPage({
 }) {
   const params = await searchParams;
   const { supabase, user } = await requireUser();
-  const { data: tasks } = await supabase
+  const { data: tasks, error: tasksError } = await supabase
     .from("tasks")
     .select(
       "*, projects(id, title), task_assignments(user_id, profiles(name)), evidence(id, type, description, url)",
@@ -69,13 +70,11 @@ export default async function ApprovalsPage({
         titleKey="Review submitted evidence"
         descriptionKey="Compare each claim against acceptance criteria. AI can advise later, but teammates approve the work first."
       />
-      <HelpCard
-        title="What reviewers are checking"
-        tone="amber"
-        className="mb-4"
-      >
-        <T id="Approve if the proof clearly matches the task. Request changes if the work is started but not fully proven. Reject only if the evidence does not support the task." />
-      </HelpCard>
+      <details className="review-guide">
+        <summary><ClipboardCheck size={16} /><T id="What reviewers are checking" /></summary>
+        <p><T id="Approve if the proof clearly matches the task. Request changes if the work is started but not fully proven. Reject only if the evidence does not support the task." /></p>
+      </details>
+      {tasksError && <ErrorMessage message="dash.loadError" />}
       <div className="grid gap-4">
         {reviewable.map((task) => {
           const assignment = singleRelation(task.task_assignments);
@@ -107,8 +106,39 @@ export default async function ApprovalsPage({
                 </ButtonLink>
               </div>
 
-              <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_1fr]">
+              <div className="review-proof-canvas mt-5 grid gap-4 lg:grid-cols-[1fr_1fr]">
+                <div className="rounded-2xl border border-border bg-surface p-4">
+                  <p className="mb-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground"><WorkspaceCopy en="The promise" lt="Pažadas" /></p>
+                  <h3 className="font-bold"><T id="Acceptance criteria" /></h3>
+                  <ul className="mt-3 space-y-2">
+                    {(task.acceptance_criteria ?? []).map((criterion) => (
+                      <li
+                        key={criterion}
+                        className="flex gap-2 text-sm leading-6"
+                      >
+                        <span className="mt-2 size-1.5 shrink-0 rounded-full bg-muted-foreground" />
+                        {criterion}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {(task.expected_evidence_types ?? []).map((item) => (
+                      <span
+                        key={item}
+                        className="rounded-full border border-border bg-card px-3 py-1 text-xs font-bold text-muted-foreground"
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                  {!(task.expected_evidence_types ?? []).length && (
+                    <div className="mt-4">
+                      <EvidenceExamples compact />
+                    </div>
+                  )}
+                </div>
                 <div className="rounded-2xl border border-ai/20 bg-ai/10 p-4">
+                  <p className="mb-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground"><WorkspaceCopy en="The proof · awaiting human review" lt="Įrodymai · laukia žmogaus peržiūros" /></p>
                   <h3 className="flex items-center gap-2 font-bold">
                     <FileCheck2 size={18} className="text-ai" />{" "}
                     <T id="Submitted evidence" />
@@ -151,54 +181,17 @@ export default async function ApprovalsPage({
                     )}
                   </div>
                 </div>
-                <div className="rounded-2xl border border-border bg-surface p-4">
-                  <h3 className="font-bold">
-                    <T id="Acceptance criteria" />
-                  </h3>
-                  <ul className="mt-3 space-y-2">
-                    {(task.acceptance_criteria ?? []).map((criterion) => (
-                      <li
-                        key={criterion}
-                        className="flex gap-2 text-sm leading-6"
-                      >
-                        <span className="mt-2 size-1.5 shrink-0 rounded-full bg-muted-foreground" />
-                        {criterion}
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {(task.expected_evidence_types ?? []).map((item) => (
-                      <span
-                        key={item}
-                        className="rounded-full border border-border bg-card px-3 py-1 text-xs font-bold text-muted-foreground"
-                      >
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                  {!(task.expected_evidence_types ?? []).length && (
-                    <div className="mt-4">
-                      <EvidenceExamples compact />
-                    </div>
-                  )}
-                </div>
               </div>
 
               <ReviewForm taskId={task.id} />
             </Card>
           );
         })}
-        {!reviewable.length && (
-          <EmptyState
-            title="Nothing to review yet"
-            copy="Great. No teammate submissions are waiting right now."
-            tip="When proof arrives, compare it to the acceptance criteria before approving."
-            action={
-              <ButtonLink href="/app" variant="secondary">
-                <T id="Back to dashboard" />
-              </ButtonLink>
-            }
-          />
+        {!tasksError && !reviewable.length && (
+          <section className="review-queue-empty">
+            <div className="flex items-start gap-4"><div className="workspace-draft-icon mb-0 shrink-0"><ClipboardCheck size={20} /></div><div><h2><T id="Nothing to review yet" /></h2><p><T id="Great. No teammate submissions are waiting right now." /></p><p><WorkspaceCopy en="When proof arrives, review the evidence against the agreed criteria." lt="Gavę įrodymus, palyginkite juos su sutartais kriterijais." /></p></div></div>
+            <ButtonLink href="/app" variant="secondary"><T id="Back to dashboard" /></ButtonLink>
+          </section>
         )}
       </div>
     </>

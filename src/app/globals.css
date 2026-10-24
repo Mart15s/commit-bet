@@ -54,7 +54,7 @@
   --color-accent-foreground: var(--pure-glare);
   --color-destructive: var(--danger-color);
   --color-destructive-foreground: var(--obsidian-void);
-  --color-border: var(--slate-steel);
+  --color-border: var(--line);
   --color-input: var(--muted-titanium);
   --color-ring: var(--pure-glare);
   --color-surface: var(--surface);
@@ -79,9 +79,9 @@
   --muted-titanium: #94A3B8;
   --pure-glare: #F8FAFC;
   --sovereign-gold: #FFD700;
-  --surface: color-mix(in srgb, var(--obsidian-void) 72%, var(--slate-steel));
-  --elevated: var(--slate-steel);
-  --line: var(--slate-steel);
+  --surface: #10161e;
+  --elevated: #192230;
+  --line: #253040;
   --brand: var(--pure-glare);
   --brand-strong: var(--muted-titanium);
   --success: var(--laser-mint);
@@ -106,22 +106,22 @@ body {
   background: var(--obsidian-void);
   color: var(--pure-glare);
   font-family: "Geist Sans", Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   line-height: 1.6;
   text-rendering: optimizeLegibility;
 }
-h1, time, code, kbd, .metric, .audit-log {
+time, code, kbd, .metric, .audit-log {
   font-family: "Geist Mono", "JetBrains Mono", Consolas, ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
 }
-h1 { letter-spacing: -0.04em; }
-h2, h3 { font-family: "Geist Sans", Inter, ui-sans-serif, sans-serif; }
+h1 { letter-spacing: -0.045em; line-height: 1.13; }
+h1, h2, h3 { font-family: "Geist Sans", Inter, ui-sans-serif, sans-serif; text-wrap: balance; }
 button, input, select, textarea { font-family: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 input, select, textarea {
   width: 100%;
   min-height: 2.75rem;
-  border: 1px solid var(--muted-titanium);
+  border: 1px solid #465365;
   border-radius: 0.625rem;
   background: var(--surface);
   padding: 0.85rem 1rem;
@@ -169,6 +169,31 @@ dialog::backdrop {
 }
 .submit-dock { bottom: calc(var(--mobile-nav-height) + 0.75rem); }
 .app-main { padding-bottom: calc(var(--mobile-nav-height) + 2rem); }
+.premium-card {
+  background-image: linear-gradient(140deg, rgba(248,250,252,.018), transparent 60%);
+  box-shadow: 0 1px 0 rgba(248,250,252,.025), 0 8px 32px rgba(0,0,0,.08);
+}
+.app-header { box-shadow: 0 6px 28px rgba(0,0,0,.12); }
+.auth-story { background-image: radial-gradient(ellipse at 10% 90%, rgba(148,163,184,.08), transparent 65%), linear-gradient(130deg, rgba(248,250,252,.025), transparent 60%); }
+.workspace-menu {
+  position: fixed;
+  inset: auto 0 0;
+  margin: 0;
+  width: 100%;
+  max-width: none;
+  max-height: min(85dvh, 36rem);
+  border-radius: 1.5rem 1.5rem 0 0;
+  padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+}
+.workspace-menu::backdrop { background: rgba(0,0,0,.4); backdrop-filter: blur(2px); }
+@media (min-width: 1024px) {
+  .workspace-menu {
+    inset: 5rem max(1.5rem, calc((100vw - 76rem) / 2)) auto auto;
+    width: 20rem;
+    border-radius: 1rem;
+  }
+  .workspace-menu::backdrop { background: rgba(0,0,0,.12); backdrop-filter: none; }
+}
 @media (min-width: 1024px) {
   .submit-dock { bottom: 1rem; }
   .app-main { padding-bottom: 3rem; }
