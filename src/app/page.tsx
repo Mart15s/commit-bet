@@ -1,164 +1,72 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, FileText, GitCompareArrows, Users } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUpRight, Check, CheckCheck, Circle, FileText, GitCommitHorizontal, Layers3, ListChecks, ScanLine, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { ButtonLink } from "@/components/ui";
 import { useI18n } from "@/components/language-provider";
+import { SprintExecutionPreview } from "@/components/marketing/sprint-execution-preview";
+import "./marketing.css";
 
 const copy = {
   en: {
-    beta: "Public beta / Evidence-based accountability",
-    title: "Ship or explain.",
-    subtitle: "AI audits, humans decide.",
+    beta: "PUBLIC BETA / BUILT FOR FOLLOW-THROUGH",
+    title: "Ship or explain.", subtitle: "AI audits, humans decide.",
     promise: "Where promises become shipped reality.",
-    intro: "Agree on the work. Build it. Put the evidence in front of a peer. Every outcome starts with a promise and ends with a human decision.",
-    start: "Start a commitment",
-    how: "See how it works",
-    signIn: "Sign in",
-    skip: "Skip to content",
-    promiseLabel: "The promise",
-    promiseTitle: "Define what done means.",
-    promiseCopy: "An owner, a deadline and acceptance criteria. Agree on the expected proof before the work begins.",
-    proofLabel: "The proof",
-    proofTitle: "Make the work reviewable.",
-    proofCopy: "Submit artifacts and context. A peer compares the evidence against the commitment. AI recommendations inform the review; people make the call.",
+    intro: "Turn a shared goal into a focused sprint. Agree on what done means, attach the proof, and let a peer make the call.",
+    start: "Start a commitment", how: "See how it works", signIn: "Sign in", skip: "Skip to content", navHow: "The workflow", navPrinciple: "Our principle",
+    benefits: ["Clear commitments", "Reviewable evidence", "Human decisions"],
+    promiseLabel: "The promise", proofLabel: "The proof", decisionLabel: "Human decision",
+    bridgeTitle: "A promise deserves\na paper trail.", bridgeCopy: "Keep the original commitment and the work that supports it in one place. Less chasing updates. More clarity about what actually shipped.",
+    promiseTitle: "Define what done means.", promiseCopy: "An owner. A deadline. Acceptance criteria everyone can review.",
+    proofTitle: "Make the work reviewable.", proofCopy: "Files, links and commits, together with the context that explains them.",
+    decisionTitle: "Give people the final word.", decisionCopy: "A peer compares the proof with the promise. Approve it or ask for changes.",
     note: "A workflow, not a claimed result. Uploading evidence does not make it verified.",
-    howTitle: "Kill checkbox theater. Provide proof.",
-    steps: [
-      ["Commit", "Agree on the outcome, ownership, deadline and evidence."],
-      ["Build", "Work against the agreed scope. Keep a record of what changed."],
-      ["Submit proof", "Attach relevant files, links or commits with a clear description."],
-      ["Peer review", "Compare evidence with acceptance criteria. Approve or request changes."],
-      ["Outcome", "Review the recommendation and record a human decision."],
-    ],
-    principles: [
-      ["Evidence has context.", "A link is a starting point. Keep the scope, submission and review together so peers can assess what the artifact actually proves."],
-      ["AI recommends.", "AI can help organize the plan and explain a recommendation. It does not automatically verify uploaded artifacts or make the final judgment."],
-      ["People decide.", "Peer approval and final confirmation are explicit human actions. An AI recommendation is never presented as a final verdict."],
-    ],
-    finalTitle: "Make the next promise measurable.",
-    betaNote: "Public Beta does not accept, hold or distribute real pledge money. Commitment points are virtual and have no monetary value.",
-    footer: "Proof first. Human decisions.",
+    loopLabel: "THE EXECUTION LOOP", howTitle: "Kill checkbox theater.\nProvide proof.", howCopy: "One connected loop, from the first agreement to a considered outcome.",
+    steps: [["Commit", "Make the outcome specific.", "Scope · owner · deadline"], ["Build", "Move the work forward.", "Tasks · daily check-ins"], ["Submit proof", "Show what changed.", "Artifacts · links · context"], ["Peer review", "Hold it against the promise.", "Criteria · review · changes"], ["Outcome", "Record the human decision.", "Recommendation · confirmation"]],
+    productLabel: "BUILT AROUND THE WORK", productTitle: "The commitment.\nThe evidence. The context.", productCopy: "Stop separating the task from the thing that proves it. A shared review surface keeps the original promise in view.", example: "Illustrative example", taskTitle: "Ship the signup experience", taskOwner: "Example task · Sprint 001", taskStatus: "Awaiting peer review", acceptance: "Acceptance criteria", criteria: ["A visitor can submit the signup form", "A saved signup appears in the demo", "The flow works on mobile"], expected: "Expected proof", expectedValue: "Working demo + mobile walkthrough", submitted: "Submitted artifacts", artifactTitle: "Signup flow walkthrough", artifactCopy: "Demo link and a recording of the mobile flow", provenance: "Example submission · Day 08", unverified: "Submitted evidence · not yet approved", reviewTitle: "Ready for a human review", reviewCopy: "Compare the artifacts with the criteria before approving.", review: "Peer review", reviewActions: "Approve · Request changes · Reject",
+    principleLabel: "THE LINE WE DO NOT CROSS", principleTitle: "AI recommends.\nPeople decide.", principleCopy: "Use AI to structure a plan and explain a recommendation. Keep judgment with the people who can inspect the work.", aiTitle: "AI recommendation", aiCopy: "Advisory input, with its reasoning and limitations. It is never a human approval.", humanTitle: "Human confirmation", humanCopy: "A deliberate decision based on the commitment and the available evidence.", principleFoot: "No automatic approval. No verdict disguised as a suggestion.",
+    finalLabel: "MAKE IT A COMMITMENT", finalTitle: "Your next promise.\nWith proof attached.", finalCopy: "Start small. Set the scope. Make the work reviewable.",
+    betaNote: "Public Beta does not accept, hold or distribute real pledge money. Commitment points are virtual and have no monetary value.", footer: "Proof first. Human decisions.", betaLink: "Public beta",
   },
   lt: {
-    beta: "Viešoji beta / Atskaitomybė, paremta įrodymais",
-    title: "Nuo pažado iki kodo.",
-    subtitle: "Be pasiteisinimų.",
+    beta: "VIEŠOJI BETA / NUO SUTARIMO IKI REZULTATO",
+    title: "Nuo pažado iki kodo.", subtitle: "Be pasiteisinimų.",
     promise: "AI vertina faktus. Žmonės priima sprendimus.",
-    intro: "Sutarkite dėl darbo. Atlikite jį. Pateikite įrodymus kolegai. Kiekvienas rezultatas prasideda pažadu ir baigiasi žmogaus sprendimu.",
-    start: "Pradėti įsipareigojimą",
-    how: "Kaip tai veikia",
-    signIn: "Prisijungti",
-    skip: "Pereiti prie turinio",
-    promiseLabel: "Pažadas",
-    promiseTitle: "Sutarkite, ką reiškia atlikta.",
-    promiseCopy: "Atsakingas žmogus, terminas ir priėmimo kriterijai. Susitarkite dėl laukiamų įrodymų prieš pradėdami darbą.",
-    proofLabel: "Įrodymai",
-    proofTitle: "Pateikite darbą peržiūrai.",
-    proofCopy: "Pateikite rezultatus ir kontekstą. Kolega palygina įrodymus su įsipareigojimu. AI rekomendacija padeda peržiūrėti; sprendžia žmonės.",
+    intro: "Paverskite bendrą tikslą kryptingu sprintu. Sutarkite, ką reiškia atlikta, pateikite įrodymus ir perduokite sprendimą kolegai.",
+    start: "Pradėti įsipareigojimą", how: "Kaip tai veikia", signIn: "Prisijungti", skip: "Pereiti prie turinio", navHow: "Darbo eiga", navPrinciple: "Mūsų principas",
+    benefits: ["Aiškūs įsipareigojimai", "Įrodymai peržiūrai", "Žmonių sprendimai"],
+    promiseLabel: "Pažadas", proofLabel: "Įrodymai", decisionLabel: "Žmogaus sprendimas",
+    bridgeTitle: "Pažadas vertas\naiškaus pagrindimo.", bridgeCopy: "Laikykite pradinį susitarimą ir jį pagrindžiančius darbus vienoje vietoje. Mažiau klausimų apie progresą. Daugiau aiškumo apie rezultatą.",
+    promiseTitle: "Sutarkite, ką reiškia atlikta.", promiseCopy: "Atsakingas žmogus. Terminas. Priėmimo kriterijai, kuriuos visi gali peržiūrėti.",
+    proofTitle: "Pateikite darbą peržiūrai.", proofCopy: "Failai, nuorodos ir kodo pakeitimai kartu su juos paaiškinančiu kontekstu.",
+    decisionTitle: "Galutinis žodis – žmonėms.", decisionCopy: "Kolega palygina įrodymus su pažadu. Patvirtina arba prašo pakeitimų.",
     note: "Tai darbo eiga, o ne patvirtintas rezultatas. Įkeltas įrodymas dar nėra patikrintas.",
-    howTitle: "Mažiau varnelių. Daugiau įrodymų.",
-    steps: [
-      ["Įsipareigokite", "Sutarkite dėl rezultato, atsakomybės, termino ir įrodymų."],
-      ["Kurkite", "Dirbkite pagal sutartą apimtį. Fiksuokite, kas pasikeitė."],
-      ["Pateikite įrodymus", "Pridėkite failus, nuorodas ar kodo pakeitimus su aiškiu aprašu."],
-      ["Kolegos peržiūra", "Palyginkite įrodymus su kriterijais. Patvirtinkite arba prašykite pakeitimų."],
-      ["Rezultatas", "Peržiūrėkite rekomendaciją ir užfiksuokite žmogaus sprendimą."],
-    ],
-    principles: [
-      ["Įrodymams reikia konteksto.", "Nuoroda – pradžia. Darbo apimtis, pateikimas ir peržiūra padeda kolegai įvertinti, ką rezultatas iš tikrųjų įrodo."],
-      ["AI rekomenduoja.", "AI gali padėti parengti planą ir paaiškinti rekomendaciją. Jis automatiškai nepatikrina įkeltų failų ir nepriima galutinio sprendimo."],
-      ["Žmonės sprendžia.", "Kolegos patvirtinimas ir galutinis sprendimas yra aiškūs žmogaus veiksmai. AI rekomendacija nėra galutinis verdiktas."],
-    ],
-    finalTitle: "Tegul kitą pažadą galima pamatuoti.",
-    betaNote: "Viešoji beta nepriima, nelaiko ir neskirsto tikrų įsipareigojimo pinigų. Įsipareigojimo taškai yra virtualūs ir neturi piniginės vertės.",
-    footer: "Pirmiausia įrodymai. Sprendžia žmonės.",
+    loopLabel: "VYKDYMO CIKLAS", howTitle: "Mažiau varnelių.\nDaugiau įrodymų.", howCopy: "Viena nuosekli eiga nuo pirmojo susitarimo iki apgalvoto rezultato.",
+    steps: [["Įsipareigokite", "Apibrėžkite konkretų rezultatą.", "Apimtis · atsakomybė · terminas"], ["Kurkite", "Judinkite darbą pirmyn.", "Užduotys · dienos įrašai"], ["Pateikite įrodymus", "Parodykite, kas pasikeitė.", "Rezultatai · nuorodos · kontekstas"], ["Kolegos peržiūra", "Palyginkite darbą su pažadu.", "Kriterijai · peržiūra · pakeitimai"], ["Rezultatas", "Užfiksuokite žmogaus sprendimą.", "Rekomendacija · patvirtinimas"]],
+    productLabel: "VISKAS APLINK DARBĄ", productTitle: "Įsipareigojimas.\nĮrodymai. Kontekstas.", productCopy: "Neatskirkite užduoties nuo ją pagrindžiančio rezultato. Bendra peržiūros erdvė padeda išlaikyti pradinį pažadą akiratyje.", example: "Iliustracinis pavyzdys", taskTitle: "Paleisti registracijos patirtį", taskOwner: "Pavyzdinė užduotis · Sprintas 001", taskStatus: "Laukia kolegos peržiūros", acceptance: "Priėmimo kriterijai", criteria: ["Lankytojas gali pateikti registracijos formą", "Išsaugota registracija matoma demonstracijoje", "Eiga veikia mobiliajame įrenginyje"], expected: "Laukiami įrodymai", expectedValue: "Veikianti demonstracija ir mobiliosios versijos įrašas", submitted: "Pateikti rezultatai", artifactTitle: "Registracijos eigos apžvalga", artifactCopy: "Demonstracijos nuoroda ir mobiliosios versijos įrašas", provenance: "Pavyzdinis pateikimas · 08 diena", unverified: "Pateikti įrodymai · dar nepatvirtinta", reviewTitle: "Paruošta žmogaus peržiūrai", reviewCopy: "Palyginkite rezultatus su kriterijais prieš patvirtindami.", review: "Kolegos peržiūra", reviewActions: "Patvirtinti · Prašyti pakeitimų · Atmesti",
+    principleLabel: "RIBA, KURIOS NEPERŽENGIAME", principleTitle: "AI rekomenduoja.\nŽmonės sprendžia.", principleCopy: "Naudokite AI planui parengti ir rekomendacijai paaiškinti. Sprendimas lieka žmonėms, kurie gali peržiūrėti darbą.", aiTitle: "AI rekomendacija", aiCopy: "Patariamasis vertinimas su paaiškinimais ir apribojimais. Tai nėra žmogaus patvirtinimas.", humanTitle: "Žmogaus patvirtinimas", humanCopy: "Apgalvotas sprendimas, paremtas įsipareigojimu ir turimais įrodymais.", principleFoot: "Jokio automatinio patvirtinimo. Rekomendacija nėra verdiktas.",
+    finalLabel: "PAVERSKITE TAI ĮSIPAREIGOJIMU", finalTitle: "Kitas jūsų pažadas.\nSu įrodymais.", finalCopy: "Pradėkite nuo mažo tikslo. Sutarkite dėl apimties. Pateikite darbą peržiūrai.",
+    betaNote: "Viešoji beta nepriima, nelaiko ir neskirsto tikrų įsipareigojimo pinigų. Įsipareigojimo taškai yra virtualūs ir neturi piniginės vertės.", footer: "Pirmiausia įrodymai. Sprendžia žmonės.", betaLink: "Viešoji beta",
   },
 };
 
 export default function Home() {
   const { language } = useI18n();
   const text = copy[language];
-  const icons = [FileText, GitCompareArrows, Users];
-
-  return (
-    <div className="min-h-screen">
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-primary focus:p-3 focus:text-primary-foreground">{text.skip}</a>
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-4 sm:px-8">
-          <Link href="/" className="inline-flex min-h-11 items-center"><BrandLogo /></Link>
-          <nav aria-label={language === "lt" ? "Pagrindinė navigacija" : "Main navigation"} className="flex items-center gap-1 sm:gap-3">
-            <LanguageSwitcher compact />
-            <ButtonLink href="/login" variant="ghost" size="sm">{text.signIn}</ButtonLink>
-          </nav>
-        </div>
-      </header>
-      <main id="main-content">
-        <section className="mx-auto grid max-w-7xl gap-12 px-5 pb-16 pt-12 sm:px-8 md:py-20 lg:grid-cols-[1.5fr_1fr] lg:items-center">
-          <div>
-            <p className="font-mono text-xs uppercase tracking-[.12em] text-muted-foreground">{text.beta}</p>
-            <h1 className="mt-6 max-w-3xl text-4xl font-bold leading-[1.15] sm:text-5xl lg:text-6xl">{text.title}</h1>
-            <p className="mt-4 font-mono text-xl font-semibold leading-relaxed sm:text-2xl">{text.subtitle}</p>
-            <p className="mt-7 text-lg font-medium">{text.promise}</p>
-            <p className="mt-3 max-w-xl leading-7 text-muted-foreground">{text.intro}</p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <ButtonLink href="/register" size="lg">{text.start}<ArrowRight size={18} aria-hidden="true" /></ButtonLink>
-              <ButtonLink href="#how-it-works" variant="secondary" size="lg">{text.how}</ButtonLink>
-            </div>
-          </div>
-          <div className="flex min-h-64 items-center justify-center border-y border-border py-10 lg:min-h-80 lg:border-y-0 lg:border-l">
-            <BrandLogo variant="stacked" className="w-[280px]" />
-          </div>
-        </section>
-        <section className="mx-auto max-w-7xl px-5 pb-16 sm:px-8" aria-label={language === "lt" ? "Pažadas ir įrodymai" : "Promise and proof"}>
-          <div className="grid overflow-hidden rounded-xl border border-border bg-surface md:grid-cols-2">
-            {[[text.promiseLabel, text.promiseTitle, text.promiseCopy], [text.proofLabel, text.proofTitle, text.proofCopy]].map(([label, title, description], index) => (
-              <div key={label} className={`p-6 sm:p-8 ${index === 1 ? "border-t border-border md:border-l md:border-t-0" : ""}`}>
-                <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">{label}</p>
-                <h2 className="mt-4 text-[22px] font-semibold">{title}</h2>
-                <p className="mt-3 max-w-lg leading-7 text-muted-foreground">{description}</p>
-              </div>
-            ))}
-          </div>
-          <p className="mt-3 text-xs text-muted-foreground">{text.note}</p>
-        </section>
-        <section id="how-it-works" className="border-y border-border">
-          <div className="mx-auto max-w-7xl px-5 py-14 sm:px-8 md:py-20">
-            <h2 className="max-w-3xl text-2xl font-semibold sm:text-3xl">{text.howTitle}</h2>
-            <ol className="mt-10 grid gap-7 sm:grid-cols-2 lg:grid-cols-5">
-              {text.steps.map(([title, description], index) => (
-                <li key={title} className="border-t border-border pt-4">
-                  <span className="font-mono text-xs text-muted-foreground">{String(index + 1).padStart(2, "0")}</span>
-                  <h3 className="mt-3 text-base font-semibold">{title}</h3>
-                  <p className="mt-2 leading-6 text-muted-foreground">{description}</p>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </section>
-        <section className="mx-auto grid max-w-7xl gap-8 px-5 py-14 sm:px-8 md:grid-cols-3 md:py-20">
-          {text.principles.map(([title, description], index) => {
-            const Icon = icons[index];
-            return <div key={title}><Icon size={22} className="text-muted-foreground" aria-hidden="true" /><h2 className="mt-5 text-[22px] font-semibold">{title}</h2><p className="mt-3 leading-7 text-muted-foreground">{description}</p></div>;
-          })}
-        </section>
-        <section className="border-y border-border bg-surface">
-          <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8">
-            <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
-              <h2 className="max-w-xl text-2xl font-semibold">{text.finalTitle}</h2>
-              <ButtonLink href="/register" size="lg">{text.start}<ArrowUpRight size={18} aria-hidden="true" /></ButtonLink>
-            </div>
-            <p className="mt-8 max-w-3xl text-sm leading-7 text-muted-foreground">{text.betaNote}</p>
-          </div>
-        </section>
-      </main>
-      <footer className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-5 px-5 py-7 sm:px-8">
-        <Link href="/" className="inline-flex min-h-11 items-center"><BrandLogo /></Link>
-        <p className="font-mono text-xs text-muted-foreground">{text.footer}</p>
-        <Link href="/login" className="inline-flex min-h-11 items-center underline underline-offset-4">{text.signIn}</Link>
-      </footer>
-    </div>
-  );
+  const stepIcons = [ListChecks, Layers3, GitCommitHorizontal, ScanLine, Users];
+  return <div className="marketing-page">
+    <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-primary focus:p-3 focus:text-primary-foreground">{text.skip}</a>
+    <header className="marketing-header"><div className="marketing-container marketing-nav"><Link href="/" className="marketing-brand"><BrandLogo /></Link><nav aria-label={language === "lt" ? "Pagrindinė navigacija" : "Main navigation"}><a className="marketing-nav-text" href="#how-it-works">{text.navHow}</a><a className="marketing-nav-text" href="#human-decisions">{text.navPrinciple}</a><LanguageSwitcher compact /><ButtonLink href="/login" variant="secondary" size="sm">{text.signIn}<ArrowUpRight size={14} aria-hidden="true" /></ButtonLink></nav></div></header>
+    <main id="main-content">
+      <section className="marketing-container marketing-hero"><div className="hero-copy"><p className="marketing-eyebrow"><span className="eyebrow-line" />{text.beta}</p><h1>{text.title}</h1><p className="hero-subtitle">{text.subtitle}</p><p className="hero-promise">{text.promise}</p><p className="hero-description">{text.intro}</p><div className="hero-actions"><ButtonLink href="/register" size="lg">{text.start}<ArrowRight size={17} aria-hidden="true" /></ButtonLink><ButtonLink href="#how-it-works" variant="ghost" size="lg">{text.how}<ArrowDown size={15} aria-hidden="true" /></ButtonLink></div><ul className="hero-benefits">{text.benefits.map((benefit) => <li key={benefit}><Check size={12} aria-hidden="true" />{benefit}</li>)}</ul></div><div className="hero-visual"><SprintExecutionPreview /></div></section>
+      <section className="marketing-container promise-section" aria-labelledby="promise-title"><div className="section-intro"><p className="marketing-eyebrow">01 / {text.promiseLabel.toUpperCase()} → {text.proofLabel.toUpperCase()}</p><h2 id="promise-title">{text.bridgeTitle}</h2><p>{text.bridgeCopy}</p></div><div className="promise-sequence">{[[text.promiseLabel,text.promiseTitle,text.promiseCopy,ListChecks],[text.proofLabel,text.proofTitle,text.proofCopy,FileText],[text.decisionLabel,text.decisionTitle,text.decisionCopy,Users]].map(([label,title,description,icon], index) => { const Icon = icon as typeof ListChecks; return <article className="promise-panel" key={index}><div className="promise-panel-top"><span className="panel-icon"><Icon size={20} aria-hidden="true" /></span><span className="panel-number">0{index+1}</span></div><p className="marketing-eyebrow">{label as string}</p><h3>{title as string}</h3><p>{description as string}</p>{index < 2 && <span className="sequence-arrow" aria-hidden="true"><ArrowRight size={16} /></span>}</article>; })}</div><p className="marketing-note"><ShieldCheck size={14} aria-hidden="true" />{text.note}</p></section>
+      <section id="how-it-works" className="workflow-section"><div className="marketing-container"><div className="workflow-intro"><div><p className="marketing-eyebrow">02 / {text.loopLabel}</p><h2>{text.howTitle}</h2></div><p>{text.howCopy}</p></div><ol className="workflow-path">{text.steps.map(([title,description,detail],index) => { const Icon = stepIcons[index]; return <li key={title} className={`workflow-step workflow-step-${index+1}`}><div className="workflow-track"><span className="workflow-node"><Icon size={19} aria-hidden="true" /></span><span className="workflow-index">0{index+1}</span></div><h3>{title}</h3><p>{description}</p><small>{detail}</small></li>; })}</ol></div></section>
+      <section className="marketing-container product-section"><div className="product-intro"><p className="marketing-eyebrow">03 / {text.productLabel}</p><h2>{text.productTitle}</h2><p>{text.productCopy}</p><div className="product-connect"><span>{text.promiseLabel}</span><ArrowRight size={15} /><span>{text.proofLabel}</span><ArrowRight size={15} /><span>{text.review}</span></div></div><figure className="product-canvas"><figcaption><span><Layers3 size={13} aria-hidden="true" />{text.taskOwner}</span><span className="example-label">{text.example}</span></figcaption><div className="product-task-title"><h3>{text.taskTitle}</h3><span>{text.taskStatus}</span></div><div className="bilateral-demo"><div className="demo-promise"><p className="marketing-eyebrow">{text.promiseLabel}</p><h4>{text.acceptance}</h4><ul>{text.criteria.map((criterion) => <li key={criterion}><Circle size={12} aria-hidden="true" />{criterion}</li>)}</ul><div className="expected-proof"><small>{text.expected}</small><p>{text.expectedValue}</p></div></div><div className="demo-proof"><p className="marketing-eyebrow">{text.proofLabel}</p><h4>{text.submitted}</h4><div className="artifact-demo"><span className="artifact-icon"><FileText size={19} aria-hidden="true" /></span><div><strong>{text.artifactTitle}</strong><p>{text.artifactCopy}</p><small>{text.provenance}</small></div></div><p className="unverified-state"><Circle size={10} aria-hidden="true" />{text.unverified}</p></div></div><div className="demo-review"><Users size={19} aria-hidden="true" /><div><strong>{text.reviewTitle}</strong><p>{text.reviewCopy}</p><small>{text.reviewActions}</small></div></div></figure></section>
+      <section id="human-decisions" className="principle-section"><div className="marketing-container principle-layout"><div><p className="marketing-eyebrow">04 / {text.principleLabel}</p><h2>{text.principleTitle}</h2><p className="principle-description">{text.principleCopy}</p></div><div className="decision-comparison"><article><span className="panel-icon"><Sparkles size={20} aria-hidden="true" /></span><div><p className="marketing-eyebrow">01 / AI</p><h3>{text.aiTitle}</h3><p>{text.aiCopy}</p></div></article><div className="decision-divider"><span /> <ArrowDown size={15} aria-hidden="true" /> <span /></div><article><span className="panel-icon"><Users size={20} aria-hidden="true" /></span><div><p className="marketing-eyebrow">02 / {text.decisionLabel.toUpperCase()}</p><h3>{text.humanTitle}</h3><p>{text.humanCopy}</p></div></article><p className="decision-foot"><CheckCheck size={14} aria-hidden="true" />{text.principleFoot}</p></div></div></section>
+      <section className="marketing-container final-section"><div className="final-cta"><div><p className="marketing-eyebrow">{text.finalLabel}</p><h2>{text.finalTitle}</h2><p>{text.finalCopy}</p></div><ButtonLink href="/register" size="lg">{text.start}<ArrowUpRight size={18} aria-hidden="true" /></ButtonLink><span className="final-corner" aria-hidden="true"><ListChecks size={100} strokeWidth={.7} /></span></div><p id="public-beta" className="beta-disclosure">{text.betaNote}</p></section>
+    </main>
+    <footer className="marketing-container marketing-footer"><div><Link href="/" className="marketing-brand"><BrandLogo /></Link><p>{text.footer}</p></div><nav aria-label={language === "lt" ? "Poraštės navigacija" : "Footer navigation"}><a href="#how-it-works">{text.navHow}</a><a href="#public-beta">{text.betaLink}</a><Link href="/login">{text.signIn}<ArrowUpRight size={13} aria-hidden="true" /></Link></nav><span className="footer-edition">5GieAEOU / BETA</span></footer>
+  </div>;
 }
