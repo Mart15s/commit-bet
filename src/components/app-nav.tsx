@@ -15,6 +15,7 @@ import {
   Users,
   X,
 } from "lucide-react";
+import { BrandLogo } from "@/components/brand-logo";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { LogoutButton } from "@/components/logout-button";
 import { useI18n } from "@/components/language-provider";
@@ -84,10 +85,7 @@ export function AppNav({
             href="/app"
             className="flex items-center gap-2 text-lg font-bold tracking-tight"
           >
-            <span className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground">
-              <ClipboardCheck size={19} aria-hidden="true" />
-            </span>
-            {t("app.brand")}
+            <BrandLogo />
           </Link>
           <nav
             aria-label={t("nav.primary")}

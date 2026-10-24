@@ -1,10 +1,31 @@
 "use client";
 
 import Link from "next/link";
+import { useFormStatus } from "react-dom";
 import { ArrowRight, LockKeyhole, UserPlus } from "lucide-react";
 import { login, register } from "@/app/(auth)/actions";
 import { Button, Card, ErrorMessage } from "@/components/ui";
 import { useI18n } from "@/components/language-provider";
+
+function AuthSubmit({ mode }: { mode: "login" | "register" }) {
+  const { pending } = useFormStatus();
+  const { t, language } = useI18n();
+  const label = pending
+    ? language === "lt"
+      ? mode === "login"
+        ? "Jungiamasi..."
+        : "Kuriama paskyra..."
+      : mode === "login"
+        ? "Signing in..."
+        : "Creating account..."
+    : t(mode === "login" ? "auth.loginButton" : "auth.createAccountButton");
+  return (
+    <Button size="lg" type="submit" disabled={pending} aria-busy={pending}>
+      <span role="status" aria-live="polite">{label}</span>
+      <ArrowRight size={18} aria-hidden="true" />
+    </Button>
+  );
+}
 
 export function LoginForm({
   error,
@@ -29,7 +50,7 @@ export function LoginForm({
       <form action={login} className="mt-7 grid gap-4">
         <ErrorMessage message={error} />
         {notice && (
-          <div className="rounded-xl border border-success/30 bg-success/12 p-3 text-sm font-bold text-success">
+          <div role="status" aria-live="polite" className="rounded-xl border border-border bg-secondary/40 p-3 text-sm text-foreground">
             {t(notice)}
           </div>
         )}
@@ -47,9 +68,7 @@ export function LoginForm({
             autoComplete="current-password"
           />
         </label>
-        <Button size="lg" type="submit">
-          {t("auth.loginButton")} <ArrowRight size={18} />
-        </Button>
+        <AuthSubmit mode="login" />
       </form>
       <p className="mt-6 text-center text-sm text-muted-foreground">
         {t("auth.newHere")}{" "}
@@ -95,12 +114,10 @@ export function RegisterForm({ error }: { error?: string }) {
             autoComplete="new-password"
           />
         </label>
-        <div className="rounded-xl border border-warning/30 bg-warning/12 p-3 text-sm font-bold text-warning">
+        <div className="rounded-xl border border-border bg-secondary/40 p-3 text-sm text-muted-foreground">
           {t("auth.onboardingNote")}
         </div>
-        <Button size="lg" type="submit">
-          {t("auth.createAccountButton")} <ArrowRight size={18} />
-        </Button>
+        <AuthSubmit mode="register" />
       </form>
       <p className="mt-6 text-center text-sm text-muted-foreground">
         {t("auth.alreadyRegistered")}{" "}

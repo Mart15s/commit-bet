@@ -1,234 +1,164 @@
 "use client";
 
 import Link from "next/link";
-import {
-  ArrowRight,
-  Brain,
-  Check,
-  ClipboardCheck,
-  FileCheck2,
-  ShieldCheck,
-  Users,
-} from "lucide-react";
+import { ArrowRight, ArrowUpRight, FileText, GitCompareArrows, Users } from "lucide-react";
+import { BrandLogo } from "@/components/brand-logo";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { ButtonLink, Card, Progress, StatusBadge } from "@/components/ui";
+import { ButtonLink } from "@/components/ui";
 import { useI18n } from "@/components/language-provider";
 
-// Public, explicitly illustrative content. Never used by the authenticated dashboard.
-const previewStatuses = ["approved", "submitted", "in_progress"];
+const copy = {
+  en: {
+    beta: "Public beta / Evidence-based accountability",
+    title: "Ship or explain.",
+    subtitle: "AI audits, humans decide.",
+    promise: "Where promises become shipped reality.",
+    intro: "Agree on the work. Build it. Put the evidence in front of a peer. Every outcome starts with a promise and ends with a human decision.",
+    start: "Start a commitment",
+    how: "See how it works",
+    signIn: "Sign in",
+    skip: "Skip to content",
+    promiseLabel: "The promise",
+    promiseTitle: "Define what done means.",
+    promiseCopy: "An owner, a deadline and acceptance criteria. Agree on the expected proof before the work begins.",
+    proofLabel: "The proof",
+    proofTitle: "Make the work reviewable.",
+    proofCopy: "Submit artifacts and context. A peer compares the evidence against the commitment. AI recommendations inform the review; people make the call.",
+    note: "A workflow, not a claimed result. Uploading evidence does not make it verified.",
+    howTitle: "Kill checkbox theater. Provide proof.",
+    steps: [
+      ["Commit", "Agree on the outcome, ownership, deadline and evidence."],
+      ["Build", "Work against the agreed scope. Keep a record of what changed."],
+      ["Submit proof", "Attach relevant files, links or commits with a clear description."],
+      ["Peer review", "Compare evidence with acceptance criteria. Approve or request changes."],
+      ["Outcome", "Review the recommendation and record a human decision."],
+    ],
+    principles: [
+      ["Evidence has context.", "A link is a starting point. Keep the scope, submission and review together so peers can assess what the artifact actually proves."],
+      ["AI recommends.", "AI can help organize the plan and explain a recommendation. It does not automatically verify uploaded artifacts or make the final judgment."],
+      ["People decide.", "Peer approval and final confirmation are explicit human actions. An AI recommendation is never presented as a final verdict."],
+    ],
+    finalTitle: "Make the next promise measurable.",
+    betaNote: "Public Beta does not accept, hold or distribute real pledge money. Commitment points are virtual and have no monetary value.",
+    footer: "Proof first. Human decisions.",
+  },
+  lt: {
+    beta: "Viešoji beta / Atskaitomybė, paremta įrodymais",
+    title: "Nuo pažado iki kodo.",
+    subtitle: "Be pasiteisinimų.",
+    promise: "AI vertina faktus. Žmonės priima sprendimus.",
+    intro: "Sutarkite dėl darbo. Atlikite jį. Pateikite įrodymus kolegai. Kiekvienas rezultatas prasideda pažadu ir baigiasi žmogaus sprendimu.",
+    start: "Pradėti įsipareigojimą",
+    how: "Kaip tai veikia",
+    signIn: "Prisijungti",
+    skip: "Pereiti prie turinio",
+    promiseLabel: "Pažadas",
+    promiseTitle: "Sutarkite, ką reiškia atlikta.",
+    promiseCopy: "Atsakingas žmogus, terminas ir priėmimo kriterijai. Susitarkite dėl laukiamų įrodymų prieš pradėdami darbą.",
+    proofLabel: "Įrodymai",
+    proofTitle: "Pateikite darbą peržiūrai.",
+    proofCopy: "Pateikite rezultatus ir kontekstą. Kolega palygina įrodymus su įsipareigojimu. AI rekomendacija padeda peržiūrėti; sprendžia žmonės.",
+    note: "Tai darbo eiga, o ne patvirtintas rezultatas. Įkeltas įrodymas dar nėra patikrintas.",
+    howTitle: "Mažiau varnelių. Daugiau įrodymų.",
+    steps: [
+      ["Įsipareigokite", "Sutarkite dėl rezultato, atsakomybės, termino ir įrodymų."],
+      ["Kurkite", "Dirbkite pagal sutartą apimtį. Fiksuokite, kas pasikeitė."],
+      ["Pateikite įrodymus", "Pridėkite failus, nuorodas ar kodo pakeitimus su aiškiu aprašu."],
+      ["Kolegos peržiūra", "Palyginkite įrodymus su kriterijais. Patvirtinkite arba prašykite pakeitimų."],
+      ["Rezultatas", "Peržiūrėkite rekomendaciją ir užfiksuokite žmogaus sprendimą."],
+    ],
+    principles: [
+      ["Įrodymams reikia konteksto.", "Nuoroda – pradžia. Darbo apimtis, pateikimas ir peržiūra padeda kolegai įvertinti, ką rezultatas iš tikrųjų įrodo."],
+      ["AI rekomenduoja.", "AI gali padėti parengti planą ir paaiškinti rekomendaciją. Jis automatiškai nepatikrina įkeltų failų ir nepriima galutinio sprendimo."],
+      ["Žmonės sprendžia.", "Kolegos patvirtinimas ir galutinis sprendimas yra aiškūs žmogaus veiksmai. AI rekomendacija nėra galutinis verdiktas."],
+    ],
+    finalTitle: "Tegul kitą pažadą galima pamatuoti.",
+    betaNote: "Viešoji beta nepriima, nelaiko ir neskirsto tikrų įsipareigojimo pinigų. Įsipareigojimo taškai yra virtualūs ir neturi piniginės vertės.",
+    footer: "Pirmiausia įrodymai. Sprendžia žmonės.",
+  },
+};
+
 export default function Home() {
-  const { t } = useI18n();
-  const flow = [
-    "Project",
-    "Commitment",
-    "Plan",
-    "Evidence",
-    "Approval",
-    "Report",
-  ];
+  const { language } = useI18n();
+  const text = copy[language];
+  const icons = [FileText, GitCompareArrows, Users];
+
   return (
-    <main className="min-h-screen">
-      <header className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-8">
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-xl font-bold tracking-tight"
-        >
-          <span className="grid size-9 place-items-center rounded-lg bg-primary text-primary-foreground">
-            <ClipboardCheck size={21} />
-          </span>
-          {t("app.brand")}
-        </Link>
-        <nav className="flex items-center gap-2">
-          <LanguageSwitcher compact />
-          <ButtonLink href="/login" variant="ghost" size="sm">
-            {t("landing.signIn")}
-          </ButtonLink>
-        </nav>
+    <div className="min-h-screen">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-primary focus:p-3 focus:text-primary-foreground">{text.skip}</a>
+      <header className="border-b border-border">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-4 sm:px-8">
+          <Link href="/" className="inline-flex min-h-11 items-center"><BrandLogo /></Link>
+          <nav aria-label={language === "lt" ? "Pagrindinė navigacija" : "Main navigation"} className="flex items-center gap-1 sm:gap-3">
+            <LanguageSwitcher compact />
+            <ButtonLink href="/login" variant="ghost" size="sm">{text.signIn}</ButtonLink>
+          </nav>
+        </div>
       </header>
-      <section className="mx-auto grid max-w-7xl gap-10 px-5 pb-16 pt-10 sm:px-8 md:py-20 lg:grid-cols-[1fr_1fr] lg:items-center lg:gap-14">
-        <div>
-          <p className="mb-5 text-xs font-semibold uppercase tracking-[.14em] text-primary">
-            {t("landing.audience")}
-          </p>
-          <h1 className="max-w-xl text-[2.75rem] font-bold leading-[1.06] tracking-[-.05em] sm:text-6xl xl:text-7xl">
-            {t("landing.heroTitle")}
-          </h1>
-          <p className="mt-6 max-w-lg text-lg leading-8 text-muted-foreground">
-            {t("landing.heroCopy")}
-          </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <ButtonLink href="/register" size="lg">
-              {t("landing.createSprint")}
-              <ArrowRight size={18} />
-            </ButtonLink>
-            <ButtonLink href="#how-it-works" variant="secondary" size="lg">
-              {t("landing.walkthrough")}
-            </ButtonLink>
+      <main id="main-content">
+        <section className="mx-auto grid max-w-7xl gap-12 px-5 pb-16 pt-12 sm:px-8 md:py-20 lg:grid-cols-[1.5fr_1fr] lg:items-center">
+          <div>
+            <p className="font-mono text-xs uppercase tracking-[.12em] text-muted-foreground">{text.beta}</p>
+            <h1 className="mt-6 max-w-3xl text-4xl font-bold leading-[1.15] sm:text-5xl lg:text-6xl">{text.title}</h1>
+            <p className="mt-4 font-mono text-xl font-semibold leading-relaxed sm:text-2xl">{text.subtitle}</p>
+            <p className="mt-7 text-lg font-medium">{text.promise}</p>
+            <p className="mt-3 max-w-xl leading-7 text-muted-foreground">{text.intro}</p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <ButtonLink href="/register" size="lg">{text.start}<ArrowRight size={18} aria-hidden="true" /></ButtonLink>
+              <ButtonLink href="#how-it-works" variant="secondary" size="lg">{text.how}</ButtonLink>
+            </div>
           </div>
-          <div className="mt-6 flex flex-wrap gap-x-5 gap-y-3 text-xs text-muted-foreground">
-            {[
-              [ShieldCheck, "landing.virtualPledges"],
-              [Brain, "landing.aiRecommends"],
-              [Users, "landing.humansConfirm"],
-            ].map(([Icon, key]) => (
-              <span
-                className="inline-flex items-center gap-2"
-                key={String(key)}
-              >
-                <Icon size={16} className="text-primary" />
-                {t(String(key))}
-              </span>
+          <div className="flex min-h-64 items-center justify-center border-y border-border py-10 lg:min-h-80 lg:border-y-0 lg:border-l">
+            <BrandLogo variant="stacked" className="w-[280px]" />
+          </div>
+        </section>
+        <section className="mx-auto max-w-7xl px-5 pb-16 sm:px-8" aria-label={language === "lt" ? "Pažadas ir įrodymai" : "Promise and proof"}>
+          <div className="grid overflow-hidden rounded-xl border border-border bg-surface md:grid-cols-2">
+            {[[text.promiseLabel, text.promiseTitle, text.promiseCopy], [text.proofLabel, text.proofTitle, text.proofCopy]].map(([label, title, description], index) => (
+              <div key={label} className={`p-6 sm:p-8 ${index === 1 ? "border-t border-border md:border-l md:border-t-0" : ""}`}>
+                <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">{label}</p>
+                <h2 className="mt-4 text-[22px] font-semibold">{title}</h2>
+                <p className="mt-3 max-w-lg leading-7 text-muted-foreground">{description}</p>
+              </div>
             ))}
           </div>
-          <p className="mt-4 text-xs text-muted-foreground">
-            {t("landing.noMoney")}
-          </p>
-        </div>
-        <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-2xl">
-          <div className="border-b border-border bg-elevated px-5 py-3">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("landing.preview")}
-            </p>
-          </div>
-          <div className="p-5 sm:p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <span className="text-xs font-semibold uppercase tracking-widest text-primary">
-                {t("landing.activeSprint")}
-              </span>
-              <StatusBadge status="active" />
-            </div>
-            <h2 className="mt-4 text-2xl font-bold tracking-tight">
-              {t("landing.previewTitle")}
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              {t("landing.previewGoal")}
-            </p>
-            <div className="mt-6 flex justify-between gap-3 text-sm">
-              <strong>{t("dash.verified")}</strong>
-              <strong className="text-primary">1 / 3</strong>
-            </div>
-            <Progress value={33} label={t("dash.verified")} className="mt-3" />
-            <div className="mt-6 grid gap-2">
-              {previewStatuses.map((status, index) => (
-                <div
-                  key={status}
-                  className="flex items-start justify-between gap-3 rounded-xl border border-border bg-background/50 p-3"
-                >
-                  <div>
-                    <p className="text-sm font-semibold">
-                      {t(`landing.previewTask${index}`)}
-                    </p>
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                      {t("landing.previewEvidence")}
-                    </p>
-                  </div>
-                  <StatusBadge status={status} />
-                </div>
+          <p className="mt-3 text-xs text-muted-foreground">{text.note}</p>
+        </section>
+        <section id="how-it-works" className="border-y border-border">
+          <div className="mx-auto max-w-7xl px-5 py-14 sm:px-8 md:py-20">
+            <h2 className="max-w-3xl text-2xl font-semibold sm:text-3xl">{text.howTitle}</h2>
+            <ol className="mt-10 grid gap-7 sm:grid-cols-2 lg:grid-cols-5">
+              {text.steps.map(([title, description], index) => (
+                <li key={title} className="border-t border-border pt-4">
+                  <span className="font-mono text-xs text-muted-foreground">{String(index + 1).padStart(2, "0")}</span>
+                  <h3 className="mt-3 text-base font-semibold">{title}</h3>
+                  <p className="mt-2 leading-6 text-muted-foreground">{description}</p>
+                </li>
               ))}
+            </ol>
+          </div>
+        </section>
+        <section className="mx-auto grid max-w-7xl gap-8 px-5 py-14 sm:px-8 md:grid-cols-3 md:py-20">
+          {text.principles.map(([title, description], index) => {
+            const Icon = icons[index];
+            return <div key={title}><Icon size={22} className="text-muted-foreground" aria-hidden="true" /><h2 className="mt-5 text-[22px] font-semibold">{title}</h2><p className="mt-3 leading-7 text-muted-foreground">{description}</p></div>;
+          })}
+        </section>
+        <section className="border-y border-border bg-surface">
+          <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8">
+            <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+              <h2 className="max-w-xl text-2xl font-semibold">{text.finalTitle}</h2>
+              <ButtonLink href="/register" size="lg">{text.start}<ArrowUpRight size={18} aria-hidden="true" /></ButtonLink>
             </div>
-            <div className="mt-4 flex gap-3 rounded-xl border border-ai/25 bg-ai/5 p-4">
-              <Brain size={19} className="shrink-0 text-ai" />
-              <div>
-                <p className="text-xs font-semibold text-ai">
-                  {t("landing.previewInsight")}
-                </p>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  {t("landing.previewInsightCopy")}
-                </p>
-              </div>
-            </div>
+            <p className="mt-8 max-w-3xl text-sm leading-7 text-muted-foreground">{text.betaNote}</p>
           </div>
-        </div>
-      </section>
-      <section
-        id="how-it-works"
-        className="border-y border-border bg-surface/50"
-      >
-        <div className="mx-auto max-w-7xl px-5 py-14 sm:px-8 md:py-20">
-          <p className="text-xs font-semibold uppercase tracking-[.16em] text-primary">
-            {t("landing.howEyebrow")}
-          </p>
-          <h2 className="mt-3 max-w-2xl text-3xl font-bold tracking-tight sm:text-4xl">
-            {t("landing.howTitle")}
-          </h2>
-          <div className="mt-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {flow.map((key, index) => (
-              <Card key={key} className="p-6">
-                <span className="grid size-9 place-items-center rounded-lg border border-primary/25 bg-primary/10 text-sm font-semibold text-primary">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <h3 className="mt-5 text-lg font-bold">
-                  {t(`landing.flow${key}`)}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  {t(`landing.flow${key}Copy`)}
-                </p>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-      <section className="mx-auto grid max-w-7xl gap-8 px-5 py-14 sm:px-8 md:py-20 lg:grid-cols-2">
-        <div>
-          <FileCheck2 size={25} className="text-primary" />
-          <h2 className="mt-5 max-w-md text-3xl font-bold tracking-tight">
-            {t("landing.assetTitle")}
-          </h2>
-          <p className="mt-4 max-w-lg leading-7 text-muted-foreground">
-            {t("landing.assetCopy")}
-          </p>
-          <div className="mt-6 flex flex-wrap gap-2">
-            {["screenshots", "githubLinks", "demoVideos"].map((key) => (
-              <span
-                key={key}
-                className="rounded-lg border border-border bg-surface px-3 py-2 text-xs font-semibold"
-              >
-                {t(`landing.${key}`)}
-              </span>
-            ))}
-          </div>
-        </div>
-        <div className="grid gap-4">
-          {[
-            [Brain, "neutralReviewer"],
-            [ClipboardCheck, "peerApproval"],
-            [ShieldCheck, "humanConfirmation"],
-          ].map(([Icon, key]) => (
-            <div
-              key={String(key)}
-              className="flex gap-4 rounded-xl border border-border bg-card p-5"
-            >
-              <Icon size={21} className="shrink-0 text-ai" />
-              <div>
-                <h3 className="font-bold">{t(`landing.${key}`)}</h3>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  {t(`landing.${key}Copy`)}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-      <section className="border-t border-border bg-surface/60">
-        <div className="mx-auto max-w-3xl px-5 py-14 text-center sm:px-8 md:py-20">
-          <Check className="mx-auto text-primary" size={30} />
-          <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">
-            {t("landing.finalTitle")}
-          </h2>
-          <p className="mt-4 leading-7 text-muted-foreground">
-            {t("landing.finalCopy")}
-          </p>
-          <div className="mt-7">
-            <ButtonLink href="/register" size="lg">
-              {t("landing.createSprint")}
-              <ArrowRight size={18} />
-            </ButtonLink>
-          </div>
-          <p className="mt-5 text-xs text-muted-foreground">
-            {t("landing.noMoney")}
-          </p>
-        </div>
-      </section>
-    </main>
+        </section>
+      </main>
+      <footer className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-5 px-5 py-7 sm:px-8">
+        <Link href="/" className="inline-flex min-h-11 items-center"><BrandLogo /></Link>
+        <p className="font-mono text-xs text-muted-foreground">{text.footer}</p>
+        <Link href="/login" className="inline-flex min-h-11 items-center underline underline-offset-4">{text.signIn}</Link>
+      </footer>
+    </div>
   );
 }
