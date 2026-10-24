@@ -136,10 +136,7 @@ export function StatusBadge({ status }: { status: string }) {
   const normalized = status.toLowerCase();
   const tone =
     normalized === "approved" ||
-    normalized === "active" ||
-    normalized === "completed" ||
-    normalized === "met" ||
-    normalized === "low"
+    normalized === "met"
       ? "border-success/30 bg-success/12 text-success"
       : normalized === "submitted"
         ? "border-review/30 bg-review/10 text-review"
@@ -147,10 +144,7 @@ export function StatusBadge({ status }: { status: string }) {
             normalized === "info" ||
             normalized === "ai"
           ? "border-ai/30 bg-ai/12 text-ai"
-          : normalized === "needs_changes" ||
-              normalized === "medium" ||
-              normalized === "partial" ||
-              normalized === "warning"
+          : normalized === "urgent" || normalized === "consent_requested"
             ? "border-warning/35 bg-warning/14 text-warning"
             : normalized === "disputed"
               ? "border-review/50 border-dashed bg-review/10 text-review"
@@ -224,7 +218,7 @@ export function MetricCard({
           <p className="text-xs font-bold uppercase tracking-[.12em] text-muted-foreground">
             {t(label)}
           </p>
-          <p className="mt-2 text-2xl font-bold tracking-[-.02em]">{value}</p>
+          <p className="mt-2 font-mono text-2xl font-bold tabular-nums tracking-[-.02em]">{value}</p>
           {detail && (
             <p className="mt-1 text-sm text-muted-foreground">{t(detail)}</p>
           )}
@@ -290,7 +284,7 @@ export function EmptyState({
       <h2 className="text-xl font-bold">{t(title)}</h2>
       <p className="mx-auto mt-2 max-w-md text-muted-foreground">{t(copy)}</p>
       {tip && (
-        <p className="mx-auto mt-4 max-w-md rounded-xl border border-warning/25 bg-warning/10 p-3 text-sm font-bold text-warning">
+        <p className="mx-auto mt-4 max-w-md rounded-xl border border-border bg-surface p-3 text-sm font-bold text-muted-foreground">
           {t(tip)}
         </p>
       )}
@@ -313,8 +307,8 @@ export function HelpCard({
   const tones = {
     primary: "border-primary/25 bg-primary/10 text-primary",
     cyan: "border-ai/25 bg-ai/10 text-ai",
-    amber: "border-warning/30 bg-warning/10 text-warning",
-    emerald: "border-success/30 bg-success/10 text-success",
+    amber: "border-border bg-surface text-muted-foreground",
+    emerald: "border-border bg-surface text-muted-foreground",
     danger: "border-danger/30 bg-danger/10 text-danger",
   };
   const { t } = useI18n();
@@ -379,9 +373,9 @@ export function SuccessState({
 }) {
   const { t } = useI18n();
   return (
-    <Card className="border-success/30 bg-success/10">
+    <Card>
       <div className="flex gap-3">
-        <div className="grid size-11 shrink-0 place-items-center rounded-full border border-success/35 bg-success/15 text-xs font-bold text-success">
+        <div className="grid size-11 shrink-0 place-items-center rounded-full border border-border bg-surface text-xs font-bold text-foreground">
           OK
         </div>
         <div className="min-w-0">
@@ -390,7 +384,7 @@ export function SuccessState({
             {t(copy)}
           </p>
           {details && (
-            <div className="mt-4 rounded-xl border border-success/25 bg-background/45 p-3 text-sm">
+            <div className="mt-4 rounded-xl border border-border bg-background/45 p-3 text-sm">
               {details}
             </div>
           )}

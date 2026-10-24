@@ -75,7 +75,7 @@ export function MultiChipField({
     <fieldset className="grid gap-3">
       <legend className="font-bold text-foreground">
         {label}
-        {required && <span className="text-warning"> *</span>}
+        {required && <span className="text-muted-foreground"> *</span>}
       </legend>
       {helper && (
         <p className="-mt-2 text-sm leading-6 text-muted-foreground">
@@ -124,7 +124,7 @@ export function MultiChipField({
             >
               <span className="truncate">{optionLabel(option, t)}</span>
               {option.recommended && (
-                <span className="rounded-full bg-warning/15 px-2 py-0.5 text-[10px] uppercase text-warning">
+                <span className="rounded-full bg-surface px-2 py-0.5 text-[10px] uppercase text-muted-foreground">
                   {t("common.recommended")}
                 </span>
               )}
@@ -162,7 +162,7 @@ export function MultiChipField({
           </button>
         </div>
       )}
-      {message && <p className="text-sm font-bold text-warning">{message}</p>}
+      {message && <p className="text-sm font-bold text-muted-foreground">{message}</p>}
     </fieldset>
   );
 }
@@ -210,7 +210,7 @@ export function SingleChipField({
     <fieldset className="grid gap-3">
       <legend className="font-bold text-foreground">
         {label}
-        {required && <span className="text-warning"> *</span>}
+        {required && <span className="text-muted-foreground"> *</span>}
       </legend>
       {helper && (
         <p className="-mt-2 text-sm leading-6 text-muted-foreground">
@@ -250,7 +250,7 @@ export function SingleChipField({
             >
               <span className="truncate">{optionLabel(option, t)}</span>
               {option.recommended && (
-                <span className="rounded-full bg-warning/15 px-2 py-0.5 text-[10px] uppercase text-warning">
+                <span className="rounded-full bg-surface px-2 py-0.5 text-[10px] uppercase text-muted-foreground">
                   {t("common.recommended")}
                 </span>
               )}
@@ -290,7 +290,7 @@ export function SingleChipField({
           </button>
         </div>
       )}
-      {message && <p className="text-sm font-bold text-warning">{message}</p>}
+      {message && <p className="text-sm font-bold text-muted-foreground">{message}</p>}
     </fieldset>
   );
 }
