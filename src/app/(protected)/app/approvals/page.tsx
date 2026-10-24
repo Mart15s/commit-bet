@@ -1,6 +1,15 @@
-import { AlertTriangle, Check, FileCheck2, MessageSquare, X } from "lucide-react";
-import { reviewTask } from "@/app/(protected)/app/tasks/actions";
-import { Button, ButtonLink, Card, EmptyState, EvidenceExamples, HelpCard, PageHeader, StatusBadge } from "@/components/ui";
+import { T } from "@/components/language-provider";
+import { FileCheck2 } from "lucide-react";
+import { ReviewForm } from "@/components/review-form";
+import {
+  ButtonLink,
+  Card,
+  EmptyState,
+  EvidenceExamples,
+  HelpCard,
+  PageHeader,
+  StatusBadge,
+} from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { singleRelation } from "@/lib/utils";
 
@@ -10,9 +19,20 @@ type ReviewTask = {
   description: string;
   acceptance_criteria: string[];
   expected_evidence_types: string[];
-  projects: { id: string; title: string } | { id: string; title: string }[] | null;
-  task_assignments: { user_id: string; profiles: { name: string } } | Array<{ user_id: string; profiles: { name: string } }> | null;
-  evidence: Array<{ id: string; type: string; description: string; url?: string | null }>;
+  projects:
+    | { id: string; title: string }
+    | { id: string; title: string }[]
+    | null;
+  task_assignments:
+    | { user_id: string; profiles: { name: string } }
+    | Array<{ user_id: string; profiles: { name: string } }>
+    | null;
+  evidence: Array<{
+    id: string;
+    type: string;
+    description: string;
+    url?: string | null;
+  }>;
 };
 
 export default async function ApprovalsPage({
@@ -24,23 +44,37 @@ export default async function ApprovalsPage({
   const { supabase, user } = await requireUser();
   const { data: tasks } = await supabase
     .from("tasks")
-    .select("*, projects(id, title), task_assignments(user_id, profiles(name)), evidence(id, type, description, url)")
+    .select(
+      "*, projects(id, title), task_assignments(user_id, profiles(name)), evidence(id, type, description, url)",
+    )
     .eq("status", "submitted");
-  const reviewable = ((tasks ?? []) as unknown as ReviewTask[]).filter((task) => {
-    const assignment = singleRelation(task.task_assignments);
-    const project = singleRelation(task.projects);
-    return assignment?.user_id !== user.id && (!params.project || project?.id === params.project);
-  });
+  const reviewable = ((tasks ?? []) as unknown as ReviewTask[]).filter(
+    (task) => {
+      const project = singleRelation(task.projects);
+      return (
+        !(
+          Array.isArray(task.task_assignments)
+            ? task.task_assignments
+            : [task.task_assignments]
+        ).some((assignment) => assignment?.user_id === user.id) &&
+        (!params.project || project?.id === params.project)
+      );
+    },
+  );
 
   return (
     <>
       <PageHeader
-        eyebrow="Peer approval"
-        title="Review submitted evidence"
-        description="Compare each claim against acceptance criteria. AI can advise later, but teammates approve the work first."
+        eyebrowKey="Peer approval"
+        titleKey="Review submitted evidence"
+        descriptionKey="Compare each claim against acceptance criteria. AI can advise later, but teammates approve the work first."
       />
-      <HelpCard title="What reviewers are checking" tone="amber" className="mb-4">
-        Approve if the proof clearly matches the task. Request changes if the work is started but not fully proven. Reject only if the evidence does not support the task.
+      <HelpCard
+        title="What reviewers are checking"
+        tone="amber"
+        className="mb-4"
+      >
+        <T id="Approve if the proof clearly matches the task. Request changes if the work is started but not fully proven. Reject only if the evidence does not support the task." />
       </HelpCard>
       <div className="grid gap-4">
         {reviewable.map((task) => {
@@ -52,50 +86,105 @@ export default async function ApprovalsPage({
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusBadge status="submitted" />
-                    <span className="text-sm font-bold text-muted-foreground">{project?.title}</span>
+                    <span className="text-sm font-bold text-muted-foreground">
+                      {project?.title}
+                    </span>
                   </div>
-                  <h2 className="mt-3 text-xl font-black tracking-[-.02em]">{task.title}</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">Performed by {assignment?.profiles?.name || "teammate"}</p>
+                  <h2 className="mt-3 text-xl font-bold tracking-[-.02em]">
+                    {task.title}
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    <T id="Performed by" />{" "}
+                    {assignment?.profiles?.name || "teammate"}
+                  </p>
                 </div>
-                <ButtonLink href={`/app/tasks/${task.id}`} variant="secondary" size="sm">Open detail</ButtonLink>
+                <ButtonLink
+                  href={`/app/tasks/${task.id}`}
+                  variant="secondary"
+                  size="sm"
+                >
+                  <T id="Open detail" />
+                </ButtonLink>
               </div>
 
               <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_1fr]">
-                <div className="rounded-2xl border border-cyan-300/20 bg-cyan-400/10 p-4">
-                  <h3 className="flex items-center gap-2 font-black"><FileCheck2 size={18} className="text-cyan-300" /> Submitted evidence</h3>
+                <div className="rounded-2xl border border-ai/20 bg-ai/10 p-4">
+                  <h3 className="flex items-center gap-2 font-bold">
+                    <FileCheck2 size={18} className="text-ai" />{" "}
+                    <T id="Submitted evidence" />
+                  </h3>
                   <div className="mt-3 space-y-3">
                     {task.evidence?.map((item) => (
-                      <div key={item.id} className="rounded-xl border border-border bg-card p-3">
-                        <p className="font-black capitalize">{item.type}</p>
-                        <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.description}</p>
-                        {item.url && <a className="mt-2 inline-block text-sm font-black text-cyan-300" href={item.url} target="_blank" rel="noreferrer">Open evidence</a>}
+                      <div
+                        key={item.id}
+                        className="rounded-xl border border-border bg-card p-3"
+                      >
+                        <p className="font-bold capitalize">{item.type}</p>
+                        <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                          {item.description}
+                        </p>
+                        {!item.url && (
+                          <ButtonLink
+                            href={`/app/tasks/${task.id}#task-evidence`}
+                            variant="ghost"
+                            size="sm"
+                          >
+                            <T id="Open evidence" />
+                          </ButtonLink>
+                        )}
+                        {item.url && (
+                          <a
+                            className="mt-2 inline-block text-sm font-bold text-ai"
+                            href={item.url}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            <T id="Open evidence" />
+                          </a>
+                        )}
                       </div>
                     ))}
-                    {!task.evidence?.length && <p className="text-sm text-muted-foreground">No evidence rows were found. Open detail before approving.</p>}
+                    {!task.evidence?.length && (
+                      <p className="text-sm text-muted-foreground">
+                        <T id="No evidence rows were found. Open detail before approving." />
+                      </p>
+                    )}
                   </div>
                 </div>
-                <div className="rounded-2xl border border-amber-300/20 bg-amber-400/10 p-4">
-                  <h3 className="font-black">Acceptance criteria</h3>
+                <div className="rounded-2xl border border-warning/20 bg-warning/10 p-4">
+                  <h3 className="font-bold">
+                    <T id="Acceptance criteria" />
+                  </h3>
                   <ul className="mt-3 space-y-2">
-                    {(task.acceptance_criteria ?? []).map((criterion) => <li key={criterion} className="flex gap-2 text-sm leading-6"><span className="mt-2 size-1.5 shrink-0 rounded-full bg-amber-300" />{criterion}</li>)}
+                    {(task.acceptance_criteria ?? []).map((criterion) => (
+                      <li
+                        key={criterion}
+                        className="flex gap-2 text-sm leading-6"
+                      >
+                        <span className="mt-2 size-1.5 shrink-0 rounded-full bg-warning" />
+                        {criterion}
+                      </li>
+                    ))}
                   </ul>
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {(task.expected_evidence_types ?? []).map((item) => <span key={item} className="rounded-full border border-border bg-card px-3 py-1 text-xs font-black text-muted-foreground">{item}</span>)}
+                    {(task.expected_evidence_types ?? []).map((item) => (
+                      <span
+                        key={item}
+                        className="rounded-full border border-border bg-card px-3 py-1 text-xs font-bold text-muted-foreground"
+                      >
+                        {item}
+                      </span>
+                    ))}
                   </div>
-                  {!(task.expected_evidence_types ?? []).length && <div className="mt-4"><EvidenceExamples compact /></div>}
+                  {!(task.expected_evidence_types ?? []).length && (
+                    <div className="mt-4">
+                      <EvidenceExamples compact />
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <form action={reviewTask} className="mt-5 grid gap-3">
-                <input type="hidden" name="task_id" value={task.id} />
-                <label><span className="inline-flex items-center gap-2"><MessageSquare size={16} /> Reviewer note</span><small className="font-normal text-muted-foreground">Required for changes or rejection. A short note helps the teammate know what happens next.</small><textarea name="comment" className="min-h-20" placeholder="Example: The screenshot is useful, but the demo link still needs to show the completed flow." /></label>
-                <div className="grid gap-2 sm:grid-cols-4">
-                  <Button name="status" value="approved" type="submit"><Check size={17} /> Approve work</Button>
-                  <Button name="status" value="needs_changes" type="submit" variant="amber">Request changes</Button>
-                  <Button name="status" value="rejected" type="submit" variant="danger"><X size={17} /> Reject proof</Button>
-                  <ButtonLink href={`/app/tasks/${task.id}`} variant="secondary"><AlertTriangle size={17} /> View dispute path</ButtonLink>
-                </div>
-              </form>
+              <ReviewForm taskId={task.id} />
             </Card>
           );
         })}
@@ -104,7 +193,11 @@ export default async function ApprovalsPage({
             title="Nothing to review yet"
             copy="Great. No teammate submissions are waiting right now."
             tip="When proof arrives, compare it to the acceptance criteria before approving."
-            action={<ButtonLink href="/app" variant="secondary">Back to dashboard</ButtonLink>}
+            action={
+              <ButtonLink href="/app" variant="secondary">
+                <T id="Back to dashboard" />
+              </ButtonLink>
+            }
           />
         )}
       </div>

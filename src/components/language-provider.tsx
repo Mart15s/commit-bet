@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   defaultLanguage,
   isLanguage,
@@ -46,13 +53,32 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     [language, setLanguage],
   );
 
-  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
+  return (
+    <LanguageContext.Provider value={value}>
+      {children}
+    </LanguageContext.Provider>
+  );
 }
 
 export function useI18n() {
   const context = useContext(LanguageContext);
   if (!context) throw new Error("useI18n must be used inside LanguageProvider");
   return context;
+}
+
+/** Localized copy inside a Server Component, using the same live language choice. */
+export function T({
+  id,
+  values,
+}: {
+  id: string;
+  values?: Record<string, string | number>;
+}) {
+  const { t } = useI18n();
+  return Object.entries(values ?? {}).reduce(
+    (copy, [key, value]) => copy.replaceAll(`{${key}}`, String(value)),
+    t(id),
+  );
 }
 
 export function LanguageHydrator({ language }: { language?: string | null }) {
@@ -63,4 +89,18 @@ export function LanguageHydrator({ language }: { language?: string | null }) {
   }, [language, setLanguage]);
 
   return null;
+}
+
+export function DateText({ value }: { value: string }) {
+  const { language } = useI18n();
+  const date = new Date(value.includes("T") ? value : `${value}T12:00:00`);
+  return (
+    <time dateTime={value}>
+      {Number.isFinite(date.getTime())
+        ? new Intl.DateTimeFormat(language === "lt" ? "lt-LT" : "en-GB", {
+            dateStyle: "medium",
+          }).format(date)
+        : "—"}
+    </time>
+  );
 }

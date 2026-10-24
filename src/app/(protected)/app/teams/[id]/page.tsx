@@ -8,7 +8,11 @@ type TeamMemberRow = {
   profiles: { id: string; name: string; email: string };
 };
 
-export default async function TeamPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function TeamPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   const { supabase, user } = await requireUser();
   const { data: membership } = await supabase
@@ -17,7 +21,11 @@ export default async function TeamPage({ params }: { params: Promise<{ id: strin
     .eq("team_id", id)
     .eq("user_id", user.id)
     .single();
-  const team = membership?.teams as unknown as { id: string; name: string; invite_code: string } | null;
+  const team = membership?.teams as unknown as {
+    id: string;
+    name: string;
+    invite_code: string;
+  } | null;
   if (!team) notFound();
   const { data: members } = await supabase
     .from("team_members")
@@ -27,31 +35,50 @@ export default async function TeamPage({ params }: { params: Promise<{ id: strin
   const memberRows = (members ?? [])
     .map((member) => ({
       role: member.role,
-      profiles: singleRelation(member.profiles as unknown as TeamMemberRow["profiles"] | TeamMemberRow["profiles"][]),
+      profiles: singleRelation(
+        member.profiles as unknown as
+          | TeamMemberRow["profiles"]
+          | TeamMemberRow["profiles"][],
+      ),
     }))
     .filter((member): member is TeamMemberRow => Boolean(member.profiles));
 
   return (
     <>
       <PageHeader
-        eyebrow="Team"
+        eyebrowKey="Team"
         title={team.name}
         description={`Invite code: ${team.invite_code}`}
-        action={<ButtonLink href={`/app/projects/new?team=${team.id}`}>New project</ButtonLink>}
+        action={
+          <ButtonLink href={`/app/projects/new?team=${team.id}`}>
+            New project
+          </ButtonLink>
+        }
       />
       <Card>
-        <h2 className="text-lg font-black">Members ({members?.length ?? 0}/5)</h2>
+        <h2 className="text-lg font-bold">
+          Members ({members?.length ?? 0}/5)
+        </h2>
         <div className="mt-4 grid gap-3">
           {memberRows.map((member) => {
             const profile = member.profiles;
             return (
-              <div key={profile.id} className="flex items-center gap-3 rounded-xl border border-border bg-secondary p-3">
-                <div className="grid size-11 place-items-center rounded-full bg-primary font-black text-primary-foreground">{initials(profile.name)}</div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-black">{profile.name}</p>
-                  <p className="truncate text-sm text-muted-foreground">{profile.email}</p>
+              <div
+                key={profile.id}
+                className="flex items-center gap-3 rounded-xl border border-border bg-secondary p-3"
+              >
+                <div className="grid size-11 place-items-center rounded-full bg-primary font-bold text-primary-foreground">
+                  {initials(profile.name)}
                 </div>
-                <span className="rounded-full border border-border bg-card px-2.5 py-1 text-xs font-black capitalize">{member.role}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-bold">{profile.name}</p>
+                  <p className="truncate text-sm text-muted-foreground">
+                    {profile.email}
+                  </p>
+                </div>
+                <span className="rounded-full border border-border bg-card px-2.5 py-1 text-xs font-bold capitalize">
+                  {member.role}
+                </span>
               </div>
             );
           })}

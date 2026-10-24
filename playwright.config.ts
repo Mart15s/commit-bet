@@ -14,10 +14,18 @@ export default defineConfig({
       ? { executablePath: browserExecutable }
       : undefined,
   },
-  webServer: {
-    command: "npm run dev",
-    url: "http://127.0.0.1:3000",
-    reuseExistingServer: true,
-    timeout: 120_000,
-  },
+  webServer: [
+    {
+      command: "npm run dev",
+      url: "http://127.0.0.1:3000",
+      reuseExistingServer: true,
+      timeout: 120_000,
+    },
+    {
+      command:
+        "node node_modules/vite/bin/vite.js --config tests/visual/vite.config.ts",
+      url: "http://127.0.0.1:3100",
+      reuseExistingServer: true,
+    },
+  ],
 });

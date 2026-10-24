@@ -4,199 +4,229 @@ import Link from "next/link";
 import {
   ArrowRight,
   Brain,
-  CheckCircle2,
+  Check,
   ClipboardCheck,
   FileCheck2,
-  Gauge,
-  Layers3,
   ShieldCheck,
-  Sparkles,
   Users,
 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { ButtonLink, Card, Progress, StatusBadge } from "@/components/ui";
 import { useI18n } from "@/components/language-provider";
-import { sampleProject } from "@/lib/mock-data";
 
+// Public, explicitly illustrative content. Never used by the authenticated dashboard.
+const previewStatuses = ["approved", "submitted", "in_progress"];
 export default function Home() {
   const { t } = useI18n();
-  const approved = sampleProject.tasks.filter((task) => task.status === "approved").length;
-  const submitted = sampleProject.tasks.filter((task) => task.status === "submitted").length;
   const flow = [
-    [t("landing.flowProject"), t("landing.flowProjectCopy")],
-    [t("landing.flowCommitment"), t("landing.flowCommitmentCopy")],
-    [t("landing.flowPlan"), t("landing.flowPlanCopy")],
-    [t("landing.flowEvidence"), t("landing.flowEvidenceCopy")],
-    [t("landing.flowApproval"), t("landing.flowApprovalCopy")],
-    [t("landing.flowReport"), t("landing.flowReportCopy")],
+    "Project",
+    "Commitment",
+    "Plan",
+    "Evidence",
+    "Approval",
+    "Report",
   ];
-  const differences = [
-    [t("landing.diffBacklog"), t("landing.diffBacklogCopy")],
-    [t("landing.diffEvidence"), t("landing.diffEvidenceCopy")],
-    [t("landing.diffAi"), t("landing.diffAiCopy")],
-  ];
-
   return (
-    <main className="min-h-screen overflow-hidden">
-      <header className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
-        <Link href="/" className="text-xl font-black tracking-[-.03em] text-foreground">{t("app.brand")}</Link>
+    <main className="min-h-screen">
+      <header className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-8">
+        <Link
+          href="/"
+          className="flex items-center gap-2 text-xl font-bold tracking-tight"
+        >
+          <span className="grid size-9 place-items-center rounded-lg bg-primary text-primary-foreground">
+            <ClipboardCheck size={21} />
+          </span>
+          {t("app.brand")}
+        </Link>
         <nav className="flex items-center gap-2">
           <LanguageSwitcher compact />
-          <ButtonLink href="/login" variant="ghost" size="sm">{t("landing.login")}</ButtonLink>
-          <ButtonLink href="/register" size="sm" className="hidden sm:inline-flex">{t("landing.startSprint")}</ButtonLink>
+          <ButtonLink href="/login" variant="ghost" size="sm">
+            {t("landing.signIn")}
+          </ButtonLink>
         </nav>
       </header>
-
-      <section className="mx-auto grid max-w-7xl gap-10 px-5 pb-14 pt-8 sm:px-8 md:grid-cols-[1.05fr_.95fr] md:items-center md:pb-20 md:pt-16">
+      <section className="mx-auto grid max-w-7xl gap-10 px-5 pb-16 pt-10 sm:px-8 md:py-20 lg:grid-cols-[1fr_1fr] lg:items-center lg:gap-14">
         <div>
-          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-400/12 px-3 py-2 text-xs font-black uppercase tracking-[.12em] text-amber-200">
-            <Sparkles size={15} /> {t("landing.heroBadge")}
-          </div>
-          <h1 className="max-w-4xl text-5xl font-black leading-[.95] tracking-[-.055em] sm:text-6xl lg:text-7xl">
+          <p className="mb-5 text-xs font-semibold uppercase tracking-[.14em] text-primary">
+            {t("landing.audience")}
+          </p>
+          <h1 className="max-w-xl text-[2.75rem] font-bold leading-[1.06] tracking-[-.05em] sm:text-6xl xl:text-7xl">
             {t("landing.heroTitle")}
           </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
+          <p className="mt-6 max-w-lg text-lg leading-8 text-muted-foreground">
             {t("landing.heroCopy")}
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <ButtonLink href="/register" size="lg">{t("landing.createSprint")} <ArrowRight size={18} /></ButtonLink>
-            <ButtonLink href="/login" variant="secondary" size="lg">{t("landing.viewProduct")}</ButtonLink>
+            <ButtonLink href="/register" size="lg">
+              {t("landing.createSprint")}
+              <ArrowRight size={18} />
+            </ButtonLink>
+            <ButtonLink href="#how-it-works" variant="secondary" size="lg">
+              {t("landing.walkthrough")}
+            </ButtonLink>
           </div>
-          <div className="mt-5 grid gap-2 text-sm font-bold text-muted-foreground sm:grid-cols-3">
-            <span className="inline-flex items-center gap-2"><ShieldCheck size={16} className="text-amber-300" /> {t("landing.virtualPledges")}</span>
-            <span className="inline-flex items-center gap-2"><Brain size={16} className="text-cyan-300" /> {t("landing.aiRecommends")}</span>
-            <span className="inline-flex items-center gap-2"><Users size={16} className="text-primary" /> {t("landing.humansConfirm")}</span>
+          <div className="mt-6 flex flex-wrap gap-x-5 gap-y-3 text-xs text-muted-foreground">
+            {[
+              [ShieldCheck, "landing.virtualPledges"],
+              [Brain, "landing.aiRecommends"],
+              [Users, "landing.humansConfirm"],
+            ].map(([Icon, key]) => (
+              <span
+                className="inline-flex items-center gap-2"
+                key={String(key)}
+              >
+                <Icon size={16} className="text-primary" />
+                {t(String(key))}
+              </span>
+            ))}
           </div>
+          <p className="mt-4 text-xs text-muted-foreground">
+            {t("landing.noMoney")}
+          </p>
         </div>
-
-        <div className="rounded-[1.5rem] border border-primary/25 bg-primary/10 p-4 shadow-[0_24px_90px_rgba(124,58,237,.22)] sm:p-5">
-          <div className="rounded-[1.15rem] border border-border bg-elevated/90 p-4">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[.14em] text-primary">{t("landing.activeSprint")}</p>
-                <h2 className="mt-1 text-2xl font-black tracking-[-.03em]">{sampleProject.title}</h2>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">{sampleProject.goal}</p>
-              </div>
+        <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-2xl">
+          <div className="border-b border-border bg-elevated px-5 py-3">
+            <p className="text-xs font-medium text-muted-foreground">
+              {t("landing.preview")}
+            </p>
+          </div>
+          <div className="p-5 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span className="text-xs font-semibold uppercase tracking-widest text-primary">
+                {t("landing.activeSprint")}
+              </span>
               <StatusBadge status="active" />
             </div>
-            <div className="mt-5 grid grid-cols-3 gap-2">
-              <Card className="bg-surface p-3"><p className="text-xs font-bold text-muted-foreground">{t("landing.score")}</p><p className="text-2xl font-black">{sampleProject.successScore}</p></Card>
-              <Card className="bg-surface p-3"><p className="text-xs font-bold text-muted-foreground">{t("landing.proof")}</p><p className="text-2xl font-black">{submitted}</p></Card>
-              <Card className="bg-surface p-3"><p className="text-xs font-bold text-muted-foreground">{t("landing.approved")}</p><p className="text-2xl font-black">{approved}</p></Card>
+            <h2 className="mt-4 text-2xl font-bold tracking-tight">
+              {t("landing.previewTitle")}
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              {t("landing.previewGoal")}
+            </p>
+            <div className="mt-6 flex justify-between gap-3 text-sm">
+              <strong>{t("dash.verified")}</strong>
+              <strong className="text-primary">1 / 3</strong>
             </div>
-            <div className="mt-5">
-              <div className="mb-2 flex justify-between text-sm font-black"><span>{t("landing.commitmentProgress")}</span><span>{sampleProject.successScore}%</span></div>
-              <Progress value={sampleProject.successScore} />
-            </div>
-            <div className="mt-5 space-y-2">
-              {sampleProject.tasks.slice(0, 3).map((task) => (
-                <div key={task.id} className="rounded-xl border border-border bg-surface p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-black">{task.title}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">{task.ownerName} · expects {task.expectedEvidenceTypes.join(", ")}</p>
-                    </div>
-                    <StatusBadge status={task.status} />
+            <Progress value={33} label={t("dash.verified")} className="mt-3" />
+            <div className="mt-6 grid gap-2">
+              {previewStatuses.map((status, index) => (
+                <div
+                  key={status}
+                  className="flex items-start justify-between gap-3 rounded-xl border border-border bg-background/50 p-3"
+                >
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {t(`landing.previewTask${index}`)}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                      {t("landing.previewEvidence")}
+                    </p>
                   </div>
+                  <StatusBadge status={status} />
                 </div>
               ))}
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="border-y border-border bg-surface/70">
-        <div className="mx-auto grid max-w-7xl gap-6 px-5 py-12 sm:px-8 md:grid-cols-[.8fr_1.2fr] md:py-16">
-          <div>
-            <p className="text-xs font-black uppercase tracking-[.16em] text-amber-300">{t("landing.problemEyebrow")}</p>
-            <h2 className="mt-2 text-3xl font-black tracking-[-.04em] sm:text-4xl">{t("landing.problemTitle")}</h2>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-3">
-            {[t("landing.problemOne"), t("landing.problemTwo"), t("landing.problemThree")].map((item) => (
-              <Card key={item} className="p-5"><p className="text-lg font-black">{item}</p></Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-5 py-14 sm:px-8 md:py-20">
-        <div className="max-w-2xl">
-          <p className="text-xs font-black uppercase tracking-[.16em] text-primary">{t("landing.howEyebrow")}</p>
-          <h2 className="mt-2 text-3xl font-black tracking-[-.04em] sm:text-4xl">{t("landing.howTitle")}</h2>
-        </div>
-        <div className="mt-8 grid gap-3 md:grid-cols-3">
-          {flow.map(([title, copy], index) => (
-            <Card key={title} className="p-5">
-              <span className="text-sm font-black text-primary">{String(index + 1).padStart(2, "0")}</span>
-              <h3 className="mt-5 text-xl font-black">{title}</h3>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">{copy}</p>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section className="border-y border-border bg-[radial-gradient(circle_at_15%_20%,rgba(124,58,237,.18),transparent_24rem),#080A12] text-foreground">
-        <div className="mx-auto grid max-w-7xl gap-8 px-5 py-14 sm:px-8 md:grid-cols-[.95fr_1.05fr] md:py-20">
-          <div>
-            <p className="text-xs font-black uppercase tracking-[.16em] text-amber-300">{t("landing.differentEyebrow")}</p>
-            <h2 className="mt-2 text-3xl font-black tracking-[-.04em] sm:text-4xl">{t("landing.differentTitle")}</h2>
-            <p className="mt-4 leading-7 text-muted-foreground">{t("landing.differentCopy")}</p>
-          </div>
-          <div className="grid gap-3">
-            {differences.map(([title, copy]) => (
-              <div key={title} className="rounded-2xl border border-border bg-elevated/60 p-5">
-                <h3 className="font-black">{title}</h3>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">{copy}</p>
+            <div className="mt-4 flex gap-3 rounded-xl border border-ai/25 bg-ai/5 p-4">
+              <Brain size={19} className="shrink-0 text-ai" />
+              <div>
+                <p className="text-xs font-semibold text-ai">
+                  {t("landing.previewInsight")}
+                </p>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  {t("landing.previewInsightCopy")}
+                </p>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section
+        id="how-it-works"
+        className="border-y border-border bg-surface/50"
+      >
+        <div className="mx-auto max-w-7xl px-5 py-14 sm:px-8 md:py-20">
+          <p className="text-xs font-semibold uppercase tracking-[.16em] text-primary">
+            {t("landing.howEyebrow")}
+          </p>
+          <h2 className="mt-3 max-w-2xl text-3xl font-bold tracking-tight sm:text-4xl">
+            {t("landing.howTitle")}
+          </h2>
+          <div className="mt-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {flow.map((key, index) => (
+              <Card key={key} className="p-6">
+                <span className="grid size-9 place-items-center rounded-lg border border-primary/25 bg-primary/10 text-sm font-semibold text-primary">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <h3 className="mt-5 text-lg font-bold">
+                  {t(`landing.flow${key}`)}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {t(`landing.flow${key}Copy`)}
+                </p>
+              </Card>
             ))}
           </div>
         </div>
       </section>
-
-      <section className="mx-auto grid max-w-7xl gap-6 px-5 py-14 sm:px-8 md:grid-cols-3 md:py-20">
-        <Card className="p-6 md:col-span-2">
-          <FileCheck2 className="text-cyan-300" />
-          <h2 className="mt-5 text-3xl font-black tracking-[-.04em]">{t("landing.assetTitle")}</h2>
-          <p className="mt-3 max-w-2xl leading-7 text-muted-foreground">
+      <section className="mx-auto grid max-w-7xl gap-8 px-5 py-14 sm:px-8 md:py-20 lg:grid-cols-2">
+        <div>
+          <FileCheck2 size={25} className="text-primary" />
+          <h2 className="mt-5 max-w-md text-3xl font-bold tracking-tight">
+            {t("landing.assetTitle")}
+          </h2>
+          <p className="mt-4 max-w-lg leading-7 text-muted-foreground">
             {t("landing.assetCopy")}
           </p>
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            {[t("landing.screenshots"), t("landing.githubLinks"), t("landing.demoVideos")].map((item) => <div key={item} className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-4 text-sm font-black text-cyan-100">{item}</div>)}
+          <div className="mt-6 flex flex-wrap gap-2">
+            {["screenshots", "githubLinks", "demoVideos"].map((key) => (
+              <span
+                key={key}
+                className="rounded-lg border border-border bg-surface px-3 py-2 text-xs font-semibold"
+              >
+                {t(`landing.${key}`)}
+              </span>
+            ))}
           </div>
-        </Card>
-        <Card className="p-6">
-          <Gauge className="text-cyan-300" />
-          <h3 className="mt-5 text-xl font-black">{t("landing.aiRisk")}</h3>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">{sampleProject.aiRiskInsight.summary}</p>
-          <p className="mt-4 rounded-xl border border-cyan-300/25 bg-cyan-400/10 p-3 text-sm font-bold text-cyan-100">{t("landing.why")} {sampleProject.aiRiskInsight.why}</p>
-        </Card>
-      </section>
-
-      <section className="border-y border-border bg-surface/70">
-        <div className="mx-auto grid max-w-7xl gap-6 px-5 py-14 sm:px-8 md:grid-cols-3 md:py-16">
+        </div>
+        <div className="grid gap-4">
           {[
-            [Brain, t("landing.neutralReviewer"), t("landing.neutralReviewerCopy")],
-            [ClipboardCheck, t("landing.peerApproval"), t("landing.peerApprovalCopy")],
-            [ShieldCheck, t("landing.humanConfirmation"), t("landing.humanConfirmationCopy")],
-          ].map(([Icon, title, copy]) => (
-            <div key={String(title)} className="flex gap-4">
-              <div className="rounded-xl border border-primary/20 bg-primary/10 p-3 text-primary"><Icon size={22} /></div>
+            [Brain, "neutralReviewer"],
+            [ClipboardCheck, "peerApproval"],
+            [ShieldCheck, "humanConfirmation"],
+          ].map(([Icon, key]) => (
+            <div
+              key={String(key)}
+              className="flex gap-4 rounded-xl border border-border bg-card p-5"
+            >
+              <Icon size={21} className="shrink-0 text-ai" />
               <div>
-                <h3 className="font-black">{String(title)}</h3>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">{String(copy)}</p>
+                <h3 className="font-bold">{t(`landing.${key}`)}</h3>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  {t(`landing.${key}Copy`)}
+                </p>
               </div>
             </div>
           ))}
         </div>
       </section>
-
-      <section className="mx-auto max-w-4xl px-5 py-16 text-center sm:px-8 md:py-24">
-        <Layers3 className="mx-auto text-primary" size={34} />
-        <h2 className="mt-5 text-4xl font-black tracking-[-.05em] sm:text-5xl">{t("landing.finalTitle")}</h2>
-        <p className="mx-auto mt-4 max-w-2xl leading-7 text-muted-foreground">{t("landing.finalCopy")}</p>
-        <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-          <ButtonLink href="/register" size="lg">{t("landing.startWithPledges")} <ArrowRight size={18} /></ButtonLink>
-          <ButtonLink href="/login" variant="secondary" size="lg"><CheckCircle2 size={18} /> {t("landing.signIn")}</ButtonLink>
+      <section className="border-t border-border bg-surface/60">
+        <div className="mx-auto max-w-3xl px-5 py-14 text-center sm:px-8 md:py-20">
+          <Check className="mx-auto text-primary" size={30} />
+          <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">
+            {t("landing.finalTitle")}
+          </h2>
+          <p className="mt-4 leading-7 text-muted-foreground">
+            {t("landing.finalCopy")}
+          </p>
+          <div className="mt-7">
+            <ButtonLink href="/register" size="lg">
+              {t("landing.createSprint")}
+              <ArrowRight size={18} />
+            </ButtonLink>
+          </div>
+          <p className="mt-5 text-xs text-muted-foreground">
+            {t("landing.noMoney")}
+          </p>
         </div>
       </section>
     </main>

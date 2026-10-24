@@ -5,6 +5,7 @@ import {
   generatePlan,
   type GeneratePlanActionState,
 } from "@/app/(protected)/app/projects/actions";
+import { useI18n } from "@/components/language-provider";
 import { Button } from "@/components/ui";
 
 const initialState: GeneratePlanActionState = {
@@ -22,6 +23,7 @@ export function AIPlanGenerationForm({
   label: string;
   className?: string;
 }) {
+  const { t } = useI18n();
   const [state, formAction, pending] = useActionState(
     generatePlan,
     initialState,
@@ -30,29 +32,25 @@ export function AIPlanGenerationForm({
   return (
     <form action={formAction} className={className}>
       <input type="hidden" name="project_id" value={projectId} />
-      <input
-        type="hidden"
-        name="idempotency_key"
-        value={idempotencyKey}
-      />
+      <input type="hidden" name="idempotency_key" value={idempotencyKey} />
       <Button
         aria-disabled={pending}
         className="w-full"
         disabled={pending}
         type="submit"
       >
-        {pending ? "Saving AI plan…" : label}
+        {t(pending ? "Saving AI plan…" : label)}
       </Button>
       {state.message ? (
         <p
           aria-live="polite"
           className={
             state.status === "error"
-              ? "mt-2 max-w-xl text-sm font-bold text-red-300"
-              : "mt-2 max-w-xl text-sm font-bold text-emerald-300"
+              ? "mt-2 max-w-xl text-sm font-bold text-danger"
+              : "mt-2 max-w-xl text-sm font-bold text-success"
           }
         >
-          {state.message}
+          {t(state.message)}
         </p>
       ) : null}
     </form>
